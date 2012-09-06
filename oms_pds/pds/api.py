@@ -1,6 +1,6 @@
 from tastypie.authorization import Authorization
 from tastypie_mongoengine import resources
-from OMS_PDS.pds.models import Funf
+from oms_pds.pds.models import Funf
 import datetime
 import json
 

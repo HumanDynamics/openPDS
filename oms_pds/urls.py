@@ -2,7 +2,7 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.conf.urls.defaults import *
 from tastypie.api import Api
-from OMS_PDS.pds.api import FunfResource
+from oms_pds.pds.api import FunfResource
 
 v1_api = Api(api_name='sensors')
 v1_api.register(FunfResource())
