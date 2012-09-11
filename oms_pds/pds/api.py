@@ -1,6 +1,8 @@
 from tastypie.authorization import Authorization
 from tastypie_mongoengine import resources
 from oms_pds.pds.models import Funf
+from oms_pds.authentication import OAuth2Authentication
+from oms_pds.authorization import PDSAuthorization
 import datetime
 import json, ast
 
@@ -9,7 +11,8 @@ class FunfResource(resources.MongoEngineResource):
     class Meta:
         queryset = Funf.objects.all()
         allowed_methods = ('get', 'post')
-        authorization = Authorization()
+        authentication = OAuth2Authentication()
+        authorization = PDSAuthorization()
 
     def hydrate(self, bundle):
 	#TODO the '.' to '_' translation from the old PDS
