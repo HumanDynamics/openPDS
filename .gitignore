@@ -1,0 +1,5 @@
+*.out
+*.pyc
+*.swp
+*.swo
+deploy.*
