@@ -1,0 +1,6 @@
+# XXX add specific version numbers once we can confirm the latest stable versions all work
+django
+pycrypto
+pymongo
+PyMySQL
+django-extensions
