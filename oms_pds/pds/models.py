@@ -13,3 +13,11 @@ class Funf(mongoengine.Document):
     def __unicode__(self):
         return self.name
 
+class FunfConfig(mongoengine.Document):
+    key = mongoengine.StringField()
+
+
+class Role(mongoengine.Document):
+    key = mongoengine.StringField()
+    ids = mongoengine.ListField(mongoengine.IntField())
+

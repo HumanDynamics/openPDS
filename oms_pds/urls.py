@@ -2,11 +2,14 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.conf.urls.defaults import *
 from tastypie.api import Api
-from oms_pds.pds.api import FunfResource
+from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource
 
 v1_api = Api(api_name='sensors')
 v1_api.register(FunfResource())
+v1_api.register(FunfConfigResource())
 
+v2_api = Api(api_name='roles')
+v2_api.register(RoleResource())
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -14,6 +17,7 @@ v1_api.register(FunfResource())
 
 urlpatterns = patterns('',
     (r'^api/', include(v1_api.urls)),
+    (r'^api/', include(v2_api.urls)),
     # Examples:
     # url(r'^$', 'OMS_PDS.views.home', name='home'),
     # url(r'^OMS_PDS/', include('OMS_PDS.foo.urls')),
