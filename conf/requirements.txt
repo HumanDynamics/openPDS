@@ -1,0 +1,14 @@
+# XXX add specific version numbers once we can confirm the latest stable versions all work
+# XXX need to confirm that the Registry and Resource Servers have the same dependencies?
+django
+django-tastypie==0.9.11
+django-tastypie-mongoengine
+mongoengine
+pymongo
+PyMySQL
+# XXX - re-enable once we make postgresql / mysql an developer-defined detail
+#psycopg2
+django-extensions
+django-chart-tools
+django-uni-form
+
