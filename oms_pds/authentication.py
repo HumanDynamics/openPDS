@@ -3,7 +3,6 @@ import httplib
 import settings
 import json
 
-
 class OAuth2Authentication(Authentication):
 
 
@@ -30,7 +29,9 @@ class OAuth2Authentication(Authentication):
         self.scope = scope
 
     def is_authenticated(self, request, **kwargs):
-        key = self.__get_userinfo_from_token(request.GET['token'], self.scope)
+	token = request.META['HTTP_TOKEN'] or request.GET['token'];
+	
+        key = self.__get_userinfo_from_token(token, self.scope)
 	
         return True
 

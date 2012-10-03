@@ -18,6 +18,7 @@ v2_api.register(RoleResource())
 urlpatterns = patterns('',
     (r'^api/', include(v1_api.urls)),
     (r'^api/', include(v2_api.urls)),
+    (r'^admin/roles', 'django.views.generic.simple.direct_to_template', { 'template' : 'roles.html' }),
     # Examples:
     # url(r'^$', 'OMS_PDS.views.home', name='home'),
     # url(r'^OMS_PDS/', include('OMS_PDS.foo.urls')),
