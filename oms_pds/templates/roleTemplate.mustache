@@ -1,0 +1,9 @@
+<div id="Container{{ id }}">
+	<input type="checkbox" value="{{ id }}" id="{{ id }}" class="roleCheckBox" /> 
+	<label for="{{ id }}">{{ key }}</label>
+	<ul>
+		{{#ids}}
+		<li>{{.}}</li>
+		{{/ids}}
+	</ul>
+</div>
