@@ -26,7 +26,7 @@ We need some good docs in here detailing:
     
     >pip install -r requirements.txt
 
-    >cd ../oms_pds
+    >cd ../
     
     >python manage.py runserver 0.0.0.0:8002 (for access to local VM)
  
