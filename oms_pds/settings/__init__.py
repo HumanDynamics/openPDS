@@ -14,7 +14,7 @@ our guide to the settings .ini files.
 import os
 
 from django_configglue.utils import configglue as django_configglue
-from oms_fabric.config.django import OMSDjangoSchema
+from oms_fabric.config.schema import OMSDjangoSchema
 
 
 # XXX - context compute logic goes here
