@@ -4,3 +4,5 @@ pycrypto
 pymongo
 PyMySQL
 django-extensions
+configglue
+-e git://github.com/illumin-us-r3v0lution/django-configglue.git#egg=django_configglue
