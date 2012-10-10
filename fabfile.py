@@ -5,7 +5,7 @@ Install PDS
 details at oms-deploy! https://github.com/IDCubed/oms-deploy
 '''
 
-from oms_fabric.webapp import Webapp
+from oms_deploy.webapp import Webapp
 
 PDS = Webapp()
 PDS.repo_url = 'https://github.com/IDCubed/OMS-PDS'
