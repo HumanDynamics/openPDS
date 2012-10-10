@@ -1,5 +1,4 @@
 # XXX add specific version numbers once we can confirm the latest stable versions all work
-<<<<<<< HEAD
 # XXX need to confirm that the Registry and Resource Servers have the same dependencies?
 django
 django-tastypie==0.9.11
@@ -14,4 +13,3 @@ django-chart-tools
 django-uni-form
 configglue
 -e git://github.com/illumin-us-r3v0lution/django-configglue.git#egg=django_configglue
->>>>>>> yeshua/deployment
