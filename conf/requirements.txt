@@ -12,4 +12,5 @@ django-extensions
 django-chart-tools
 django-uni-form
 configglue
--e git://github.com/illumin-us-r3v0lution/django-configglue.git#egg=django_configglue
+git+ssh://git@github.com/illumin-us-r3v0lution/django-configglue#egg=django_configglue
+git+ssh://git@github.com/IDCubed/oms-deploy.git#egg=oms_deploy
