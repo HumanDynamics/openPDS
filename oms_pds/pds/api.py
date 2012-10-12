@@ -36,7 +36,7 @@ class FunfConfigResource(resources.MongoEngineResource):
 class RoleResource(resources.MongoEngineResource):
     class Meta:
         queryset = Role.objects.all()
-        allowed_methods = ('get', 'post')
+        allowed_methods = ('get', 'post', 'delete')
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization()
 

@@ -1,0 +1,27 @@
+{% load straight_include %}
+{% load verbatim %}
+
+<html>
+<head>
+        <title>
+        {% block title %}
+        OMS Base
+        {% endblock %}
+        </title>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+        <script src="{{ STATIC_URL }}js/underscore-min.js"></script>
+        <script src="{{ STATIC_URL }}js/backbone-min.js"></script>
+	<script src="{{ STATIC_URL }}js/backbone-tastypie.js"></script> 
+	<script src="{{ STATIC_URL }}js/ICanHaz.min.js"></script>
+	<script src="{{ STATIC_URL }}js/admin.js"></script>	
+
+	{% block scripts %}
+	{% endblock %}
+</head>
+<body>
+        <div id="content">
+        {% block content %}
+        {% endblock %}
+        </div>
+</body>
+

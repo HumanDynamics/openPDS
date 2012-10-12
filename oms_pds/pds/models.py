@@ -1,9 +1,6 @@
 from django.db import models
-import mongoengine
 from tastypie_mongoengine import fields
-
-
-# Create your models here.
+import mongoengine
 
 class Funf(mongoengine.Document):
     name = mongoengine.StringField()
@@ -20,4 +17,7 @@ class FunfConfig(mongoengine.Document):
 class Role(mongoengine.Document):
     key = mongoengine.StringField()
     ids = mongoengine.ListField(mongoengine.IntField())
+
+    def __unicode__(self):
+        return self.key
 
