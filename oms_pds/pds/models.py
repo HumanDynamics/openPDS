@@ -1,5 +1,6 @@
 from django.db import models
 import mongoengine
+import datetime
 from tastypie_mongoengine import fields
 
 
@@ -14,6 +15,7 @@ class Funf(mongoengine.Document):
         return self.name
 
 class FunfConfig(mongoengine.Document):
+    created_on = mongoengine.DateTimeField(default=datetime.datetime.now)
     key = mongoengine.StringField()
 
 

@@ -28,6 +28,7 @@ class FunfConfigResource(resources.MongoEngineResource):
     class Meta:
         queryset = FunfConfig.objects.all()
 	limit = 1
+	ordering = ['-id',]
         allowed_methods = ('get', 'post')
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization()
