@@ -20,6 +20,9 @@ import django.conf
 
 django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
 
+activate_this = os.path.expanduser("/var/www/trustframework/pdsvirtenv/bin/activate_this.py")
+execfile(activate_this, dict(__file__=activate_this))
+sys.path.append('/var/www/trustframework/pdsvirtenv/OMS-PDS');
 os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "oms_pds.settings")
 
 # This application object is used by any WSGI server configured to use this

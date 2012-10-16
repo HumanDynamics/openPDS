@@ -3,9 +3,6 @@ import mongoengine
 import datetime
 from tastypie_mongoengine import fields
 
-
-# Create your models here.
-
 class Funf(mongoengine.Document):
     name = mongoengine.StringField()
     timestamp = mongoengine.DateTimeField()
@@ -22,4 +19,7 @@ class FunfConfig(mongoengine.Document):
 class Role(mongoengine.Document):
     key = mongoengine.StringField()
     ids = mongoengine.ListField(mongoengine.IntField())
+
+    def __unicode__(self):
+        return self.key
 
