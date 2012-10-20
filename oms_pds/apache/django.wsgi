@@ -16,12 +16,11 @@ framework.
 import os
 import site
 import sys
-import django.conf
-
-django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
 
 activate_this = os.path.expanduser("/var/www/trustframework/pdsvirtenv/bin/activate_this.py")
 execfile(activate_this, dict(__file__=activate_this))
+import django.conf
+django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
 sys.path.append('/var/www/trustframework/pdsvirtenv/OMS-PDS');
 os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "oms_pds.settings")
 
