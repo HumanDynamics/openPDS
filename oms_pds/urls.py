@@ -3,10 +3,12 @@ from django.conf import settings
 from django.conf.urls.defaults import *
 from tastypie.api import Api
 #from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource
-from oms_pds.pds.api import FunfResource
+from oms_pds.pds.api import FunfResource, RoleResource, PurposeResource
 
 v1_api = Api(api_name='personal_data')
 v1_api.register(FunfResource())
+v1_api.register(RoleResource())
+v1_api.register(PurposeResource())
 #v1_api.register(FunfResource())
 #v1_api.register(FunfConfigResource())
 #v1_api.register(RoleResource())
