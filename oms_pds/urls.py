@@ -2,12 +2,14 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.conf.urls.defaults import *
 from tastypie.api import Api
-from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource
+#from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource
+from oms_pds.pds.api import FunfResource
 
 v1_api = Api(api_name='personal_data')
 v1_api.register(FunfResource())
-v1_api.register(FunfConfigResource())
-v1_api.register(RoleResource())
+#v1_api.register(FunfResource())
+#v1_api.register(FunfConfigResource())
+#v1_api.register(RoleResource())
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin

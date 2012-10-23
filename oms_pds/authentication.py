@@ -29,9 +29,11 @@ class OAuth2Authentication(Authentication):
         self.scope = scope
 
     def is_authenticated(self, request, **kwargs):
-	token = request.META['HTTP_TOKEN'] or request.GET['token'];
+	token = request.GET['bearer_token'];
 	
         key = self.__get_userinfo_from_token(token, self.scope)
+	
+	key = settings.MONGO_DATABASE_NAME
 	
         return True
 
