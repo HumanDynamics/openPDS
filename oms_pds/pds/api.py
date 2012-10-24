@@ -9,7 +9,6 @@ from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.validation import Validation
 from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
-from oms_pds.pds.models import Purpose
 
 class FunfResource(MongoDBResource):
 
@@ -24,6 +23,48 @@ class FunfResource(MongoDBResource):
         authorization = Authorization()
         object_class = Document
         collection = "funf" # collection name
+
+
+class FunfConfigResource(MongoDBResource):
+
+    id = fields.CharField(attribute="_id")
+    key = fields.CharField(attribute="key", null=True)
+
+    class Meta:
+        resource_name = "funfconfig"
+        list_allowed_methods = ["delete", "get", "post"]
+        authorization = Authorization()
+        object_class = Document
+        collection = "funfconfig" # collection name
+
+
+
+class RealityAnalysisResource(MongoDBResource):
+    id = fields.CharField(attribute="_id")
+    key = fields.CharField(attribute="key", help_text='A unique string identifier', null=False, unique=True)
+#    data = fields.ToManyField('oms_pds.pds.api.resources.SocialHealthResource', 'socialhealth_set', related_name='realityanalysis')
+    data = fields.ListField(attribute="data", null=True, )
+
+    class Meta:
+        resource_name = "realityanalysis"
+        list_allowed_methods = ["delete", "get", "post"]
+        authorization = Authorization()
+        object_class = Document
+        collection = "realityanalysis" # collection name
+
+    
+class SocialHealthResource(MongoDBResource):
+    layer = fields.CharField(attribute="layer", null=False)
+    value = fields.CharField(attribute="value", null=False)
+    key = fields.CharField(attribute="key", null=False)
+    
+    class Meta:
+        resource_name = "socialhealth"
+        list_allowed_methods = ["delete", "get", "post"]
+        authorization = Authorization()
+        object_class = Document
+        collection = "socialhealth" # collection name
+
 
 class RoleResource(MongoDBResource):
 
