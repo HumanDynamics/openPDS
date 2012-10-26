@@ -2,8 +2,8 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.conf.urls.defaults import *
 from tastypie.api import Api
-#from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource
 from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource, PurposeResource, RealityAnalysisResource, SocialHealthResource
+print "urls.py"
 
 v1_api = Api(api_name='personal_data')
 v1_api.register(FunfResource())
@@ -23,7 +23,7 @@ v1_api.register(RealityAnalysisResource())
 urlpatterns = patterns('',
     (r'^api/', include(v1_api.urls)),
     (r'^admin/roles', 'django.views.generic.simple.direct_to_template', { 'template' : 'roles.html' }),
-    (r'^static/viz', 'django.views.generic.simple.direct_to_template', { 'template' : 'reality_analysis/reality_analysis/visualization.html' }),
+    (r'^admin/viz', 'django.views.generic.simple.direct_to_template', { 'template' : 'reality_analysis/reality_analysis/visualization.html' }),
     # Examples:
     # url(r'^$', 'OMS_PDS.views.home', name='home'),
     # url(r'^OMS_PDS/', include('OMS_PDS.foo.urls')),

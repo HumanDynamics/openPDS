@@ -8,11 +8,14 @@ from django.conf import settings
 from tastypie.bundle import Bundle
 from tastypie.resources import Resource
 
+"""the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
+
 
 db = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
     port=getattr(settings, "MONGODB_PORT", None)
-)[settings.MONGODB_DATABASE]
+)
+#[settings.MONGODB_DATABASE]
 
 
 class Document(dict):
@@ -20,15 +23,15 @@ class Document(dict):
     __getattr__ = dict.get
 
 class MongoDBResource(Resource):
-    """
-    A base resource that allows to make CRUD operations for mongodb.
-    """
+    
+
     def get_collection(self):
         """
         Encapsulates collection name.
         """
         try:
-            return db[self._meta.collection]
+	    print settings.MONGODB_DATABASE_MULTIPDS
+            return db[settings.MONGODB_DATABASE_MULTIPDS][self._meta.collection]
         except AttributeError:
             raise ImproperlyConfigured("Define a collection in your resource.")
 

@@ -22,6 +22,7 @@ class OAuth2Authentication(Authentication):
             key = result['key']
             conn.close()
         except Exception as ex:
+	    print ex
             return False
         return key
 
@@ -30,10 +31,14 @@ class OAuth2Authentication(Authentication):
 
     def is_authenticated(self, request, **kwargs):
 	token = request.GET['bearer_token'];
+	print token
+	print self.scope
 	
-        key = self.__get_userinfo_from_token(token, self.scope)
+#       key = self.__get_userinfo_from_token(token, self.scope)
+#	print "-----key-----"
+#	print key	
 	
-	key = settings.MONGO_DATABASE_NAME
+#	settings.MONGODB_DATABASE = "User_"+str(key)
 	
         return True
 

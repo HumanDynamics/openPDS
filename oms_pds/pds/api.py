@@ -18,6 +18,7 @@ class FunfResource(MongoDBResource):
     value = fields.CharField(attribute="value", null=True)
 
     class Meta:
+        authentication = OAuth2Authentication("reality_analysis")
         resource_name = "funf"
         list_allowed_methods = ["delete", "get", "post"]
         authorization = Authorization()
@@ -36,7 +37,6 @@ class FunfConfigResource(MongoDBResource):
         authorization = Authorization()
         object_class = Document
         collection = "funfconfig" # collection name
-
 
 
 class RealityAnalysisResource(MongoDBResource):

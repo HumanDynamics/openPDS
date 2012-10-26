@@ -7,7 +7,9 @@ TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='localhost:8087'
+SERVER_OMS_REGISTRY='192.168.110.156:8000'
+USE_MULTIPDS = True
+
 
 
 ADMINS = (
@@ -100,6 +102,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     #'django.middleware.csrf.CsrfViewMiddleware',
     'oms_pds.django-crossdomainxhr-middleware.XsSharing',
+    'oms_pds.extract-user-middleware.ExtractUser',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
