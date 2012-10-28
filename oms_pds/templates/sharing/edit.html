@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+Editing
+      <form action="/sharing/update/" method="post">{% csrf_token %}
+	{{ form.as_p }}
+	<input type="submit" value="Submit" />
+      </form>
+      <div class="span1">
+      </div>
+{% endblock %}

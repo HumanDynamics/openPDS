@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+</html>
+<meta charset="utf-8">
+<head>
+<style>
+
+.line {
+  fill: none;
+  stroke: red;
+  stroke-width: 7px;
+}
+
+</style>
+  <!-- d3.js -->
+  <script src="http://mbostock.github.com/d3/d3.js?2.5.0"></script>
+
+  <!-- jQuery/jQuery Mobile -->
+  <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+</head>
+
+<body>
+
+  <div id="simplechart">
+  </div>
+
+<script>
+
+var data = [.2,0,-1];
+
+console.log("Data: ",data);
+
+var width = 960,
+    height = 500;
+
+var radius = d3.scale.linear()
+    .domain([-1, 1])
+    .range([height / 3, height / 2]);
+
+var angle = d3.scale.linear()
+    .domain([0, data.length])
+    .range([0, 2 * Math.PI]);
+
+var line = d3.svg.line.radial()
+    .interpolate("cardinal-closed")
+    .radius(radius)
+    .angle(function(d, i) { return angle(i); });
+
+
+
+
+var svg = d3.select("#simplechart").append("svg")
+    .datum(data)
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    capitalMeta = ["blah","Blah","blah"];
+     meta = ["blah","Blah","blah"];
+      unhealthyArray = ["bldfah","Blahdf","blsah"];
+
+var outerRadius = height / 2 - 10;
+
+
+  // create Axis
+  svg.selectAll(".axis")
+      .data(d3.range(angle.domain()[1]))
+    .enter().append("g")
+      .attr("class", "axis")
+      .attr("transform", function(d) { return "rotate(" + angle(d) * 180 / Math.PI + ")"; })
+    .call(d3.svg.axis()
+      .scale(radius.copy().range([-5, -outerRadius]))
+      .ticks(5)
+      .orient("left"))
+    .append("text")
+      .attr("y", 
+        function (d) {
+          if (window.innerWidth < 455){
+            return -(window.innerHeight * .335);
+          }
+          else{
+            return -(window.innerHeight * .335);
+          }
+        })
+      .attr("dy", ".71em")
+      .attr("text-anchor", "middle")
+      .text(function(d, i) { return capitalMeta[i]; })
+      .attr("style","font-size:16px;")
+      .style("fill", function(d,i) {
+        if ($.inArray(meta[i], unhealthyArray) != -1) {
+           return "red";
+       } else {
+           return "black";
+        }
+    });
+
+svg.append("path")
+    .attr("class", "line")
+    .style("stroke-width",7)
+    .attr("d", line);
+
+
+
+</script>
+</body>
+</html>

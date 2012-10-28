@@ -1,0 +1,168 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+  <meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,maximum-scale=1.0" >
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+  <title>Reality Analysis App</title> 
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+  <link rel="stylesheet" type="text/css" href="simpleDialog2/jquery.mobile.simpledialog.min.css" />
+  <link rel="stylesheet" type="text/css" href="./visualizationCSS.css" />  
+
+  <!-- Modernizer -->
+  <script type="text/javascript" src="./modernizr.custom.56582.js"></script>
+
+  <!-- jQuery/jQuery Mobile -->
+  <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+
+   <!-- simpleDiaglo2 -->
+  <script src="simpleDialog2/jquery.mobile.simpledialog2.min.js"></script>
+
+    <!-- d3.js -->
+  <script src="http://mbostock.github.com/d3/d3.js?2.5.0"></script>
+
+<!-- Page starts here -->
+<div data-role="page" data-theme="b" id="loginPage">
+  
+  <script>   
+
+   // Global declarations used for login
+    var username_l = null;
+    var password_l = null;
+    var loginForm_l = null;
+    var EMPTY = '';
+
+    // Used in Settings.html
+    var permission_l = null;
+
+    function showSimpleDialogue(alertHeader, alertMessage) {
+    
+    $('<div>').simpledialog2({
+                    mode: 'button',
+                    headerText: alertHeader,
+                    buttonPrompt: alertMessage,
+                    headerClose: false,
+                    buttons : {
+                      'OK': {
+                        click: function () { 
+                        }
+                      }
+                    }
+             });
+ }
+
+  </script>
+
+</head> 
+<body> 
+
+    <header data-role="header">
+     <h1>Reality Analysis HTML 5</h1>
+    </header>
+
+  <div data-role="content" id="contentMain" name="contentMain"> 
+
+  <form id="loginForm">
+  
+  <div id="usernameDiv" data-role="fieldcontain">
+    <label for="username">Username</label>   
+    <input id="username" name="username" type="text" />
+  </div>
+
+  <div id="passwordDiv" data-role="fieldcontain">
+    <label for="password">Password</label>   
+    <input id="password" name="password" type="password" />
+  </div>
+
+    <div id="signInDiv" data-role="fieldcontain">    
+     <input type="submit" value="Sign In" data-inline="true"/>
+    </div>
+    </form>
+  </div><!-- contentMain -->
+  
+  <script>
+   
+    $(document).ready(function() {
+    
+    // Assign global variables
+      username_l = $('#username');
+      password_l = $('#password');
+      loginForm_l = $('#loginForm');
+    }); 
+    
+    $('#loginForm').submit(function() {
+
+      if (window.navigator.onLine != false) {
+        var emtpyError = false;
+      username_l = $('#username');
+      password_l = $('#password');
+
+
+       if ((username_l != undefined) && (password_l != undefined))  {
+
+        if ((username_l.val() == EMPTY) || (password_l.val() == EMPTY)){
+
+        	emtpyError = true;
+          }
+        }
+        else {
+          emptyError = true;
+        }
+
+        // If validation fails, show error message
+        if(emtpyError == true){  
+         // missing username or password
+          showSimpleDialogue('Whoops!', 'Please enter a valid username and password.');
+
+          return false;
+        }        
+/*
+        // Submit the form
+        $.getJSON("http://dcaps.staging.mit.edu/login.php?username=" + username_l.val() + "&password=" + passwordVar.val(), loginForm_l.serialize(), function(data){
+
+          console.log(data);
+
+         	 if (data != null){
+                 
+                 if (Modernizr.sessionstorage) {
+                      // browser supports local storage
+                          sessionStorage.token = data.token;
+                  }
+                  else {
+                      $.cookie("token",data.token);
+                  }
+         		     
+                $.mobile.changePage( "settings.html", { transition: "slide"} );
+    		 }  
+    		 else{
+    		 	// show error message
+          // wrong username or password
+          password_l = '';
+          $('#password').val('');
+          showSimpleDialogue('Whoops!','Invalid username or password.');
+        
+          return false;
+         }
+        })
+*/
+        $.mobile.changePage("settings.html", {transition: "slide"});
+        return false;
+      }
+        else {
+
+          showSimpleDialogue('No Internet!','Please check your internet currention for connectivity.');
+        return false;
+        }      
+    });   
+
+    
+  </script>
+</div> <!-- loginPage -->
+
+
+<!-- Page ends here -->
+</body>
+</html>

@@ -9,6 +9,7 @@ from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.validation import Validation
 from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
+from oms_pds.pds.models import Purpose
 
 class FunfResource(MongoDBResource):
 

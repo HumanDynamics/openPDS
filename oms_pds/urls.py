@@ -3,7 +3,6 @@ from django.conf import settings
 from django.conf.urls.defaults import *
 from tastypie.api import Api
 from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource, PurposeResource, RealityAnalysisResource, SocialHealthResource
-print "urls.py"
 
 v1_api = Api(api_name='personal_data')
 v1_api.register(FunfResource())
@@ -20,8 +19,14 @@ v1_api.register(RealityAnalysisResource())
 # from django.contrib import admin
 # admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = patterns('oms_pds.views',
+    (r'^home/', 'home'),
     (r'^api/', include(v1_api.urls)),
+    (r'^purpose/', 'purpose'), 
+    (r'^trust/', include('oms_pds.trust.urls')),
+    (r'^sharing/', include('oms_pds.sharing.urls')),
+    (r'^pdssettings/', 'permissions'), 
+    (r'^trustsettings/', 'permissions'), 
     (r'^admin/roles', 'django.views.generic.simple.direct_to_template', { 'template' : 'roles.html' }),
     (r'^admin/viz', 'django.views.generic.simple.direct_to_template', { 'template' : 'reality_analysis/reality_analysis/visualization.html' }),
     # Examples:

@@ -1,0 +1,118 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+  <meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,maximum-scale=1.0" >
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+  <title>Reality Analysis App</title> 
+
+  <link rel="stylesheet" type="text/css" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+  <link rel="stylesheet" type="text/css" href="simpleDialog2/jquery.mobile.simpledialog.min.css" /> 
+    <link rel="stylesheet" type="text/css" href="/static/css/visualizationCSS.css" /> 
+
+  <!-- Modernizer -->
+  <script type="text/javascript" src="/static/css/modernizr.custom.56582.js"></script>
+
+  <!-- jQuery/jQuery Mobile -->
+  <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+
+   <!-- simpleDiaglo2 -->
+  <script src="simpleDialog2/jquery.mobile.simpledialog2.min.js"></script>
+
+  <!-- d3.js -->
+  <script src="http://mbostock.github.com/d3/d3.js?2.5.0"></script>
+  
+  <script>   
+
+  </script>
+
+</head>
+
+<body> 
+
+  <!-- Page starts here -->
+    <div data-role="page" data-theme="b" id="visualizationPage" data-add-back-btn="true">
+
+<style>
+  #radial_chart {
+    margin-top:5px;
+  }
+</style>
+
+    <header data-role="header">
+     <h1>Reality Analysis HTML 5</h1>
+    </header>
+
+      <div data-role="navbar" id="navbar">
+      <ul>
+        <li><a href="settings.html" rel="external" data-icon="" data-transition="fade">Settings</a></li>
+        <li><a href="" data-icon="" data-transition="fade" class="ui-btn-active ui-state-persist">Social Health</a></li>
+        <li><a href="map.html" rel="external" data-icon="" data-transition="fade">Social Map</a></li>
+      </ul>
+    </div>
+
+
+  <div data-role="content" id="visualizationContent" name="visualizationContent"> 
+       
+        <div id="radial_chart">
+           <script type="text/javascript" src="/static/js/radialScriptRealityAnalysis.js"></script>
+        </div>
+
+          <div id="visSelectionMenu">
+           </div>
+  </div>
+
+<script>
+
+ $(document).bind('mobileinit',function(){
+        $.mobile.selectmenu.prototype.options.nativeMenu = false;
+  });
+
+$('#visMenu').live('change', function(e) {
+     
+     var appendString;
+    if (e.target.options[e.target.selectedIndex].text === 'Social Triangle')
+        appendString = '<script type="text/javascript" src="/static/js/radialScriptRealityAnalysis.js"><script>';
+    else
+        appendString = '<script type="text/javascript" src="/static/js/radialScriptSimple.js"><script>';
+
+    $('#radial_chart').empty();
+    $('#radial_chart').append(appendString);
+    $('#radial_chart').trigger('create');
+});
+
+$('#visualizationPage').bind('pagebeforeshow', function(){
+  appendSelectMenu();
+});
+
+$("#radial_chart").click(function(event){
+    // do your action 
+    $.mobile.changePage("boxPlot.html", {transition : "slideup"});
+});
+
+function removeSelectMenu(){
+  $('#visSelectionMenu').remove();
+}
+
+function appendSelectMenu(){
+            $('#visSelectionMenu').empty();
+
+            $('#visSelectionMenu').append('<div data-role="fieldcontain"><label for="visMenu" class="select">Select Visualization:</label><select name="visMenu" id="visMenu" data-native-menu="false" class="visualizationMenu">');
+
+              var visualizationList = ['Social Triangle','Individual Triangle'];
+
+              for (var i = 0; i < visualizationList.length; i++) {
+                $('#visMenu').append('<option value=\'' + visualizationList[i] + '\'>' + visualizationList[i] + '</option>');
+              }
+
+              $('#visMenu').selectmenu();
+               $("#visMenu").selectmenu('refresh', true);
+}
+
+</script>
+</div> <!-- visualizationPage -->
+
+<!-- Page ends here -->
+</body>
+</html>

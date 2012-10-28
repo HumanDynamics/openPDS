@@ -1,0 +1,69 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+  <meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,maximum-scale=1.0" >
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+  <title>Reality Analysis App</title> 
+
+  <link rel="stylesheet" type="text/css" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+  <link rel="stylesheet" type="text/css" href="simpleDialog2/jquery.mobile.simpledialog.min.css" /> 
+    <link rel="stylesheet" type="text/css" href="./visualizationCSS.css" /> 
+
+  <!-- Modernizer -->
+  <script type="text/javascript" src="./modernizr.custom.56582.js"></script>
+
+  <!-- jQuery/jQuery Mobile -->
+  <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+
+   <!-- simpleDiaglo2 -->
+  <script src="simpleDialog2/jquery.mobile.simpledialog2.min.js"></script>
+
+  <!-- d3.js -->
+  <script src="http://mbostock.github.com/d3/d3.js?2.5.0"></script>
+  
+  <script>   
+
+  </script>
+
+</head>
+
+<body> 
+
+  <!-- Page starts here -->
+    <div data-role="page" data-theme="b" id="boxPlotPage" data-add-back-btn="true">
+
+<script>
+</script>
+
+  <header data-role="header">
+    <h1>More Info</h1>
+  </header>
+
+  <div data-role="content" id="visualizationContent" name="visualizationContent"> 
+       
+        <div id="boxChart">
+           <script type="text/javascript" src="./box.js"></script>
+        </div>
+
+          <div id="visSelectionMenu">
+           </div>
+  </div><!-- contentSettings -->
+
+
+<script>
+
+$('#visualizationPage').bind('pagebeforeshow', function(){
+
+  console.log("pagebeforeshow");
+});
+
+
+
+</script>
+</div> <!-- visualizationPage -->
+
+<!-- Page ends here -->
+</body>
+</html>

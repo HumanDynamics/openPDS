@@ -1,0 +1,16 @@
+.axis line {
+  stroke: #222;
+}
+
+.axis path {
+  fill: none;
+  stroke: #222;
+}
+
+.axis + .axis g text {
+  display: none;
+}
+
+#clearfooter {
+  height: 200px;
+}

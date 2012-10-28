@@ -1,0 +1,126 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+  <meta name="viewport" content="height=device-height,width=device-width,initial-scale=1.0,maximum-scale=1.0" >
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+
+  <title>Settings</title> 
+
+  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+  <link rel="stylesheet" type="text/css" href="simpleDialog2/jquery.mobile.simpledialog.min.css" /> 
+  <link rel="stylesheet" type="text/css" href="./visualizationCSS.css" /> 
+
+  <!-- Modernizer -->
+  <script type="text/javascript" src="./modernizr.custom.56582.js"></script>
+
+  <!-- jQuery/jQuery Mobile -->
+  <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+
+   <!-- simpleDiaglo2 -->
+  <script src="simpleDialog2/jquery.mobile.simpledialog2.min.js"></script>
+
+    <!-- d3.js -->
+  <script src="http://mbostock.github.com/d3/d3.js?2.5.0"></script>
+  
+  <script>   
+
+   // Global declarations - assignments made in $(document).ready() below
+   var permission_l = null;
+
+    function showSimpleDialogue(alertHeader, alertMessage) {
+    
+    $('<div>').simpledialog2({
+                    mode: 'button',
+                    headerText: alertHeader,
+                    buttonPrompt: alertMessage,
+                    headerClose: false,
+                    buttons : {
+                      'OK': {
+                        click: function () { 
+                        }
+                      }
+                    }
+             })
+ }
+
+  </script>
+
+</head>
+
+<body> 
+
+  <!-- Page starts here -->
+    <div data-role="page" data-theme="b" id="settingsPage" data-add-back-btn="true">
+
+    <header data-role="header">
+     <h1>Reality Analysis HTML 5</h1>
+    </header>
+
+      <div data-role="navbar" id="navbar">
+      <ul>
+        <li><a href="" data-icon="" data-transition="fade" class="ui-btn-active ui-state-persist">Settings</a></li>
+        <li><a href="visualization.html" rel="external" data-icon="" data-transition="fade">Social Health</a></li>
+        <li><a href="map.html" rel="external" data-icon="" data-transition="fade">Social Map</a></li>
+      </ul>
+    </div>
+
+
+  <div data-role="content" id="contentSettings" name="contentSettings"> 
+
+
+  
+    <div data-role="fieldcontain">
+        <fieldset data-role="controlgroup" data-type="horizontal">
+          <legend>Permission</legend>
+          <legend>Choose a pet:</legend>
+              <input type="radio" name="permission" id="Off" value="Off" checked="checked" />
+              <label for="Off">Off</label>
+
+              <input type="radio" name="permission" id="Gold" value="Gold"  />
+              <label for="Gold">Gold</label>
+
+              <input type="radio" name="permission" id="Silver" value="Silver"  />
+              <label for="Silver">Silver</label>
+
+              <input type="radio" name="permission" id="Bronze" value="Bronze"  />
+              <label for="Bronze">Bronze</label>
+        </fieldset>
+    </div>
+
+    <div id="permissionExplanation">
+      <p> permission dialogue that explains each permission option. </p>
+    </div>
+
+    <div data-role="fieldcontain">
+    <fieldset data-role="controlgroup" data-type="horizontal">
+     <legend>Sensors:</legend>
+     <input type="checkbox" name="Sensors" id="Activity" class="custom" checked="true" />
+     <label for="Activity">Activity</label>
+     <input type="checkbox" name="Sensors" id="Focus" class="custom" checked="true" />
+     <label for="Focus">Focus</label>
+     <input type="checkbox" name="Sensors" id="Social" class="custom" checked="true" />
+     <label for="Social">Social</label>
+    </fieldset>
+    </div>
+
+      <div data-role="fieldcontain">
+      <fieldset data-role="controlgroup" data-type="horizontal">
+       <legend>Set Sharing:</legend>
+       <input type="checkbox" name="Sharing" id="Sister" class="custom" checked="true"/>
+      <label for="Sister">Sister</label>
+      <input type="checkbox" name="Sharing" id="Family" class="custom" checked="true" />
+      <label for="Family">Family</label>
+      <input type="checkbox" name="Sharing" id="Everyone" class="custom" checked="true" />
+      <label for="Everyone">Everyone</label>
+    </fieldset>
+    </div>
+
+    
+  </div><!-- contentSettings -->
+</div> <!-- settingsPage -->
+
+
+<!-- Page ends here -->
+</body>
+</html>

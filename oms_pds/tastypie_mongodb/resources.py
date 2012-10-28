@@ -7,6 +7,7 @@ from django.conf import settings
 
 from tastypie.bundle import Bundle
 from tastypie.resources import Resource
+#from mongoengine import Document
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 
@@ -19,7 +20,7 @@ db = Connection(
 
 
 class Document(dict):
-    # dictionary-like object for mongodb documents.
+#    # dictionary-like object for mongodb documents.
     __getattr__ = dict.get
 
 class MongoDBResource(Resource):

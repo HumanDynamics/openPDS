@@ -1,0 +1,382 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+
+  <title>Settings</title> 
+
+  <link rel="stylesheet" type="text/css" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+  <link rel="stylesheet" type="text/css" href="simpleDialog2/jquery.mobile.simpledialog.min.css" /> 
+    <link rel="stylesheet" type="text/css" href="./visualizationCSS.css" /> 
+
+  <!-- Modernizer -->
+  <script type="text/javascript" src="./modernizr.custom.56582.js"></script>
+
+  <!-- jQuery/jQuery Mobile -->
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&libraries=drawing"></script>
+  <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+  <script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+
+   <!-- simpleDiaglog2 -->
+  <script src="simpleDialog2/jquery.mobile.simpledialog2.min.js"></script>  
+
+
+  <style>
+      body, html {
+        margin:0;
+        padding:0;
+        font-family:Arial;
+      }
+      h1 {
+        margin-bottom:10px;
+      }
+      #savePlaceButton {
+        width:60%;
+        margin-left:65px;
+        margin-top:25px;
+      }
+      #main {
+        position:relative;
+        width:100%;
+        height:100%;
+        padding:0px;
+        margin:auto;
+      }
+      #heatmapArea {
+        position:relative;
+        margin-left:20px;
+        width:80%;
+        height:500px;
+        border:1px dashed black;
+      }
+      #configArea {
+        position:relative;
+        float:left;
+        width:200px;
+        padding:15px;
+        padding-top:0;
+        padding-right:0;
+      }
+      .btn {
+        margin-top:25px;
+        padding:10px 20px 10px 20px;
+        -moz-border-radius:15px;
+        -o-border-radius:15px;
+        -webkit-border-radius:15px;
+        border-radius:15px;
+        border:2px solid black;
+        cursor:pointer;
+        color:white;
+        background-color:black;
+      }
+      #gen:hover{
+        background-color:grey;
+        color:black;
+      }
+      textarea{
+        width:260px;
+        padding:10px;
+        height:200px;
+      }
+      h2{
+        margin-top:0;
+      }
+    </style>
+
+</head>
+
+<body> 
+
+  <!-- Page starts here -->
+    <div data-role="page" data-theme="b" id="mapPage" data-add-back-btn="true">
+
+     <header data-role="header">
+       <h1>Map</h1>
+    </header>
+
+      <div data-role="navbar" id="navbar">
+      <ul>
+        <li><a href="settings.html" rel="external" data-icon="" data-transition="fade">Settings</a></li>
+        <li><a href="visualization.html" rel="external" data-icon="" data-transition="fade">Social Health</a></li>
+        <li><a href="" data-icon="" data-transition="fade" class="ui-btn-active ui-state-persist">Social Map</a></li>
+      </ul>
+    </div>
+
+  <div id="main">
+
+<a href="" id="savePlaceButton" data-role="button" data-icon="check">Save Place</a>
+      <div id="heatmapArea">
+      
+      </div>
+  </div>
+
+  </div><!-- contentSettings -->
+
+<script type="text/javascript" src="heatmap.js"></script>
+<script type="text/javascript" src="heatmap-gmaps.js"></script>
+<script type="text/javascript">
+
+$(document).bind('pageinit',function(){
+  console.log("Ready");
+});
+
+  setInterval("checkMyLocation()",10000);
+
+var map;
+var heatmap; 
+var shape;
+
+window.onload = function(){
+
+  var myLatlng = new google.maps.LatLng(42.366520, -71.077135);
+  // sorry - this demo is a beta
+  // there is lots of work todo
+  // but I don't have enough time for eg redrawing on dragrelease right now
+  var myOptions = {
+    zoom: 9,
+    center: myLatlng,
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    disableDefaultUI: false,
+    scrollwheel: true,
+    draggable: true,
+    navigationControl: true,
+    mapTypeControl: false,
+    scaleControl: true,
+    disableDoubleClickZoom: false
+  };
+  map = new google.maps.Map(document.getElementById("heatmapArea"), myOptions);
+heatmap = new HeatmapOverlay(map, {"radius":15, "visible":true, "opacity":60});
+  
+        var drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.MARKER,
+                drawingControl: true,
+                drawingControlOptions: {
+                  position: google.maps.ControlPosition.TOP_CENTER,
+                  drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+                },
+                markerOptions: {
+                  icon: new google.maps.MarkerImage('http://www.example.com/icon.png')
+                },
+                circleOptions: {
+                  fillColor: '#ffff00',
+                  fillOpacity: .3,
+                  strokeWeight: 5,
+                  clickable: false,
+                  zIndex: 1,
+                  editable: true
+                },
+                polygonOptions: {
+                  fillColor: '#ffff00',
+                  fillOpacity: .3,
+                  strokeWeight: 5,
+                  clickable: true,
+                  zIndex: 1,
+                  editable: true,
+                  draggable: true
+                }
+              });
+              drawingManager.setMap(map);
+        
+        google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
+          if(shape != undefined){shape.setMap(null);}
+          if (event.type == google.maps.drawing.OverlayType.CIRCLE) {
+            shape = event.overlay;
+          }
+          if (event.type == google.maps.drawing.OverlayType.POLYGON) {
+            shape = event.overlay;
+          }
+        });
+
+        google.maps.event.addListener(map, 'click', function(event) {
+                if(shape != undefined){shape.setMap(null);}
+                var latLng = event.latLng;
+                lat = latLng.lat()-1;
+                lng = latLng.lng();
+                  var paths = [latLng];
+                
+                shape = new google.maps.Polygon({
+                  paths: paths,
+                  strokeColor: '#ff0000',
+                  strokeOpacity: 0.8,
+                  strokeWeight: 2,
+                  fillColor: '#ff0000',
+                  fillOpacity: 0.35,
+                  draggable: true,
+                  editable: true,
+                  map: map
+                });
+                shape.enableDrawing();
+                google.maps.event.addListener(shape, 'click', function() {
+                 this.setMap(null);
+                });
+                
+  
+        });
+
+  
+  var testData={
+        max: 5,
+        data: [{lat:  42.366520, lng:-71.077135, count: 5}]
+      };
+
+  $.getJSON('http://192.168.110.142:8005/api/personal_data/funf/?format=json&token=kckvldsj', function(data) {
+    console.log("data: ",data);
+    for(i = 0; i < data.data.result.length;i++)
+    {
+      console.log(data)
+      console.log(data.data.result[i].LOCATION)
+      testData.data[i] = {lat: data.data.result[i].LOCATION.mLatitude, lng: data.data.result[i].LOCATION.mLongitude, count: 1};
+    }
+        });
+    
+  
+  // this is important, because if you set the data set too early, the latlng/pixel projection doesn't work
+   
+   google.maps.event.addListenerOnce(map, "idle", function(){
+    heatmap.setDataSet(testData);
+   });
+  
+    };
+
+
+function setHeader(xhr) {
+
+  xhr.setRequestHeader('Authorization', 'token');
+}
+$('#savePlaceButton').click( function() { alert('saving...');savePlace(); } );
+function savePlace() {
+  var verticies = '{"coordinates":[';
+  var numPaths = shape.getPaths().getLength();
+  for(var p = 0; p < numPaths; p++) {
+    var path = shape.getPaths().getAt(p);
+    var numPoints = path.getLength();
+    var j = numPoints-1;
+    
+    for(var i=0; i < numPoints-1; i++) {
+      var vertex1 = path.getAt(i);
+      verticies+='{"lat": '+vertex1.lat()+', "lng":'+vertex1.lng()+'},';
+		  }
+		  var vertex1 = path.getAt(numPoints-1);
+		  
+		  verticies +='{"lat": '+vertex1.lat()+', "lng":'+vertex1.lng()+'}]}';
+  }
+
+           $.ajax({
+                url: "http://ec2-184-73-32-179.compute-1.amazonaws.com/api/reality_analysis_service/get_reality_analysis_data?bearer_token=6bceb96de2&document_key=map_place",
+                accept: "application/json",
+                type: "POST",
+                data: verticies,
+                success: function(data, status) {
+		    var loc = android.getLocation();
+		    var loc_json = jQuery.parseJSON(loc);
+		    android.notify(loc_json.lon, "lo"); 
+                return console.log("The returned data", data);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    x = jqXHR;
+                    alert(x);
+                },
+                dataType: "json",
+                
+            });
+
+
+};
+var polyCoords = [
+    new google.maps.LatLng(0,2),
+    new google.maps.LatLng(0,0),
+    new google.maps.LatLng(2,0),
+    new google.maps.LatLng(2,2),  
+];
+
+function checkMyLocation(){
+  console.log("hello");
+}
+
+
+var polygon = new google.maps.Polygon({
+  paths: polyCoords,  strokeColor: "#FF0000",
+  strokeOpacity: 0.8,  strokeWeight: 2,
+  fillColor: "#FF0000",  fillOpacity: 0.2
+});
+
+
+
+
+
+
+
+if (!google.maps.Polygon.prototype.getBounds) {
+  google.maps.Polygon.prototype.getBounds = function(latLng) {
+    var bounds = new google.maps.LatLngBounds();
+    var paths = this.getPaths();
+    var path;
+    for (var p = 0; p < paths.getLength(); p++) {
+      path = paths.getAt(p);
+      for (var i = 0; i < path.getLength(); i++) {
+        bounds.extend(path.getAt(i));
+      }
+    }
+    return bounds;
+  }
+}
+
+
+    // Polygon containsLatLng - method to determine if a latLng is within a polygon
+    google.maps.Polygon.prototype.containsLatLng = function(latLng) {
+      // Exclude points outside of bounds as there is no way they are in the poly
+      var bounds = this.getBounds();
+
+      if(bounds != null && !bounds.contains(latLng)) {
+        return false;
+      }
+
+      // Raycast point in polygon method
+      var inPoly = false;
+
+      var numPaths = this.getPaths().getLength();
+      for(var p = 0; p < numPaths; p++) {
+        var path = this.getPaths().getAt(p);
+        var numPoints = path.getLength();
+        var j = numPoints-1;
+
+        for(var i=0; i < numPoints; i++) { 
+          var vertex1 = path.getAt(i);
+          var vertex2 = path.getAt(j);
+
+          if (vertex1.lng() < latLng.lng() && vertex2.lng() >= latLng.lng() || vertex2.lng() < latLng.lng() && vertex1.lng() >= latLng.lng())  {
+            if (vertex1.lat() + (latLng.lng() - vertex1.lng()) / (vertex2.lng() - vertex1.lng()) * (vertex2.lat() - vertex1.lat()) < latLng.lat()) {
+              inPoly = !inPoly;
+            }
+          }
+
+          j = i;
+        }
+      }
+
+      return inPoly;
+    }
+
+
+setInterval(function(){GetLocation();},10000);
+var notified = false;
+function GetLocation() {
+//    alert("Your coordinates are:" + location.coords.latitude + ", " + location.coords.longitude);
+
+    var loc = android.getLocation();
+    var loc_json = jQuery.parseJSON(loc);
+    var latlng = new google.maps.LatLng(loc_json.lat, loc_json.lon);
+
+//    alert(shape.containsLatLng(latlng));
+    if(!notified){
+	    if(shape.containsLatLng(latlng))
+		{
+			android.notify('Welcome to Media Lab', 'http://media.mit.edu');
+			notified = true;
+		}
+	}
+}
+</script>
+<!-- Page ends here -->
+</body>
+</html>
