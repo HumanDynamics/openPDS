@@ -1,25 +1,27 @@
 from django.conf import settings
-from mongoengine import *
-
-connect(settings.MONGODB_DATABASE)
+from django.db import models
 
 
-class Purpose(Document):
-    name = StringField(max_length=120, required=True)
+
+class Purpose(models.Model):
+    name = models.CharField(max_length=120)
 #    author = ReferenceField(User)
 
-class Scope(Document):
-    name = StringField(max_length=120, required=True)
-    purpose = ReferenceField(Purpose)
+class Scope(models.Model):
+    name = models.CharField(max_length=120)
+    purpose = models.ManyToManyField(Purpose)
+    issharing = models.BooleanField(default=False)
 
-class Role(Document):
+class Role(models.Model):
     """ @name : The user defined name of the role
         @purpose : A list of purposes associated with this role
         @tokens : A list of oauth tokens of users assigned to this role """
-    name = StringField(max_length=120, required=True)
-    purpose = ReferenceField(Purpose)
+    name = models.CharField(max_length=120)
+    purpose = models.ManyToManyField(Purpose)
+    issharing = models.BooleanField(default=False)
 
-class SharingLevel(Document):
-    level = IntField(required=True)
-    purpose = ReferenceField(Purpose)
+class SharingLevel(models.Model):
+    level = models.IntegerField()
+    purpose = models.ManyToManyField(Purpose)
+    isselected = models.BooleanField(default=False)
 

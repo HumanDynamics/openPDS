@@ -7,7 +7,7 @@ TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='192.168.110.156:8000'
+SERVER_OMS_REGISTRY='192.168.110.203:8001'
 USE_MULTIPDS = True
 
 
@@ -124,6 +124,9 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'oms_pds.pds',
+    'oms_pds.sharing',
+    'oms_pds.trust',
+    'tastytools',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:

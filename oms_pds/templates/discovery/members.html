@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+	{% for p in profiles %}
+	<h2>User: {{ p.user }}  </h2><!--<div>Location:<a>{{p.location }}</a>  </div>-->
+	<div>
+		<div data-role="fieldcontain">
+		  <fieldset data-role="controlgroup" data-type="horizontal">
+		{% for r in roles %}
+		      <input type="checkbox" name="Sharing" id="{{ r.name }}" class="custom" checked="true"/>
+		      <label for="{{ r.name }}">{{ r.name }}</label>
+		{% endfor %}
+		  </fieldset>
+		</div>
+		
+	</div>
+	</br>
+	{% endfor %}
+{% endblock %}

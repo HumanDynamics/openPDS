@@ -1,17 +1,24 @@
 from django.conf import settings
-from mongoengine import *
-from oms_pds.pds.api import FunfResource
-from oms_pds.trust.models import Role
-
-connect(settings.MONGODB_DATABASE)
+from django.db import models
+from oms_pds.trust.models import Role, SharingLevel
 
 
-class Tokens(Document):
-    token_id = StringField(max_length=120, required=True)
-    role = ReferenceField(Role)  
+class Tokens(models.Model):
+    token_id = models.CharField(max_length=120)
+    role = models.ManyToManyField(Role)  
 
-class OverallSharingLevel(Document):
-    level = IntField(required=True)
+class OverallSharingLevel(models.Model):
+    level = models.IntegerField(default=0)
+
+class ProbeGroupSetting(models.Model):
+    name = models.CharField(max_length=120)
+    issharing = models.BooleanField(default=False)
+#    probes = ListField(ReferenceField(FunfResource))
+
+#class Sharing(models.Model):
+#    overallsharinglevel = models.ForeignKey(SharingLevel)
+#    roles = models.ManyToManyField(Role) #a list of roles the user is currently sharing with
+#    probes = models.ManyToManyField(ProbeGroupSetting)#a list of probes the user is currently sharing 
 
 #class Space(Document):
 #    """ @name : The user defined name of the role
@@ -23,8 +30,4 @@ class OverallSharingLevel(Document):
 #class Time(Document):
 #    level = IntField(required=True)
 #    purpose = ReferenceField(Purpose)
-
-class ProbeGroupSettings(Document):
-    name = StringField(max_length=120, required=True)
-#    probes = ListField(ReferenceField(FunfResource))
 

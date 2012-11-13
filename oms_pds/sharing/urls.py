@@ -8,5 +8,6 @@ from django.conf.urls.defaults import *
 # admin.autodiscover()
 
 urlpatterns = patterns('oms_pds.sharing.views',
-    (r'^edit/', 'update'),
+    (r'^edit/', 'edit'),
+    (r'^update/', 'update'),
 )

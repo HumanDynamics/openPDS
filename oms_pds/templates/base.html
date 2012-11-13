@@ -9,11 +9,12 @@
         {% endblock %}
         </title>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-        <script src="{{ STATIC_URL }}js/underscore-min.js"></script>
-        <script src="{{ STATIC_URL }}js/backbone-min.js"></script>
-	<script src="{{ STATIC_URL }}js/backbone-tastypie.js"></script> 
-	<script src="{{ STATIC_URL }}js/ICanHaz.min.js"></script>
-	<script src="{{ STATIC_URL }}js/admin.js"></script>	
+
+	<!-- jQuery/jQuery Mobile -->
+	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.js"></script>
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+
 
 	{% block scripts %}
 	{% endblock %}
@@ -26,6 +27,7 @@
 	<meta name="author" content="">
 	<!-- Le styles -->
 	<link href="/static/css/bootstrap.css" rel="stylesheet">
+	<link href="/static/css/style.css" rel="stylesheet">
 	<style>
 	      body { padding-top: 60px; /* 60px to make the container go all the way
 	      to the bottom of the topbar */ }
@@ -60,16 +62,6 @@
               </a>
             </li>
             <li>
-              <a href="#">
-                About
-              </a>
-            </li>
-            <li>
-              <a href="#">
-                Contact
-              </a>
-            </li>
-            <li>
               <a href="/trust/add/">
                 Trust Settings
               </a>
@@ -77,6 +69,16 @@
             <li>
               <a href="/sharing/edit/">
                 Sharing Settings
+              </a>
+            </li>
+            <li>
+              <a href="/discovery/members/">
+                Trust Network
+              </a>
+            </li>
+            <li>
+              <a href="/home/">
+                Apps
               </a>
             </li>
           </ul>

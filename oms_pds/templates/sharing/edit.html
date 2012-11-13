@@ -1,10 +1,66 @@
 {% extends "base.html" %}
 {% block content %}
-Editing
-      <form action="/sharing/update/" method="post">{% csrf_token %}
+      <form action="/sharing/edit/" method="post">{% csrf_token %}
 	{{ form.as_p }}
-	<input type="submit" value="Submit" />
+	<input id="sharingsubmit" type="submit" value="Submit" />
       </form>
-      <div class="span1">
-      </div>
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+	{% for probe in probes %}
+	    {% if probe.issharing %}
+		console.log("{{ probe.name }}:{{ probe.issharing }}");
+		$('[id^=id_probes][value={{ probe.name }}]').attr('checked','checked');
+		$('[id^=id_probes][value={{ probe.name }}]').checkboxradio('refresh');
+	    {% endif %}
+	{% endfor %}
+	{% for role in roles %}
+	    {% if role.issharing %}
+		$('[id^=id_roles][value={{ role.name }}]').attr('checked','checked');
+		$('[id^=id_roles][value={{ role.name }}]').checkboxradio('refresh');
+	    {% endif %}
+	{% endfor %}
+	{% for sharinglevel in sharinglevels %}
+	    {% if sharinglevel.isselected %}
+		$('[id^=id_sharinglevel][value={{ sharinglevel.level }}]').attr('checked','checked');
+		$('[id^=id_sharinglevel][value={{ sharinglevel.level }}]').checkboxradio('refresh');
+	    {% endif %}
+	{% endfor %}
+});
+
+$('#sharingsubmit').parent().click(function() {
+	var data = []
+	$('input').each(function(index){
+	data.push({name:this.name, value:this.value, selected:this.checked});
+	});
+
+	$.ajax({
+	        url: "/sharing/edit/",
+	        type: "post",
+	        data: JSON.stringify(data),
+	        // callback handler that will be called on success
+	        success: function(response, textStatus, jqXHR){
+	            // log a message to the console
+	            console.log("Hooray, it worked!");
+	        },
+	        // callback handler that will be called on error
+	        error: function(jqXHR, textStatus, errorThrown){
+	            // log the error to the console
+	            console.log(
+	                "The following error occured: "+
+	                textStatus, errorThrown
+	            );
+	        },
+	        // callback handler that will be called on completion
+	        // which means, either on success or error
+	        complete: function(){
+	            // enable the inputs
+	            //$inputs.removeAttr("disabled");
+	        }
+	    });
+});
+
+</script>
 {% endblock %}
+

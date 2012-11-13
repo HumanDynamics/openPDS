@@ -1,5 +1,5 @@
 from django import forms
-from oms_pds.pds.models import Scope, Role, SharingLevel
+from oms_pds.trust.models import Scope, Role, SharingLevel
 from django.forms.widgets import RadioSelect, CheckboxSelectMultiple
 
 

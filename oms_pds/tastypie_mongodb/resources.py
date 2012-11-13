@@ -7,32 +7,29 @@ from django.conf import settings
 
 from tastypie.bundle import Bundle
 from tastypie.resources import Resource
-#from mongoengine import Document
-
-"""the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
+import pdb
 
 
 db = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
     port=getattr(settings, "MONGODB_PORT", None)
-)
-#[settings.MONGODB_DATABASE]
+)[settings.MONGODB_DATABASE]
 
 
 class Document(dict):
-#    # dictionary-like object for mongodb documents.
+    # dictionary-like object for mongodb documents.
     __getattr__ = dict.get
 
 class MongoDBResource(Resource):
-    
-
+    """
+    A base resource that allows to make CRUD operations for mongodb.
+    """
     def get_collection(self):
         """
         Encapsulates collection name.
         """
         try:
-	    print settings.MONGODB_DATABASE_MULTIPDS
-            return db[settings.MONGODB_DATABASE_MULTIPDS][self._meta.collection]
+            return db[self._meta.collection]
         except AttributeError:
             raise ImproperlyConfigured("Define a collection in your resource.")
 
@@ -50,17 +47,20 @@ class MongoDBResource(Resource):
             "_id": ObjectId(kwargs.get("pk"))
         }))
 
-    def obj_create(self, bundle, **kwargs):
+    def obj_create(self, bundle, request = None, **kwargs):
         """
         Creates mongodb document from POST data.
         """
-        self.get_collection().insert(bundle.data)
+        object_id = self.get_collection().insert(bundle.data)
+        bundle.obj = self.obj_get(request, pk=object_id)
+        
         return bundle
 
     def obj_update(self, bundle, request=None, **kwargs):
         """
         Updates mongodb document.
         """
+        pdb.set_trace()
         self.get_collection().update({
             "_id": ObjectId(kwargs.get("pk"))
         }, {
@@ -90,5 +90,6 @@ class MongoDBResource(Resource):
             pk = item._id
         return reverse("api_dispatch_detail", kwargs={
             "resource_name": self._meta.resource_name,
+            "api_name": self._meta.api_name,
             "pk": pk
         })
