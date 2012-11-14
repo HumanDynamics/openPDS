@@ -126,7 +126,6 @@ INSTALLED_APPS = (
     'oms_pds.pds',
     'oms_pds.sharing',
     'oms_pds.trust',
-    'tastytools',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
