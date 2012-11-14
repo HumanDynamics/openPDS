@@ -2,7 +2,6 @@
 # XXX need to confirm that the Registry and Resource Servers have the same dependencies?
 django
 django-tastypie==0.9.11
-django-tastytools
 mongoengine
 pymongo
 requests
