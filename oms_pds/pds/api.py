@@ -38,19 +38,33 @@ class FunfConfigResource(MongoDBResource):
         object_class = Document
         collection = "funfconfig" # collection name
 
-class AnswersResource(MongoDBResource):
+class AnswerResource(MongoDBResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
 #    data = fields.ToManyField('oms_pds.pds.api.resources.SocialHealthResource', 'socialhealth_set', related_name='realityanalysis')
     data = fields.DictField(attribute="data", help_text='A json blob of answer data.', null=True, )
 
     class Meta:
-        resource_name = "answers"
+        resource_name = "answer"
         list_allowed_methods = ["delete", "get", "post"]
 	help_text='resource help text...'
         authorization = Authorization()
         object_class = Document
-        collection = "answers" # collection name
+        collection = "answer" # collection name
+
+class AnswerListResource(MongoDBResource):
+    id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
+    key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
+#    data = fields.ToManyField('oms_pds.pds.api.resources.SocialHealthResource', 'socialhealth_set', related_name='realityanalysis')
+    data = fields.ListField(attribute="data", help_text='A list json blob of answer data.', null=True, )
+
+    class Meta:
+        resource_name = "answerlist"
+        list_allowed_methods = ["delete", "get", "post"]
+	help_text='resource help text...'
+        authorization = Authorization()
+        object_class = Document
+        collection = "answerlist" # collection name
 
 class SharingLevelResource(ModelResource):
     
