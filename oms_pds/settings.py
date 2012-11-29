@@ -8,6 +8,8 @@ MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
 SERVER_OMS_REGISTRY='192.168.110.203:8001'
+AUDIT_COLLECTION = 'auditentry'
+SERVER_OMS_REGISTRY='localhost:8001'
 USE_MULTIPDS = True
 
 
@@ -21,7 +23,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/trustframework3/testPDS.db',                      # Or path to database file if using sqlite3.
+        'NAME': 'test.db',                      # Or path to database file if using sqlite3.
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.

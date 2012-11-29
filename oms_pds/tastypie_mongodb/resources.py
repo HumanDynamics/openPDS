@@ -9,11 +9,16 @@ from tastypie.bundle import Bundle
 from tastypie.resources import Resource
 import pdb
 
+from oms_pds.pds.models import Profile
+
+"""the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
+
 
 db = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
     port=getattr(settings, "MONGODB_PORT", None)
-)[settings.MONGODB_DATABASE]
+)
+#[settings.MONGODB_DATABASE]
 
 
 class Document(dict):
@@ -24,12 +29,22 @@ class MongoDBResource(Resource):
     """
     A base resource that allows to make CRUD operations for mongodb.
     """
-    def get_collection(self):
+    def get_collection(self, request):
         """
         Encapsulates collection name.
         """
         try:
-            return db[self._meta.collection]
+            # If no owner is specified in the request, we use the default from settings for now
+            # moving forward, we'll want to remove this fallback and require that the owner is specified
+            # from the owner uuid, we're looking up the internal identifier from the corresponding profile
+            #pdb.set_trace()
+            database = settings.MONGODB_DATABASE
+            if (request and "datastore_owner" in request.GET):
+                profile, created = Profile.objects.get_or_create(uuid = request.GET["datastore_owner"])
+                database = "User_" + str(profile.id)
+            
+            print database
+            return db[database][self._meta.collection]
         except AttributeError:
             raise ImproperlyConfigured("Define a collection in your resource.")
 
@@ -37,13 +52,13 @@ class MongoDBResource(Resource):
         """
         Maps mongodb documents to Document class.
         """
-        return map(Document, self.get_collection().find())
+        return map(Document, self.get_collection(request).find())
 
     def obj_get(self, request=None, **kwargs):
         """
         Returns mongodb document from provided id.
         """
-        return Document(self.get_collection().find_one({
+        return Document(self.get_collection(request).find_one({
             "_id": ObjectId(kwargs.get("pk"))
         }))
 
@@ -51,17 +66,15 @@ class MongoDBResource(Resource):
         """
         Creates mongodb document from POST data.
         """
-        object_id = self.get_collection().insert(bundle.data)
-        bundle.obj = self.obj_get(request, pk=object_id)
-        
+        object_id = self.get_collection(request).insert(bundle.data)
+        bundle.obj = self.obj_get(request, pk = object_id)
         return bundle
 
     def obj_update(self, bundle, request=None, **kwargs):
         """
         Updates mongodb document.
         """
-        pdb.set_trace()
-        self.get_collection().update({
+        self.get_collection(request).update({
             "_id": ObjectId(kwargs.get("pk"))
         }, {
             "$set": bundle.data
@@ -72,13 +85,13 @@ class MongoDBResource(Resource):
         """
         Removes single document from collection
         """
-        self.get_collection().remove({ "_id": ObjectId(kwargs.get("pk")) })
+        self.get_collection(request).remove({ "_id": ObjectId(kwargs.get("pk")) })
 
     def obj_delete_list(self, request=None, **kwargs):
         """
         Removes all documents from collection
         """
-        self.get_collection().remove()
+        self.get_collection(request).remove()
 
     def get_resource_uri(self, item):
         """
@@ -90,6 +103,6 @@ class MongoDBResource(Resource):
             pk = item._id
         return reverse("api_dispatch_detail", kwargs={
             "resource_name": self._meta.resource_name,
-            "api_name": self._meta.api_name,
+            "api_name": self._meta.api_name, 
             "pk": pk
         })

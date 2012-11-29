@@ -28,7 +28,7 @@ urlpatterns = patterns('oms_pds.views',
     (r'^sharing/', include('oms_pds.sharing.urls')),
     (r'^pdssettings/', 'permissions'), 
     (r'^trustsettings/', 'permissions'),
-    (r'^documentation/', include('tastytools.urls'), {'api_name': v1_api.api_name}),
+    #(r'^documentation/', include('tastytools.urls'), {'api_name': v1_api.api_name}),
 #    (r'^admin/roles', 'django.views.generic.simple.direct_to_template', { 'template' : 'roles.html' }),
 #    (r'^admin/viz', 'django.views.generic.simple.direct_to_template', { 'template' : 'reality_analysis/reality_analysis/visualization.html' }),
     # Examples:

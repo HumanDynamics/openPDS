@@ -1,0 +1,34 @@
+.chart {
+	height: 225px;
+	width: 500px;
+}
+
+.chart rect {
+	fill: steelblue;
+	stroke: white;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+#filterMenu {
+	width: 320px;
+	float: left;
+}
+
+#filterMenu input {
+	display: block;
+}
+
+.auditContent {
+	float: left;
+}
+
+#fetchMoreLink {
+	float: right;
+	padding: 10 20 0 0;
+}

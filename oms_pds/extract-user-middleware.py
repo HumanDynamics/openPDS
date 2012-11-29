@@ -18,7 +18,7 @@ class ExtractUser(object):
     """
     def process_request(self, request):
         if 'multiPDS_user' in request.GET:
-	    print "setting multipds"
+            print "setting multipds"
 ##	    db = Connection(
 #	        host=getattr(settings, "MONGODB_HOST", None),
 #	        port=getattr(settings, "MONGODB_PORT", None)
@@ -27,10 +27,9 @@ class ExtractUser(object):
 #                host=getattr(settings, "MONGODB_HOST", None),
 #                port=getattr(settings, "MONGODB_PORT", None)
 #            )	["User_"+request.GET['multiPDS_user']]
-	    settings.MONGODB_DATABASE_MULTIPDS = "User_"+request.GET['multiPDS_user']
-
-	else:
-	    settings.MONGODB_DATABASE_MULTIPDS = None
+            settings.MONGODB_DATABASE_MULTIPDS = "User_"+request.GET['multiPDS_user']
+        else:
+            settings.MONGODB_DATABASE_MULTIPDS = None
 
         return None
 

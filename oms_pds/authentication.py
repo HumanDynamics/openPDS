@@ -2,11 +2,11 @@ from tastypie.authentication import Authentication
 import httplib
 import settings
 import json
+import pdb
 
 class OAuth2Authentication(Authentication):
 
-
-    def __get_userinfo_from_token(self, token, scope):
+    def get_userinfo_from_token(self, token, scope):
         # upon success, will return a json {'key':'value'}
         userinfo = {}
         try:
@@ -22,7 +22,7 @@ class OAuth2Authentication(Authentication):
             key = result['key']
             conn.close()
         except Exception as ex:
-	    print ex
+            print ex
             return False
         return key
 
@@ -30,9 +30,9 @@ class OAuth2Authentication(Authentication):
         self.scope = scope
 
     def is_authenticated(self, request, **kwargs):
-	token = request.GET['bearer_token'];
-	print token
-	print self.scope
+        token = request.GET['bearer_token'];
+        print token
+        print self.scope
 	
 #       key = self.__get_userinfo_from_token(token, self.scope)
 #	print "-----key-----"
