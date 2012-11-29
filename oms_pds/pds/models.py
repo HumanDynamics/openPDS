@@ -52,8 +52,3 @@ class AuditEntry(models.Model):
     
     def __unicode__(self):
         self.pk
-    
-    
-class AuditEntryDetails(models.Model):
-    audit_entry = models.ForeignKey(AuditEntry)
-    result = models.TextField()
