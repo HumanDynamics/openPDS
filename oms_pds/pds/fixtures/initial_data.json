@@ -1,0 +1,74 @@
+[
+  {
+    "model": "pds.scope",
+    "pk": 1,
+    "fields": {
+      "name": "reality_analysis",
+      "datastore_owner": 1
+    }
+  },
+  {
+    "model": "pds.scope",
+    "pk": 2,
+    "fields": {
+      "name": "funf_write",
+      "datastore_owner": 1
+    }
+  },
+  {
+    "model": "pds.role",
+    "pk": 1,
+    "fields": {
+      "name": "Family",
+      "datastore_owner": 1
+    }
+  },
+  {
+    "model": "pds.role",
+    "pk": 2,
+    "fields": {
+      "name": "Peers",
+      "datastore_owner": 1
+    }
+  },
+  {
+    "model": "pds.role",
+    "pk": 3,
+    "fields": {
+      "name": "Care_Team",
+      "datastore_owner": 1
+    }
+  },
+  {
+    "model": "pds.sharinglevel",
+    "pk": 1,
+    "fields": {
+      "level": 0,
+      "datastore_owner": 1
+    }
+  },
+  {
+    "model": "pds.sharinglevel",
+    "pk": 2,
+    "fields": {
+      "level": 1,
+      "datastore_owner": 1
+    }
+  },
+  {
+    "model": "pds.sharinglevel",
+    "pk": 3,
+    "fields": {
+      "level": 2,
+      "datastore_owner": 1
+    }
+  },
+  {
+    "model": "pds.sharinglevel",
+    "pk": 4,
+    "fields": {
+      "level": 3, 
+      "datastore_owner": 1
+    }
+  }
+]
