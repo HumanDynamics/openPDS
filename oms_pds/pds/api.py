@@ -2,7 +2,7 @@ from tastypie.authorization import Authorization
 from tastypie.resources import ModelResource, fields, ALL_WITH_RELATIONS
 from oms_pds.authentication import OAuth2Authentication
 from oms_pds.authorization import PDSAuthorization
-from oms_pds.trust.models import SharingLevel, Role, Purpose
+#from oms_pds.trust.models import SharingLevel, Role, Purpose
 from oms_pds import settings
 import datetime
 import json, ast
@@ -11,7 +11,7 @@ from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.validation import Validation
 from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
-from oms_pds.pds.models import AuditEntry, Profile
+from oms_pds.pds.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope
 from django.db import models
 
 import pdb
@@ -30,7 +30,6 @@ class FunfResource(MongoDBResource):
         authorization = Authorization()
         object_class = Document
         collection = "funf" # collection name
-
 
 class FunfConfigResource(MongoDBResource):
 
@@ -54,7 +53,8 @@ class AnswerResource(MongoDBResource):
         resource_name = "answer"
         list_allowed_methods = ["delete", "get", "post"]
 	help_text='resource help text...'
-        authorization = Authorization()
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         object_class = Document
         collection = "answer" # collection name
 
@@ -75,8 +75,14 @@ class AnswerListResource(MongoDBResource):
 class SharingLevelResource(ModelResource):
     
     class Meta:
-	resource_name = 'sharinglevel'
 	queryset = SharingLevel.objects.all()
+	resource_name = 'sharinglevel'
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
+        filtering = { "datastore_owner_id": ["contains"]}
+
+    def get_object_list(self, request):
+        return super(SharingLevelResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
 
 class RoleResource(ModelResource):
     
@@ -84,17 +90,33 @@ class RoleResource(ModelResource):
 	resource_name = 'role'
 	queryset = Role.objects.all()
 
+    def get_object_list(self, request):
+        return super(RoleResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
+
 
 class PurposeResource(ModelResource):
     
     class Meta:
 	resource_name = 'purpose'
-	queryset = Purpose.objects.all()
+        queryset = Purpose.objects.all()
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
+        filtering = { "uuid": ["contains"]}
 
-class ScopeResource(MongoDBResource):
-    purpose = fields.ToManyField(PurposeResource, 'purpose')
-    key = fields.CharField(attribute="key", null=False, unique=True)
-    
+    def get_object_list(self, request):
+        return super(PurposeResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
+
+class ScopeResource(ModelResource):
+
+    class Meta:
+        resource_name = 'scope'
+        queryset = Scope.objects.all()
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
+
+    def get_object_list(self, request):
+        return super(ScopeResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
+
 class ProfileResource(ModelResource):
     
     class Meta:

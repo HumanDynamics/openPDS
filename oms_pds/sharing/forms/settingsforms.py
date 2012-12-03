@@ -1,6 +1,6 @@
 from django import forms
 from oms_pds.sharing.models import Tokens, OverallSharingLevel, ProbeGroupSetting
-from oms_pds.trust.models import SharingLevel, Role
+from oms_pds.pds.models import SharingLevel, Role
 from django.forms.widgets import RadioSelect, CheckboxSelectMultiple
 
 
@@ -9,26 +9,39 @@ from django.forms.widgets import RadioSelect, CheckboxSelectMultiple
 #    tokenview.update({t.id:t.role.name})
 
 oslview = {}
-for osl in OverallSharingLevel.objects.all():
-    oslview.update({osl.level:osl.level})
-
 pgsview = {}
-for pgs in ProbeGroupSetting.objects.all():
-    pgsview.update({pgs.name:pgs.name})
-
 slview = {}
-for sl in SharingLevel.objects.all():
-    slview.update({sl.level:sl.level})
-
 rview = {}
-for r in Role.objects.all():
-    rview.update({r.name:r.name})
+
 
 class Sharing_Form(forms.Form):
     #tokens = forms.MultipleChoiceField(tokenview.viewitems(), widget=forms.CheckboxSelectMultiple)
     probes = forms.MultipleChoiceField(pgsview.viewitems(), widget=forms.CheckboxSelectMultiple)
     roles = forms.MultipleChoiceField(rview.viewitems(), widget=forms.CheckboxSelectMultiple)
     sharinglevel = forms.MultipleChoiceField(slview.viewitems(), widget=forms.RadioSelect, label= "Overall Sharing Level")
+    def update_form(self, uuid):
+        new_pgsview = {}
+        new_slview = {}
+        new_rview = {}
+        for pgs in ProbeGroupSetting.objects.all():#(datastore_owner_id=uuid):
+            new_pgsview.update({pgs.name:pgs.name})
+        
+        for sl in SharingLevel.objects.filter(datastore_owner_id=uuid):
+            new_slview.update({sl.level:sl.level})
+        
+        for r in Role.objects.filter(datastore_owner_id=uuid):
+            new_rview.update({r.name:r.name})
+
+	self.fields['roles'] = forms.MultipleChoiceField(new_rview.viewitems(), widget=forms.CheckboxSelectMultiple)
+	self.fields['probes'] = forms.MultipleChoiceField(new_pgsview.viewitems(), widget=forms.CheckboxSelectMultiple)
+	self.fields['sharinglevel'] = forms.MultipleChoiceField(new_slview.viewitems(), widget=forms.RadioSelect, label= "Overall Sharing Level")
+#    probes = None
+#    roles = None
+#    sharinglevel = None
+    
+#        self.probes = forms.MultipleChoiceField(pgsview.viewitems(), widget=forms.CheckboxSelectMultiple)
+#        self.roles = forms.MultipleChoiceField(rview.viewitems(), widget=forms.CheckboxSelectMultiple)
+#        self.sharinglevel = forms.MultipleChoiceField(slview.viewitems(), widget=forms.RadioSelect, label= "Overall Sharing Level")
 
 class CreateSharingForm(forms.Form):
 

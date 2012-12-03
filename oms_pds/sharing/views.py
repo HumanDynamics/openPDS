@@ -6,18 +6,26 @@ import httplib
 from django import forms
 import json
 from oms_pds.sharing.forms.settingsforms import Sharing_Form, ProbeGroupSetting
-from oms_pds.trust.models import Scope, Purpose, Role, SharingLevel
+import oms_pds.sharing.forms.settingsforms as settingsforms
+#from oms_pds.trust.models import Scope, Purpose, Role, SharingLevel
+from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel
 
 
 
 def edit(request):
     '''A web interface for modifying trust framework permissions'''
-    form = Sharing_Form()
+    form = settingsforms.Sharing_Form()
     template = {"form":form}
+    if request.GET.get('datastore_owner') == None:
+        raise Exception('missing datastore_owner')
+    datastore_owner = request.GET.get('datastore_owner')
+    template['datastore_owner']=datastore_owner
+    form.update_form(datastore_owner)
+
     probes = ProbeGroupSetting.objects.all()
-    roles = Role.objects.all()
-    sharinglevels = SharingLevel.objects.all()
-    scopes = Scope.objects.all()
+    roles = Role.objects.filter(datastore_owner_id=datastore_owner)
+    sharinglevels = SharingLevel.objects.filter(datastore_owner_id=datastore_owner)
+    scopes = Scope.objects.filter(datastore_owner_id=datastore_owner)
  
     try:
         if request.method == "POST":
@@ -28,11 +36,11 @@ def edit(request):
 		    pgs.issharing = json_input['selected']
     		    pgs.save()
     	        elif json_input.get('name') == 'roles':
-    	            role = Role.objects.get(name=json_input['value'])
+    	            role = Role.objects.get(name=json_input['value'], datastore_owner_id=datastore_owner)
 		    role.issharing = json_input['selected']
     		    role.save()
     	        elif json_input.get('name') == 'sharinglevel':
-    	            sl = SharingLevel.objects.get(level=json_input['value'])
+    	            sl = SharingLevel.objects.get(level=json_input['value'], datastore_owner_id=datastore_owner)
 		    sl.isselected = json_input['selected']
     		    sl.save()
 

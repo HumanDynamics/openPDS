@@ -5,32 +5,50 @@ from mongoengine import *
 connect(settings.MONGODB_DATABASE)
 
 
-class Purpose(Document):
-    name = StringField(max_length=120, required=True)
-#    author = ReferenceField(User)
-
-class Scope(Document):
-    name = StringField(max_length=120, required=True)
-    purpose = ReferenceField(Purpose)
-
-class Role(Document):
-    """ @name : The user defined name of the role
-	@purpose : A list of purposes associated with this role
-	@tokens : A list of oauth tokens of users assigned to this role """
-    name = StringField(max_length=120, required=True)
-    purpose = ReferenceField(Purpose)
-
-class SharingLevel(Document):
-    level = IntField(required=True)
-    purpose = ReferenceField(Purpose)
-
-class Tokens(Document):
-    id = StringField(required=True)
-    roles = ListField(ReferenceField(Role))
-
-
 class Profile(models.Model):
     uuid = models.CharField(max_length=36, unique=True, blank = False, null = False, db_index = True)
+
+class ResourceKey(models.Model):
+    ''' A way of controlling sharing within a collection.  Maps to any key within a collection.  For example, funf probes and individual answers to questions'''
+    key = models.CharField(max_length=120)
+    issharing = models.BooleanField(default=True)
+
+class ProbeGroupSetting(models.Model):
+    ''' A way of grouping resource keys for sharing.'''
+    name = models.CharField(max_length=120)
+    issharing = models.BooleanField(default=False)
+    keys = models.ManyToManyField(ResourceKey) #a list of roles the user is currently sharing with
+
+class Purpose(models.Model):
+    name = models.CharField(max_length=120)
+    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="purpose_owner")
+
+class Scope(models.Model):
+    name = models.CharField(max_length=120)
+    purpose = models.ManyToManyField(Purpose)
+    issharing = models.BooleanField(default=False)
+    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="scope_owner")
+
+class Role(models.Model):
+    """ @name : The user defined name of the role
+        @purpose : A list of purposes associated with this role
+        @tokens : A list of oauth tokens of users assigned to this role """
+    name = models.CharField(max_length=120)
+    purpose = models.ManyToManyField(Purpose)
+    issharing = models.BooleanField(default=False)
+    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="role_owner")
+
+class SharingLevel(models.Model):
+    level = models.IntegerField()
+    purpose = models.ManyToManyField(Purpose)
+    isselected = models.BooleanField(default=False)
+    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="sharinglevel_owner")
+
+#class Tokens(Document):
+#    id = StringField(required=True)
+#    roles = ListField(ReferenceField(Role))
+#    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="token_owner")
+
 
 # Represents an audit of a request against the PDS
 # Given that there will be many entries (one for each request), 

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-      <form action="/permissions/" method="post">{% csrf_token %}
+      <form action="/permissions/?datastore_owner={{ datastore_owner }}" method="post">{% csrf_token %}
 	{{ form.as_p }}
 	<input type="submit" value="Submit" />
       </form>

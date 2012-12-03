@@ -24,6 +24,7 @@ class OAuth2Authentication(Authentication):
         except Exception as ex:
             print ex
             return False
+	print "successfully got key: returning"
         return key
 
     def __init__(self, scope):
@@ -43,6 +44,6 @@ class OAuth2Authentication(Authentication):
         return True
 
     def get_identifier(self, request):
-        return "jschmitz"
+        return request.GET.get('datastore_owner')
 
 

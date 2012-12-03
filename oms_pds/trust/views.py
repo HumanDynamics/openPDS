@@ -13,6 +13,10 @@ from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel
 def add(request):
     form = Purpose_Form()
     template = {"form":form}
+    if request.GET.get('datastore_owner') == None:
+        raise Exception('missing datastore_owner')
+    template['datastore_owner']=request.GET.get('datastore_owner')
+
 
     if request.META.get('CONTENT_TYPE') == 'application/json' or request.GET.get('format') == "json":
         response_dict = {}

@@ -8,27 +8,36 @@ import pdb
 class PDSAuthorization(Authorization):
     audit_enabled = True
     scope = ""
+    requester_uuid = ""
+    
+    def requester(self):
+	print self.requester_uuid
+        return self.requester_uuid
     
     def is_authorized(self, request, object=None):
         authenticator = OAuth2Authentication(self.scope)
         token = request.REQUEST["bearer_token"] if "bearer_token" in request.REQUEST else request.META["HTTP_BEARER_TOKEN"]
         # Result will be the uuid of the requesting party
-        requester_uuid = authenticator.get_userinfo_from_token(token, self.scope)
-        
-        if (self.audit_enabled):
-            #pdb.set_trace()
-            audit_entry = AuditEntry(token = token)
-            audit_entry.method = request.method
-            audit_entry.scope = self.scope
-            audit_entry.purpose = request.REQUEST["purpose"] if "purpose" in request.REQUEST else ""
-            audit_entry.system_entity_toggle = request.REQUEST["system_entity"] if "system_entity" in request.REQUEST else False
-            # NOTE: datastore_owner and requester are required
-            # if they're not available, the KeyError exception should raise and terminate the request
-            datastore_owner_uuid = request.REQUEST["datastore_owner"]
-            audit_entry.datastore_owner, created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
-            audit_entry.requester, created = Profile.objects.get_or_create(uuid = requester_uuid)
-            audit_entry.script = request.path
-            audit_entry.save()
+        self.requester_uuid = authenticator.get_userinfo_from_token(token, self.scope)
+	print self.requester_uuid
+	try:        
+            if (self.audit_enabled):
+                #pdb.set_trace()
+                audit_entry = AuditEntry(token = token)
+                audit_entry.method = request.method
+                audit_entry.scope = self.scope
+                audit_entry.purpose = request.REQUEST["purpose"] if "purpose" in request.REQUEST else ""
+                audit_entry.system_entity_toggle = request.REQUEST["system_entity"] if "system_entity" in request.REQUEST else False
+                # NOTE: datastore_owner and requester are required
+                # if they're not available, the KeyError exception should raise and terminate the request
+                datastore_owner_uuid = request.REQUEST["datastore_owner"]
+                audit_entry.datastore_owner, created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
+                audit_entry.requester, created = Profile.objects.get_or_create(uuid = self.requester_uuid)
+                audit_entry.script = request.path
+                audit_entry.save()
+	except Exception as e:
+	    print e
+
         
         return True
     
