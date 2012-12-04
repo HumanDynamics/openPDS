@@ -19,15 +19,16 @@ import pdb
 class FunfResource(MongoDBResource):
 
     id = fields.CharField(attribute="_id")
-    title = fields.CharField(attribute="title", null=True, help_text='The funf probe name.')
+    key = fields.CharField(attribute="key", null=True, help_text='The funf probe name.')
     time = fields.DateTimeField(attribute="time", null=True, help_text='A human readable datetime.  The time represents when funf collected the data.')
     value = fields.CharField(attribute="value", null=True, help_text='A json blob of funf data.')
 
     class Meta:
-        authentication = OAuth2Authentication("reality_analysis")
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         resource_name = "funf"
         list_allowed_methods = ["delete", "get", "post"]
-        authorization = Authorization()
+#        authorization = Authorization()
         object_class = Document
         collection = "funf" # collection name
 
@@ -47,7 +48,7 @@ class AnswerResource(MongoDBResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
 #    data = fields.ToManyField('oms_pds.pds.api.resources.SocialHealthResource', 'socialhealth_set', related_name='realityanalysis')
-    data = fields.DictField(attribute="data", help_text='A json blob of answer data.', null=True, )
+    value = fields.DictField(attribute="data", help_text='A json blob of answer data.', null=True, )
 
     class Meta:
         resource_name = "answer"
@@ -62,7 +63,7 @@ class AnswerListResource(MongoDBResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
 #    data = fields.ToManyField('oms_pds.pds.api.resources.SocialHealthResource', 'socialhealth_set', related_name='realityanalysis')
-    data = fields.ListField(attribute="data", help_text='A list json blob of answer data.', null=True, )
+    value = fields.ListField(attribute="data", help_text='A list json blob of answer data.', null=True, )
 
     class Meta:
         resource_name = "answerlist"
@@ -78,21 +79,31 @@ class SharingLevelResource(ModelResource):
 	queryset = SharingLevel.objects.all()
 	resource_name = 'sharinglevel'
         authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "datastore_owner_id": ["contains"]}
 
     def get_object_list(self, request):
         return super(SharingLevelResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
+
+    def hydrate(self, bundle):
+	bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
+	return bundle
 
 class RoleResource(ModelResource):
     
     class Meta:
 	resource_name = 'role'
 	queryset = Role.objects.all()
+        list_allowed_methods = ["delete", "get", "post"]
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
 
     def get_object_list(self, request):
         return super(RoleResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
 
+    def hydrate(self, bundle):
+	bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
+	return bundle
 
 class PurposeResource(ModelResource):
     
@@ -100,11 +111,15 @@ class PurposeResource(ModelResource):
 	resource_name = 'purpose'
         queryset = Purpose.objects.all()
         authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "uuid": ["contains"]}
 
     def get_object_list(self, request):
         return super(PurposeResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
+
+    def hydrate(self, bundle):
+	bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
+	return bundle
 
 class ScopeResource(ModelResource):
 
@@ -112,17 +127,21 @@ class ScopeResource(ModelResource):
         resource_name = 'scope'
         queryset = Scope.objects.all()
         authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
 
     def get_object_list(self, request):
         return super(ScopeResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
+
+    def hydrate(self, bundle):
+	bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
+	return bundle
 
 class ProfileResource(ModelResource):
     
     class Meta:
         queryset = Profile.objects.all()
         authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "uuid": ["contains"]}
 
 class AuditEntryCountResource(ModelResource):

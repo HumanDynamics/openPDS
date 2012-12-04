@@ -1,6 +1,6 @@
 from django import forms
 from oms_pds.sharing.models import Tokens, OverallSharingLevel, ProbeGroupSetting
-from oms_pds.pds.models import SharingLevel, Role
+from oms_pds.pds.models import SharingLevel, Role, Profile
 from django.forms.widgets import RadioSelect, CheckboxSelectMultiple
 
 
@@ -23,13 +23,14 @@ class Sharing_Form(forms.Form):
         new_pgsview = {}
         new_slview = {}
         new_rview = {}
+	p = Profile.objects.get(uuid=uuid)
         for pgs in ProbeGroupSetting.objects.all():#(datastore_owner_id=uuid):
             new_pgsview.update({pgs.name:pgs.name})
         
-        for sl in SharingLevel.objects.filter(datastore_owner_id=uuid):
+        for sl in p.sharinglevel_owner.all():
             new_slview.update({sl.level:sl.level})
         
-        for r in Role.objects.filter(datastore_owner_id=uuid):
+        for r in p.role_owner.all():
             new_rview.update({r.name:r.name})
 
 	self.fields['roles'] = forms.MultipleChoiceField(new_rview.viewitems(), widget=forms.CheckboxSelectMultiple)

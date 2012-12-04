@@ -8,7 +8,7 @@ import json
 from oms_pds.sharing.forms.settingsforms import Sharing_Form, ProbeGroupSetting
 import oms_pds.sharing.forms.settingsforms as settingsforms
 #from oms_pds.trust.models import Scope, Purpose, Role, SharingLevel
-from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel
+from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel, Profile
 
 
 
@@ -22,11 +22,12 @@ def edit(request):
     template['datastore_owner']=datastore_owner
     form.update_form(datastore_owner)
 
+    p = Profile.objects.get(uuid=datastore_owner)
     probes = ProbeGroupSetting.objects.all()
-    roles = Role.objects.filter(datastore_owner_id=datastore_owner)
-    sharinglevels = SharingLevel.objects.filter(datastore_owner_id=datastore_owner)
-    scopes = Scope.objects.filter(datastore_owner_id=datastore_owner)
- 
+    roles = p.role_owner.all()
+    sharinglevels = p.sharinglevel_owner.all()
+    scopes = p.scope_owner.all()
+
     try:
         if request.method == "POST":
     	    # Process web form from web permission interface
