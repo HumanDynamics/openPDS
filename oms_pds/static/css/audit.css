@@ -1,6 +1,6 @@
 .chart {
-	height: 225px;
-	width: 500px;
+	height: 230px;
+	width: 100%;
 }
 
 .chart rect {
@@ -17,6 +17,7 @@
 
 #filterMenu {
 	width: 320px;
+	width: 100%;
 	float: left;
 }
 
@@ -24,11 +25,21 @@
 	display: block;
 }
 
-.auditContent {
-	float: left;
-}
 
 #fetchMoreLink {
 	float: right;
 	padding: 10 20 0 0;
+}
+
+.auditContent table {
+	width: 100%;
+}
+
+.auditContent table td {
+	background-color: lightgray;
+}
+
+#auditEntryCountGraphContainer {
+	width: 100%;
+	margin: 10px;
 }

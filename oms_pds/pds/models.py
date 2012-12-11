@@ -37,6 +37,7 @@ class Role(models.Model):
     purpose = models.ManyToManyField(Purpose)
     issharing = models.BooleanField(default=False)
     datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="role_owner")
+    # TODO: fill in field for tokens (rather than ints / uuids)
 
 class SharingLevel(models.Model):
     level = models.IntegerField()

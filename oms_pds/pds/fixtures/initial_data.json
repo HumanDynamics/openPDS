@@ -1,5 +1,12 @@
 [
   {
+    "model": "pds.profile",
+    "pk": 1,
+    "fields": {
+        "uuid": "not-really-a-uuid"
+    }
+  },
+  {
     "model": "pds.scope",
     "pk": 1,
     "fields": {

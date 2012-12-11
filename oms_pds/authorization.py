@@ -11,13 +11,13 @@ class PDSAuthorization(Authorization):
     requester_uuid = ""
     
     def requester(self):
-	print self.requester_uuid
+        print self.requester_uuid
         return self.requester_uuid
 
-    def trustWrapper(self, datastore_owner_uuid):
-	print "checking trust wrapper"
-        ds_owner_profile = Profile.objects.get(uuid = datastore_owner_uuid)
-	print ds_owner_profile.sharinglevel_owner.get(isselected = True)
+    def trustWrapper(self, datastore_owner):
+        print "checking trust wrapper"
+        #ds_owner_profile = Profile.objects.get(uuid = datastore_owner_uuid)
+        #print datastore_owner.sharinglevel_owner.get(isselected = True)
 
 #>>> p0.role_owner.latest("id")
 #<Role: Role object>
@@ -39,13 +39,20 @@ class PDSAuthorization(Authorization):
 #>>> sl.latest("id").level
  
     def is_authorized(self, request, object=None):
-	print "is authorized?"
+        print "is authorized?"
         authenticator = OAuth2Authentication(self.scope)
         token = request.REQUEST["bearer_token"] if "bearer_token" in request.REQUEST else request.META["HTTP_BEARER_TOKEN"]
         # Result will be the uuid of the requesting party
+        
+        # Note: the trustwrapper must be run regardless of if auditting is enabled on this call or not
+        
+        datastore_owner_uuid = request.REQUEST["datastore_owner__uuid"]
+        datastore_owner, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
         self.requester_uuid = authenticator.get_userinfo_from_token(token, self.scope)
-	print self.requester_uuid
-	try:        
+        self.trustWrapper(datastore_owner)
+        
+        print self.requester_uuid
+        try:
             if (self.audit_enabled):
                 #pdb.set_trace()
                 audit_entry = AuditEntry(token = token)
@@ -55,15 +62,12 @@ class PDSAuthorization(Authorization):
                 audit_entry.system_entity_toggle = request.REQUEST["system_entity"] if "system_entity" in request.REQUEST else False
                 # NOTE: datastore_owner and requester are required
                 # if they're not available, the KeyError exception should raise and terminate the request
-                datastore_owner_uuid = request.REQUEST["datastore_owner"]
-		self.trustWrapper(datastore_owner_uuid)
-                audit_entry.datastore_owner, created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
+                audit_entry.datastore_owner = datastore_owner
                 audit_entry.requester, created = Profile.objects.get_or_create(uuid = self.requester_uuid)
                 audit_entry.script = request.path
                 audit_entry.save()
-	except Exception as e:
-	    print e
-
+        except Exception as e:
+            print e
         
         return True
 

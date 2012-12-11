@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "backboneLayout.html" %}
 
 {% load straight_include %}
 
@@ -6,7 +6,7 @@
 Role Admin
 {% endblock %}
 
-{% block scripts %}
+{% block more_scripts %}
 	
 <script>
 	ROLE_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="role" %}";

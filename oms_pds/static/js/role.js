@@ -1,7 +1,7 @@
 $(function () {
 
 window.Role = Backbone.Model.extend({
-	idAttribute: "_id"
+	idAttribute: "id"
 });
 
 window.RoleCollection = Backbone.Collection.extend({
@@ -62,7 +62,7 @@ window.RolesApp = Backbone.View.extend({
         var idsValue = $('#idsTextBox').val();
         if (keyValue && idsValue) {
             this.roles.create({
-                key: keyValue,
+                name: keyValue,
                 ids: idsValue.split(',')
             });
             $('#keyTextBox').val('');
@@ -77,7 +77,7 @@ window.RolesApp = Backbone.View.extend({
             var modelId = $(this).val();
             var model = me.roles.find(
             	function (r) { 
-            		return r.attributes["_id"].indexOf(modelId) != -1; 
+            		return r.attributes["id"].indexOf(modelId) != -1; 
             	}
             );
             if (model) {

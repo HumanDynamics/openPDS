@@ -20,6 +20,10 @@ from oms_pds.pds.tools import v1_api
 # from django.contrib import admin
 # admin.autodiscover()
 
+from oms_pds.pds.api import AuditEntryResource
+
+audit_entry_resource = AuditEntryResource()
+
 urlpatterns = patterns('oms_pds.views',
     (r'^home/', 'home'),
     (r'^api/', include(v1_api.urls)),
@@ -31,7 +35,8 @@ urlpatterns = patterns('oms_pds.views',
     (r'^trustsettings/', 'permissions'),
     (r'^admin/audit', direct_to_template, { 'template' : 'audit.html' }),
     #(r'^documentation/', include('tastytools.urls'), {'api_name': v1_api.api_name}),
-#    (r'^admin/roles', 'django.views.generic.simple.direct_to_template', { 'template' : 'roles.html' }),
+    (r'^admin/roles', direct_to_template, { 'template' : 'roles.html' }),
+    (r'^(?P<owner_uuid>\w+)/api/', include(audit_entry_resource.urls)),
 #    (r'^admin/viz', 'django.views.generic.simple.direct_to_template', { 'template' : 'reality_analysis/reality_analysis/visualization.html' }),
     # Examples:
     # url(r'^$', 'OMS_PDS.views.home', name='home'),

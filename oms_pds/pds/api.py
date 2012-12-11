@@ -53,7 +53,7 @@ class AnswerResource(MongoDBResource):
     class Meta:
         resource_name = "answer"
         list_allowed_methods = ["delete", "get", "post"]
-	help_text='resource help text...'
+        help_text='resource help text...'
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         object_class = Document
@@ -68,16 +68,24 @@ class AnswerListResource(MongoDBResource):
     class Meta:
         resource_name = "answerlist"
         list_allowed_methods = ["delete", "get", "post"]
-	help_text='resource help text...'
+        help_text='resource help text...'
         authorization = Authorization()
         object_class = Document
         collection = "answerlist" # collection name
 
+class ProfileResource(ModelResource):
+    
+    class Meta:
+        queryset = Profile.objects.all()
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
+        filtering = { "uuid": ["contains", "exact"]}
+
 class SharingLevelResource(ModelResource):
     
     class Meta:
-	queryset = SharingLevel.objects.all()
-	resource_name = 'sharinglevel'
+        queryset = SharingLevel.objects.all()
+        resource_name = 'sharinglevel'
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "datastore_owner_id": ["contains"]}
@@ -86,29 +94,33 @@ class SharingLevelResource(ModelResource):
         return super(SharingLevelResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
 
     def hydrate(self, bundle):
-	bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
-	return bundle
+        bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
+        return bundle
 
 class RoleResource(ModelResource):
     
+    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
+    
     class Meta:
-	resource_name = 'role'
-	queryset = Role.objects.all()
+        resource_name = 'role'
+        queryset = Role.objects.all()
         list_allowed_methods = ["delete", "get", "post"]
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
+        filtering = { "datastore_owner" : ALL_WITH_RELATIONS }
 
     def get_object_list(self, request):
-        return super(RoleResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
+        return super(RoleResource, self).get_object_list(request).filter(datastore_owner__uuid=request.GET.get('datastore_owner__uuid'))
 
     def hydrate(self, bundle):
-	bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
-	return bundle
+        bundle = super(RoleResource, self).hydrate(bundle)
+        bundle.obj.datastore_owner.uuid = str(bundle.request.GET.get('datastore_owner__uuid'))
+        return bundle
 
 class PurposeResource(ModelResource):
     
     class Meta:
-	resource_name = 'purpose'
+        resource_name = 'purpose'
         queryset = Purpose.objects.all()
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
@@ -118,8 +130,8 @@ class PurposeResource(ModelResource):
         return super(PurposeResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
 
     def hydrate(self, bundle):
-	bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
-	return bundle
+        bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
+        return bundle
 
 class ScopeResource(ModelResource):
 
@@ -133,20 +145,13 @@ class ScopeResource(ModelResource):
         return super(ScopeResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
 
     def hydrate(self, bundle):
-	bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
-	return bundle
-
-class ProfileResource(ModelResource):
-    
-    class Meta:
-        queryset = Profile.objects.all()
-        authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-        filtering = { "uuid": ["contains"]}
+        bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
+        return bundle
 
 class AuditEntryCountResource(ModelResource):
     def get_resource_uri(self, bundle): 
         # Returning nothing here... there isn't a model backing this resource, so there's nowhere to pull this from
+        # If we deem this important in the future, we can potentially construct a URL with datefilters built-in
         return ""
     
     def dehydrate(self, bundle):
@@ -200,9 +205,19 @@ class AuditEntryResource(ModelResource):
     requester = fields.ForeignKey(ProfileResource, 'requester', full = True)
     
     def dehydrate(self, bundle):
+        # Sending this over the line is a waste of bandwidth... 
+        # When we have the time, we should make this formatting happen on the client side from the raw timestamp
         bundle.data['timestamp_date'] = bundle.data['timestamp'].date()
         bundle.data['timestamp_time'] = bundle.data['timestamp'].time().strftime('%I:%M:%S %p')
         return bundle
+    
+    #def dispatch(self, request_type, request, **kwargs):
+    #    # This method is used for pulling the datastore_owner out of the url path, rather than a querystring parameter
+    #    # This is not supported in v0.3 
+    #    pdb.set_trace()
+    #    owner_uuid = kwargs.pop("owner_uuid")
+    #    kwargs["datastore_owner"], created = Profile.objects.get_or_create(uuid = owner_uuid)
+    #    return super(AuditEntryResource, self).dispatch(request_type, request, **kwargs)
     
     class Meta:
         queryset = AuditEntry.objects.all()
@@ -210,11 +225,12 @@ class AuditEntryResource(ModelResource):
         allowed_methods = ('get', 'post')
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
-        filtering = { "datastore_owner" : ["exact"],
+        filtering = { "datastore_owner" : ALL_WITH_RELATIONS,
                       "timestamp": ["gte", "lte", "gt", "lt"],
                       "script": ["contains"], 
                       "requester": ALL_WITH_RELATIONS }
         ordering = ('timestamp')
         limit = 20
+    
 
 

@@ -156,7 +156,7 @@ $(function () {
 				this.graph.remove();
 			}
 			var padding = [0,20,30,0];
-			var w = 450, h = 150;
+			var w = $(this.el).width() - 50, h = 150;
 			
 			var entries = this.auditEntryCounts.map(function (model) { return { date: model.attributes['date'], count: model.attributes['count']}});
 			
@@ -239,13 +239,13 @@ $(function () {
 			// this view does not have access to the elements.
 			
 			$("#fromDate").datepicker({
-				defaultDate: "-1w",
+				defaultDate: "-2w",
 				changeMonth: true,
 				numberOfMonths: 1,
 				dateFormat: "yy-mm-dd",
 				autoSize: true,
-				onClose: function (selectedDate) {
-					$("#toDate").datepicker("option", "minDate", selectedDate);
+				onSelect: function (selectedDate) {
+					//$("#toDate").datepicker("option", "minDate", selectedDate);
 					if (me.auditEntries.setFromDate(selectedDate)) {
 						me.fetchAuditEntries();
 					}
@@ -260,8 +260,8 @@ $(function () {
 				numberOfMonths: 1,
 				dateFormat: "yy-mm-dd",
 				autoSize: true,
-				onClose: function (selectedDate) {
-					$("#fromDate").datepicker("option", "maxDate", selectedDate);
+				onSelect: function (selectedDate) {
+					//$("#fromDate").datepicker("option", "maxDate", selectedDate);
 					if (me.auditEntries.setToDate(selectedDate)) { 
 						me.fetchAuditEntries();
 					}
@@ -278,11 +278,8 @@ $(function () {
 			var lastWeek = new Date();
 			lastWeek.setDate(lastWeek.getUTCDate() - 14);
 			
-			$("#fromDate").datepicker("setDate", lastWeek);
-			$("#toDate").datepicker("setDate", today);
-			
-			this.auditEntryGraph.setFromDate(lastWeek.getUTCFullYear() + "-" + (lastWeek.getUTCMonth() + 1) + "-" + lastWeek.getUTCDate());
-			this.auditEntryGraph.setToDate(today.getUTCFullYear() + "-" + (today.getUTCMonth() + 1) + "-" + today.getUTCDate());
+			this.auditEntryGraph.setFromDate(lastWeek.toISOString().substring(0,10));
+			this.auditEntryGraph.setToDate(today.toISOString().substring(0,10));
 			this.auditEntryGraph.refresh()
 			
 			$("#script").change(function () { if (me.auditEntries.setScript($(this).val())) { me.fetchAuditEntries(); }});
