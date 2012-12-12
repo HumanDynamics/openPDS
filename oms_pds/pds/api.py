@@ -82,23 +82,16 @@ class ProfileResource(ModelResource):
         filtering = { "uuid": ["contains", "exact"]}
 
 class SharingLevelResource(ModelResource):
+    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
     
     class Meta:
         queryset = SharingLevel.objects.all()
         resource_name = 'sharinglevel'
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-        filtering = { "datastore_owner_id": ["contains"]}
-
-    def get_object_list(self, request):
-        return super(SharingLevelResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
-
-    def hydrate(self, bundle):
-        bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
-        return bundle
+        filtering = { "datastore_owner": ALL_WITH_RELATIONS}
 
 class RoleResource(ModelResource):
-    
     datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
     
     class Meta:
@@ -109,44 +102,25 @@ class RoleResource(ModelResource):
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "datastore_owner" : ALL_WITH_RELATIONS }
 
-    def get_object_list(self, request):
-        return super(RoleResource, self).get_object_list(request).filter(datastore_owner__uuid=request.GET.get('datastore_owner__uuid'))
-
-    def hydrate(self, bundle):
-        bundle = super(RoleResource, self).hydrate(bundle)
-        bundle.obj.datastore_owner.uuid = str(bundle.request.GET.get('datastore_owner__uuid'))
-        return bundle
-
 class PurposeResource(ModelResource):
+    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
     
     class Meta:
         resource_name = 'purpose'
         queryset = Purpose.objects.all()
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-        filtering = { "uuid": ["contains"]}
-
-    def get_object_list(self, request):
-        return super(PurposeResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
-
-    def hydrate(self, bundle):
-        bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
-        return bundle
+        filtering = {"datastore_owner" : ALL_WITH_RELATIONS }
 
 class ScopeResource(ModelResource):
-
+    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
+    
     class Meta:
         resource_name = 'scope'
         queryset = Scope.objects.all()
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-
-    def get_object_list(self, request):
-        return super(ScopeResource, self).get_object_list(request).filter(datastore_owner_id=request.GET.get('datastore_owner'))
-
-    def hydrate(self, bundle):
-        bundle.obj.datastore_owner_id = str(bundle.request.GET.get('datastore_owner'))
-        return bundle
+        filtering = {"datastore_owner" : ALL_WITH_RELATIONS }
 
 class AuditEntryCountResource(ModelResource):
     def get_resource_uri(self, bundle): 
