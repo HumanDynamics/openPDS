@@ -49,6 +49,12 @@ class MongoDBResource(Resource):
             raise ImproperlyConfigured("Define a collection in your resource.")
 
     def get_filter_object_value(self, parts, value):
+        '''
+        Gets object that describes the operation to apply in a filter, as a mongodb filter object. 
+        A simple string value means equality. Compound objects are of the form { operation : value }
+        For example, "endsin" becomes { "$regex" : "value$" }
+        Note: this currently only handles filtering on top-level fields, not sub-fields, etc.
+        '''
         # No operator implies equality
         if (len(parts) == 1):
             return value

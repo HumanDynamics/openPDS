@@ -2,6 +2,9 @@ from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
+from django.contrib import admin
+admin.autodiscover()
+
 #from tastypie.api import Api
 #from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource, PurposeResource, SocialHealthResource, RealityAnalysisResource
 #
@@ -33,6 +36,7 @@ urlpatterns = patterns('oms_pds.views',
     (r'^sharing/', include('oms_pds.sharing.urls')),
     (r'^pdssettings/', 'permissions'), 
     (r'^trustsettings/', 'permissions'),
+    (r'^admin/', include(admin.site.urls)),
     (r'^admin/audit', direct_to_template, { 'template' : 'audit.html' }),
     #(r'^documentation/', include('tastytools.urls'), {'api_name': v1_api.api_name}),
     (r'^admin/roles', direct_to_template, { 'template' : 'roles.html' }),

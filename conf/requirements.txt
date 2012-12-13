@@ -3,6 +3,7 @@
 django
 django-tastypie==0.9.11
 mongoengine
+django-celery
 pymongo
 requests
 # XXX - re-enable once we make postgresql / mysql an developer-defined detail

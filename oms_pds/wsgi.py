@@ -17,6 +17,8 @@ import os
 import site
 import sys
 import django.conf
+import djcelery
+djcelery.setup_loader()
 
 django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
 
