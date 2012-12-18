@@ -69,7 +69,7 @@ class AnswerListResource(MongoDBResource):
         resource_name = "answerlist"
         list_allowed_methods = ["delete", "get", "post"]
         help_text='resource help text...'
-        authorization = Authorization()
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         object_class = Document
         collection = "answerlist" # collection name
 

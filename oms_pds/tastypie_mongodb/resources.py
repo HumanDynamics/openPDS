@@ -39,8 +39,8 @@ class MongoDBResource(Resource):
             # from the owner uuid, we're looking up the internal identifier from the corresponding profile
             #pdb.set_trace()
             database = settings.MONGODB_DATABASE
-            if (request and "datastore_owner" in request.GET):
-                profile, created = Profile.objects.get_or_create(uuid = request.GET["datastore_owner"])
+            if (request and "datastore_owner__uuid" in request.GET):
+                profile, created = Profile.objects.get_or_create(uuid = request.GET["datastore_owner__uuid"])
                 database = "User_" + str(profile.id)
             
             print database
