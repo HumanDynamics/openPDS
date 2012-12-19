@@ -1,0 +1,25 @@
+{% extends "backboneLayout.html" %}
+
+
+{% block more_scripts %}
+
+  <script src="{{ STATIC_URL }}js/jQuery.ui.datepicker.js"></script>
+     <link rel="stylesheet" href="{{ STATIC_URL}}css/jquery.ui.datepicker.mobile.css" /> 
+  <script src="{{ STATIC_URL }}js/jquery.ui.datepicker.mobile.js"></script>
+      
+<script src="http://d3js.org/d3.v2.js"></script>
+
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+</script>
+
+
+<script src="{{ STATIC_URL }}js/socialHealthTriangle.js"></script>
+
+{% endblock %}
+
+{% block content %}
+
+<div id="radial_chart"></div>
+
+{% endblock %}

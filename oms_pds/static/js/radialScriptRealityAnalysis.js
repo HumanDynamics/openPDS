@@ -3,19 +3,11 @@
 // Grab data from server...
 //var btoken = window.location.search.split( 'bearer_token=')[1].split('&')[0]; 
 //var endpoint = "http://dcaps-staging.media.mit.edu:8080/api/reality_analysis_service/get_reality_analysis_data?document_key=radialData&bearer_token=8e2f9e3129";
-var endpoint = "http://192.168.110.150:8006/api/personal_data/realityanalysis/?format=json&token=skdfjsdl";
+var endpoint = "/api/personal_data/answerlist/?format=json&datastore_owner__uuid=52db3d60-250d-424b-9b1c-fa9efc258cd0&bearer_token=374236b0af";
   d3.json(endpoint, function(json){
   console.log(json);
 
-  var data = json.radialData.data;
-  var csvdata; 
-      csvdata = data;
-
-  var meta = json.radialData.meta;
-  var capitalMeta = [];
-  for (i = 0; i < meta.length; i++){
-      capitalMeta.push(capitaliseFirstLetter(meta[i]));
-  }
+  var data = json.objects[0].value;
 
 console.log(window.innerWidth, window.innerHeight )
 
@@ -59,9 +51,9 @@ var line = d3.svg.line.radial()
 var lowestValues = [];
 
 // parse response for lowest values
-for (i = 0; i < csvdata.length; i++){
-  if (csvdata[i].layer == "averageLow"){
-      lowestValues.push(csvdata[i].value);
+for (i = 0; i < data.length; i++){
+  if (data[i].layer == "averageLow"){
+      lowestValues.push(data[i].value);
   }
 }
 
@@ -130,15 +122,11 @@ var svg = d3.select("#radial_chart").append("svg")
         })
       .attr("dy", ".71em")
       .attr("text-anchor", "middle")
-      .text(function(d, i) { return capitalMeta[i]; })
+      .text(function(d, i) { return ""; }) // insert means of getting at axis titles here
       .attr("style","font-size:16px;")
       .style("fill", function(d,i) {
-        if ($.inArray(meta[i], unhealthyArray) != -1) {
-           return "red";
-       } else {
-           return "black";
-        }
-    });
+           return "black"; // Insert means of determining unhealthy value here
+        });
 
   svg.selectAll(".layer")
       .data(layers)

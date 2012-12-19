@@ -23,7 +23,8 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/trustframework/pdsEnv/OMS-PDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
+        #'NAME': '/var/www/trustframework/pdsEnv/OMS-PDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
+        'NAME': 'test.db',
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -128,6 +129,7 @@ INSTALLED_APPS = (
     'oms_pds.pds',
     'oms_pds.sharing',
     'oms_pds.trust',
+    #'oms_pds.visualization',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
