@@ -206,4 +206,6 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 	}
 });
 
+window.triangleApp = new SocialHealthTriangleView();
+
 });
