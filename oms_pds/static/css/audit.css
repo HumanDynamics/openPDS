@@ -1,6 +1,6 @@
 .chart {
 	height: 230px;
-	width: 100%;
+/*	width: 100%;*/
 }
 
 .chart rect {
@@ -25,10 +25,11 @@
 	display: block;
 }
 
-
-#fetchMoreLink {
-	float: right;
-	padding: 10 20 0 0;
+#fetchMoreLinkContainer {
+	text-align: center;
+	width: 100%;
+	padding-top: 20px;
+	padding-bottom: 20px;
 }
 
 .auditContent table {
@@ -41,5 +42,5 @@
 
 #auditEntryCountGraphContainer {
 	width: 100%;
-	margin: 10px;
 }
+

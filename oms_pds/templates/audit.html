@@ -27,7 +27,7 @@ Audit Logs
 {% straight_include "auditEntryTemplate.mustache" %}
 </script>
 
-<link rel="stylesheet" href="{{ STATIC_URL }}css/audit.css" />
+<link rel="stylesheet" href="{{ STATIC_URL }}css/audit.css" /> 
 <script src="{{ STATIC_URL }}js/audit.js"></script>
 
 {% endblock %}
@@ -67,7 +67,9 @@ Audit Logs
 	</div>
 	<div id="auditEntriesContainer">
 		<div id="auditEntriesList"></div>
-		<a href="#" onclick="return false;" id="fetchMoreLink">more...</a>
+		<div id="fetchMoreLinkContainer">
+			<a href="#" onclick="return false;" id="fetchMoreLink">more...</a>
+		</div>
 	</div>
 </div>
 <div style="clear: both;">
