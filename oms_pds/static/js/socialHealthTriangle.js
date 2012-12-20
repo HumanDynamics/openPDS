@@ -18,6 +18,10 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 	},
 	
 	render: function () {
+		if (this.graph) {
+			this.graph.remove();
+		}
+		
 		var data = this.answerLists.models[0].attributes["value"];
 
 		var width = window.innerWidth - 5,
@@ -76,7 +80,8 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 		var chartSvg = d3.select("#radial_chart").append("svg")
 			.attr("width", width)
 			.attr("height", height);
-			
+		
+		this.graph = chartSvg;
 
 		// Draw the legend first - putting it up top and off to the side allows us to make the chart iteself - important on smallers screens
 		
@@ -151,5 +156,6 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 });
 
 window.triangleApp = new SocialHealthTriangleView();
+$(window).bind("resize", function () { window.triangleApp.render(); });
 
 });
