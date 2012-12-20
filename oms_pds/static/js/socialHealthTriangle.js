@@ -11,174 +11,85 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 	el: "#triangle",
 	
 	initialize: function () {
-		answerLists = new AnswerListCollection();
-		answerLists.bind("reset", this.render);
-		answerLists.fetch();
+		_.bindAll(this, "render");
+		this.answerLists = new AnswerListCollection();
+		this.answerLists.bind("reset", this.render);
+		this.answerLists.fetch();
 	},
 	
 	render: function () {
-		var stop = {};
-		var data = answerLists.models[0].attributes["value"];
+		var data = this.answerLists.models[0].attributes["value"];
 
 		var width = window.innerWidth - 5,
-		height = window.innerHeight - (window.innerHeight * .35),
-		outerRadius = height / 2 - 10,
-		innerRadius = 120;
-
-		var angle = d3.scale.linear()
-		.range([0, 2 * Math.PI]);
-
-		var radius = d3.scale.linear()
-		.range([0, outerRadius]);
-
+		height = window.innerHeight * 0.75,
+		maxRadius = height / 2 - 10;
+		
 		var z = d3.scale.category20();
 		var whiteColor = d3.rgb(255,255,255);
 		var redColor = d3.rgb(200,100,50);
 		var newColor = d3.rgb(100,100,100);
 		var pink = d3.rgb(238,98,226);
 		var lightblue = d3.rgb(122,205,247);
+		
+		var averageData = _.filter(data, function (d) { return d.layer.indexOf("average") != -1; });
+		var userData = _.filter(data, function (d) { return d.layer == "User";});
 
-		var stack = d3.layout.stack()
-			.offset("zero")//.offset(function(d) { return d.y0; })
-			.values(function(d) { return d.values; })
-			.x(function(d, i) { return i; })
-			.y(function(d) { return d.value; });
-
-		var replaceY0 = 0;
-
+		// Handle the fact that our data is in different layers (ie; "User", "AverageLow", "AverageHigh")		
+		// nest - essentially a "group by": gets us a mapping from a layer to the associated objects with that layer 
 		var nest = d3.nest()
 			.key(function(d) { return d.layer; });
-
+		
+		// stack essentially just computes the inner radius for consecutive layers such as the average low and high layers we have
+		var stack = d3.layout.stack()
+			.offset("zero")//.offset(function(d) { return d.y0; })
+			.values(function(layer) { return layer.values; })
+			.x(function(d, i) { return d.key; })
+			.y(function(d) { return d.value; });
+		
+		var layers = stack(nest.entries(averageData));
+		
+		// Now that we got the stacking out of the way, we know the inner and outer radius for the average layer
+		// To simplify things (and optimize a bit), let's throw out the averageLow and replace it with the user data
+		layers[0] = {key: "User", values: userData };
+		
+		// Since all layers have the same dimensions, using the first one to pull the dimension names is fine
+		var dimensions = _.pluck(layers[0].values, "key");
+		var angle = d3.scale.ordinal().domain(dimensions).range([0,120,240])
+		var radius = d3.scale.linear().domain([0,10]).range([0, maxRadius]);
+		
 		var line = d3.svg.line.radial()
 			.interpolate("cardinal-closed")
 			.angle(function(d,i) { return angle(i); })
 			.radius(function(d) { return radius(replaceY0 + d.y); });
 
-
-		var lowestValues = [];
-
-		// parse response for lowest values
-		for (i = 0; i < data.length; i++){
-			if (data[i].layer == "averageLow"){
-				lowestValues.push(data[i].value);
-			}
-		}
-
+		// Setting up the radial area graph used by both the user and group values
 		var area = d3.svg.area.radial()
 			.interpolate("cardinal-closed")
-			.angle(function(d, i) { return angle(i); })
-			//.innerRadius(function(d) { return radius(replaceY0); })
-			.innerRadius(function(d, i) {
-				if (d.layer == "User"){ // Hardcoded check right now, might change later...data tag must have USER in it...
-					//  return radius(d.y);
-					return 0;
-				}
-				else{
-					return radius(lowestValues[i]);
-				}
-			})
-			.outerRadius(function(d) { return radius(replaceY0 + d.y); });
+			.angle(function(d, i) { return angle(d.key) * (Math.PI / 180.0); })
+			.innerRadius(function(d) { return radius((d.y0)? d.y0: 0); })
+			.outerRadius(function(d) { return radius(d.value); });
 
 		var heightPadding = 20;
 		var widthPadding = 2;
+		var chartCenter = [ ((width / 2) + widthPadding), ((height / 2) + heightPadding)];
 
-		var svg = d3.select("#radial_chart").append("svg")
+		var chartSvg = d3.select("#radial_chart").append("svg")
 			.attr("width", width)
-			.attr("height", height)
-			.append("g")
-			.attr("transform", "translate(" + ((width / 2) + widthPadding) + "," + ((height / 2) + heightPadding) + ")");
+			.attr("height", height);
+			
 
-
-		var layers = stack(nest.entries(data));
-
-		// Hardcoded swap for User and Average High
-		var swapper = layers[2];
-		layers[2] = layers[1];
-		layers[1] = swapper;
-
-		//var unhealthyArray = isHealthy(layers);
-
-		//console.log("unhealthyArray: ",unhealthyArray);
-		console.log("LAYERS : ",layers);
-
-
-		// Extend the domain slightly to match the range of [0, 2π].
-		angle.domain([0, layers.length]);
-		//radius.domain([0, d3.max(data, function(d) {  return d.y + replaceY0; })]);
-		// I think the numbers are out of 10, so it makes sense to make the radius domain [0, 10]
-		radius.domain([0, 10]);
-
-		// create Axis
-		svg.selectAll(".axis")
-		.data(d3.range(angle.domain()[1]))
-		.enter().append("g")
-		.attr("class", "axis")
-		.attr("transform", function(d) { return "rotate(" + angle(d) * 180 / Math.PI + ")"; })
-		.call(d3.svg.axis()
-				.scale(radius.copy().range([-5, -outerRadius]))
-				.ticks(5)
-				.orient("left"))
-				.append("text")
-				.attr("y", 
-						function (d) {
-					if (window.innerWidth < 455){
-						return -(window.innerHeight * .335);
-					}
-					else{
-						return -(window.innerHeight * .335);
-					}
-				})
-				.attr("dy", ".11em")
-				.attr("text-anchor", "middle")
-				.text(function(d, i) { return "label" + i; }) // insert means of getting at axis titles here
-				.attr("style","font-size:16px;")
-				.style("fill", function(d,i) {
-					return "black"; // Insert means of determining unhealthy value here
-				});
-
-		svg.selectAll(".layer")
-			.data(layers)
-			.enter().append("path")
-			.attr("class", "layer")
-			.attr("d", function(d) { return area(d.values); })
-			.style("fill",
-				function(d, i) {
-					if (i === 0){
-						return pink;
-					}
-					else if (i == 1){
-						return lightblue;
-					}
-					else
-						return pink; 
-				})
-			.style("opacity",.6)
-			.style("stroke",function(d, i) {
-				if (i == 0)
-					return whiteColor;
-				else if (i == 2)
-					return pink;
-				else if (i == 1)
-					return whiteColor;
-			})
-			.style("stroke-width", 0);
-
-
-		// Create the svg drawing canvas...
-		var canvas = d3.select("#radial_chart")
-			.append("svg:svg")
-			.attr("width", 300)//canvasWidth)
-			.attr("height", 75)//canvasHeight);
-			.attr("id","legend");
-
-		legendOffset = 35;
-		legendMarginLeft = 60;
-
+		// Draw the legend first - putting it up top and off to the side allows us to make the chart iteself - important on smallers screens
+		
 		var arrayOfTypes = ["User","Average High-Low"];
-
+		var legendOffset = 35;
+		var legendMarginLeft = 20;
+		
 		// Plot the bullet circles...
-		canvas.selectAll("circle")
+		var legend = chartSvg.append("g").attr("id", "legend");
+			
+		legend.selectAll("circle")
 			.data(arrayOfTypes).enter().append("svg:circle") // Append circle elements
+			.attr("transform", "translate(0,0)")
 			.attr("cx", legendMarginLeft)// barsWidthTotal + legendBulletOffset)
 			.attr("cy", function(d, i) { return legendOffset + i*25; } )
 			.attr("stroke-width", ".5")
@@ -191,18 +102,52 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 			.attr("r", 10);
 
 		// Create hyper linked text at right that acts as label key...
-		canvas.selectAll("a.legend_link")
+		legend.selectAll("a.legend_link")
 			.data(arrayOfTypes) // Instruct to bind dataSet to text elements
 			.enter().append("svg:a") // Append legend elements
 			.append("text")
+			.attr("transform", "translate(0,0)")
 			.attr("text-anchor", "left")
 			.attr("x", legendMarginLeft+15)
 			.attr("y", function(d, i) { return legendOffset + i*24 - 10; })
 			.attr("dx", 5)
 			.attr("dy", "1em") // Controls padding to place text above bars
 			.text(function(d, i) { return arrayOfTypes[i];})
-			.style("color","white")
+			.style("color","white");
 		
+		// Center the chart itself on the page
+		chartSvg = chartSvg.append("g")
+			.attr("transform", "translate("+chartCenter[0]+","+chartCenter[1]+")");
+			
+		// create Axis		
+		chartSvg.selectAll(".axis")
+			.data(dimensions)
+			.enter().append("g")
+			.attr("class", "axis")
+			.attr("transform", function(d, i) { return "rotate(" + angle(d) + ")"; })
+			.call(d3.svg.axis()
+				.scale(radius.copy().range([-5, -maxRadius]))
+				.ticks(5)
+				.orient("left"))
+				.append("text")
+				.attr("y", -(window.innerHeight * .335))
+				.attr("dy", ".11em")
+				.attr("text-anchor", "middle")
+				.text(function(d) { return d; }) 
+				.attr("style","font-size:16px;")
+				.style("fill", function(d,i) {
+					return "black"; // Insert means of determining unhealthy value here
+				});
+		
+		// Draw the layers
+		chartSvg.selectAll(".layer")
+			.data(layers)
+			.enter().append("path")
+			.attr("class", "layer")
+			.attr("d", function(d) { return area(d.values); })
+			.style("fill",
+				function(d, i) { return (d.key == "User")? pink:lightblue; })
+			.style("opacity", 0.6);
 	}
 });
 
