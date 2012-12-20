@@ -7,7 +7,7 @@ window.AnswerListCollection = Backbone.Collection.extend({
 	urlRoot: ANSWERLIST_API_URL
 });
 
-window.SocialHealthTriangleView = Backbone.View.extend({
+window.SocialHealthRadialView = Backbone.View.extend({
 	el: "#triangle",
 	
 	initialize: function () {
@@ -25,8 +25,8 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 		var data = this.answerLists.models[0].attributes["value"];
 
 		var width = window.innerWidth - 5,
-		height = window.innerHeight * 0.75,
-		maxRadius = height / 2 - 10;
+		height = window.innerHeight - 5,
+		maxRadius = Math.min(height, width) / 2 - 10;
 		
 		var z = d3.scale.category20();
 		var whiteColor = d3.rgb(255,255,255);
@@ -34,6 +34,9 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 		var newColor = d3.rgb(100,100,100);
 		var pink = d3.rgb(238,98,226);
 		var lightblue = d3.rgb(122,205,247);
+		
+		// Warning: the code below assumes that both average and user-specific sets are returned. If the user is not sharing, 
+		// this will not be the case, and will need to be handled eventually.
 		
 		var averageData = _.filter(data, function (d) { return d.layer.indexOf("average") != -1; });
 		var userData = _.filter(data, function (d) { return d.layer == "User";});
@@ -94,7 +97,6 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 			
 		legend.selectAll("circle")
 			.data(arrayOfTypes).enter().append("svg:circle") // Append circle elements
-			.attr("transform", "translate(0,0)")
 			.attr("cx", legendMarginLeft)// barsWidthTotal + legendBulletOffset)
 			.attr("cy", function(d, i) { return legendOffset + i*25; } )
 			.attr("stroke-width", ".5")
@@ -111,7 +113,6 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 			.data(arrayOfTypes) // Instruct to bind dataSet to text elements
 			.enter().append("svg:a") // Append legend elements
 			.append("text")
-			.attr("transform", "translate(0,0)")
 			.attr("text-anchor", "left")
 			.attr("x", legendMarginLeft+15)
 			.attr("y", function(d, i) { return legendOffset + i*24 - 10; })
@@ -131,7 +132,7 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 			.attr("class", "axis")
 			.attr("transform", function(d, i) { return "rotate(" + angle(d) + ")"; })
 			.call(d3.svg.axis()
-				.scale(radius.copy().range([-5, -maxRadius]))
+				.scale(radius.copy().range([-10, -maxRadius]))
 				.ticks(5)
 				.orient("left"))
 				.append("text")
@@ -155,7 +156,7 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 	}
 });
 
-window.triangleApp = new SocialHealthTriangleView();
-$(window).bind("resize", function () { window.triangleApp.render(); });
+window.radialApp = new SocialHealthRadialView();
+$(window).bind("resize", function () { window.radialApp.render(); });
 
 });
