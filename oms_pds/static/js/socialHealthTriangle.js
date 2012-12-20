@@ -80,7 +80,7 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 
 		// Draw the legend first - putting it up top and off to the side allows us to make the chart iteself - important on smallers screens
 		
-		var arrayOfTypes = ["User","Average High-Low"];
+		var arrayOfTypes = ["User","Average"];
 		var legendOffset = 35;
 		var legendMarginLeft = 20;
 		
@@ -130,8 +130,7 @@ window.SocialHealthTriangleView = Backbone.View.extend({
 				.ticks(5)
 				.orient("left"))
 				.append("text")
-				.attr("y", -(window.innerHeight * .335))
-				.attr("dy", ".11em")
+				.attr("y", -maxRadius - 10)
 				.attr("text-anchor", "middle")
 				.text(function(d) { return d; }) 
 				.attr("style","font-size:16px;")
