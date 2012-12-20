@@ -333,4 +333,5 @@ $(function () {
 	});
 	
 	window.auditApp = new AuditApp();
+	$(window).bind("resize", function () { auditApp.auditEntryGraph.render(); });
 });
