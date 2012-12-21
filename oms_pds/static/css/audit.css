@@ -1,6 +1,6 @@
 .chart {
 	height: 230px;
-/*	width: 100%;*/
+	width: 100%;
 }
 
 .chart rect {
@@ -30,6 +30,10 @@
 	width: 100%;
 	padding-top: 20px;
 	padding-bottom: 20px;
+}
+
+#auditEntriesContainer {
+	overflow-x: hidden;
 }
 
 .auditContent table {
