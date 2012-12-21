@@ -56,7 +56,7 @@
     </div>
 
     <script>
-    if (android && android.hideWebNavBar && android.hideWebNavBar()) {
+    if (typeof android !== "undefined" && android.hideWebNavBar && android.hideWebNavBar()) {
     	$("#navbar").hide();
     }
     </script>
