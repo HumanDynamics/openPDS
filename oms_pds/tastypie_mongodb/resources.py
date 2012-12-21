@@ -48,11 +48,43 @@ class MongoDBResource(Resource):
         except AttributeError:
             raise ImproperlyConfigured("Define a collection in your resource.")
 
+    def get_filter_object_value(self, parts, value):
+        # No operator implies equality
+        if (len(parts) == 1):
+            return value
+        
+        op = parts[1]
+        
+        if (op == "endsin"):
+            return { "$regex" : value + "$" }
+        
+        return value
+
+    def get_filter_object(self, request):
+        filter_object = {}
+        
+        if (request == None):
+            return filter_object
+        
+        for var in request.GET:
+            if (var not in ["datastore_owner__uuid", "format", "bearer_token"]):
+                # Ignoring known required querystring parameters, build the filters
+                value = request.GET[var]
+                parts = var.split("__")
+                name = parts[0]
+                
+                filter_object[name] = self.get_filter_object_value(parts, value)    
+        
+        return filter_object
+
     def obj_get_list(self, request=None, **kwargs):
         """
         Maps mongodb documents to Document class.
         """
-        return map(Document, self.get_collection(request).find())
+        pdb.set_trace()
+        filter_object = self.get_filter_object(request)
+        
+        return map(Document, self.get_collection(request).find(filter_object))
 
     def obj_get(self, request=None, **kwargs):
         """

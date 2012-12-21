@@ -33,15 +33,15 @@ class FunfResource(MongoDBResource):
         collection = "funf" # collection name
         filtering = { "key" : ["exact"]}
     
-    def obj_get_list(self, request=None, **kwargs):
-        """
-        Maps mongodb documents to Document class.
-        """
-        if (request and "key" in request.GET):
-            return map(Document, self.get_collection(request).find(key = request.GET["key"]))
-        if (request and "key__endsin" in request.GET):
-            return map(Document, self.get_collection(request).find({"key" : { "$regex" : request.GET["key__endsin"] + "$"}}))
-        return map(Document, self.get_collection(request).find())
+#    def obj_get_list(self, request=None, **kwargs):
+#        """
+#        Maps mongodb documents to Document class.
+#        """
+#        if (request and "key" in request.GET):
+#            return map(Document, self.get_collection(request).find(key = request.GET["key"]))
+#        if (request and "key__endsin" in request.GET):
+#            return map(Document, self.get_collection(request).find({"key" : { "$regex" : request.GET["key__endsin"] + "$"}}))
+#        return map(Document, self.get_collection(request).find())
 
 class FunfConfigResource(MongoDBResource):
 
