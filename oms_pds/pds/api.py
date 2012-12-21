@@ -31,6 +31,16 @@ class FunfResource(MongoDBResource):
 #        authorization = Authorization()
         object_class = Document
         collection = "funf" # collection name
+#        filtering = { "key" : ["exact"]}    
+   
+    def obj_get_list(self, request=None, **kwargs):
+        """
+        Maps mongodb documents to Document class.
+        """
+#	pdb.set_trace()
+        if (request and "key" in request.GET):
+            return map(Document, self.get_collection(request).find({ "key": request.GET["key"]}))
+        return map(Document, self.get_collection(request).find())
 
 class FunfConfigResource(MongoDBResource):
 
