@@ -79,7 +79,7 @@ class MongoDBResource(Resource):
                 parts = var.split("__")
                 name = parts[0]
                 
-                filter_object[name] = self.get_filter_object_value(parts, value)    
+                filter_object[name] = self.get_filter_object_value(parts, value)
         
         return filter_object
 

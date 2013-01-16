@@ -2,17 +2,15 @@
 
 import os
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='working-title.media.mit.edu:8003'
+SERVER_OMS_REGISTRY='vmip:8003'
 AUDIT_COLLECTION = 'auditentry'
 #SERVER_OMS_REGISTRY='localhost:8001'
 USE_MULTIPDS = True
-
-
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -131,8 +129,8 @@ INSTALLED_APPS = (
     'oms_pds.sharing',
     'oms_pds.trust',
     'djcelery',
-    'oms_pds.ra_celery',
-    'celerytest',
+    #'oms_pds.ra_celery',
+    'kombu.transport.django',
     #'oms_pds.visualization',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
@@ -140,7 +138,25 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
 )
 
-CELERY_IMPORTS = ('celerytest.task',)
+#django celery configuration
+
+from celery.schedules import crontab
+
+CELERY_IMPORTS = ('oms_pds.tasks',)
+BROKER_URL = "django://"
+CELERYBEAT_SCHEDULE = {
+    "aggregate-hourly-activity": {
+        "task": "tasks.aggregateAllActivityForLastHour",
+        "schedule": crontab(minute="*")
+     },
+}
+
+
+import djcelery
+
+djcelery.setup_loader()
+
+
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
