@@ -3,7 +3,14 @@ from django.conf import settings
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 from django.contrib import admin
+from oms_pds.pds.models import Role, Profile, Purpose, Scope, SharingLevel
 admin.autodiscover()
+admin.site.register(Role)
+admin.site.register(Profile)
+admin.site.register(Purpose)
+admin.site.register(Scope)
+admin.site.register(SharingLevel)
+
 
 #from tastypie.api import Api
 #from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource, PurposeResource, SocialHealthResource, RealityAnalysisResource
@@ -36,12 +43,10 @@ urlpatterns = patterns('oms_pds.views',
     (r'^sharing/', include('oms_pds.sharing.urls')),
     (r'^pdssettings/', 'permissions'), 
     (r'^trustsettings/', 'permissions'),
-    (r'^admin/', include(admin.site.urls)),
     (r'^admin/audit', direct_to_template, { 'template' : 'audit.html' }),
     #(r'^documentation/', include('tastytools.urls'), {'api_name': v1_api.api_name}),
     (r'^admin/roles', direct_to_template, { 'template' : 'roles.html' }),
-    (r'^(?P<owner_uuid>\w+)/api/', include(audit_entry_resource.urls)),
-    (r'^admin/viz', direct_to_template, { 'template' : 'reality_analysis/reality_analysis/visualization.html' }),
+    (r'^admin/', include(admin.site.urls)),
     (r'visualization/', include('oms_pds.visualization.urls')),
     # Examples:
     # url(r'^$', 'OMS_PDS.views.home', name='home'),

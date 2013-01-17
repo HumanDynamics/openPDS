@@ -7,6 +7,9 @@ connect(settings.MONGODB_DATABASE)
 
 class Profile(models.Model):
     uuid = models.CharField(max_length=36, unique=True, blank = False, null = False, db_index = True)
+    
+    def __unicode__(self):
+        return self.uuid
 
 class ResourceKey(models.Model):
     ''' A way of controlling sharing within a collection.  Maps to any key within a collection.  For example, funf probes and individual answers to questions'''
@@ -22,12 +25,18 @@ class ProbeGroupSetting(models.Model):
 class Purpose(models.Model):
     name = models.CharField(max_length=120)
     datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="purpose_owner")
+    
+    def __unicode__(self):
+        return self.name + "(" + self.datastore_owner.uuid + ")"
 
 class Scope(models.Model):
     name = models.CharField(max_length=120)
     purpose = models.ManyToManyField(Purpose)
     issharing = models.BooleanField(default=False)
     datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="scope_owner")
+    
+    def __unicode__(self):
+        return self.name + "(" + self.datastore_owner.uuid + ")"
 
 class Role(models.Model):
     """ @name : The user defined name of the role
@@ -37,6 +46,9 @@ class Role(models.Model):
     purpose = models.ManyToManyField(Purpose)
     issharing = models.BooleanField(default=False)
     datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="role_owner")
+    
+    def __unicode__(self):
+        return self.name + "(" + self.datastore_owner.uuid + ")"
     # TODO: fill in field for tokens (rather than ints / uuids)
 
 class SharingLevel(models.Model):
@@ -44,6 +56,9 @@ class SharingLevel(models.Model):
     purpose = models.ManyToManyField(Purpose)
     isselected = models.BooleanField(default=False)
     datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="sharinglevel_owner")
+    
+    def __unicode__(self):
+        return str(self.level) + "(" + self.datastore_owner.uuid + ")"
 
 #class Tokens(Document):
 #    id = StringField(required=True)
