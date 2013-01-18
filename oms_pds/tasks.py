@@ -93,6 +93,10 @@ def activityForToday():
             hour = (offsetFromMidnight - midnight) / 3600
             
             aggregates[profile.uuid][hour] = activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600)
+        
+        answer = { "key": "activityByHour" }
+        answer["value"] = aggregates[profile.uuid]
+        
+        connection[dbName]["answerlist"].insert(answer)
     
     return aggregates
-        
