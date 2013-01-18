@@ -87,15 +87,16 @@ def activityForToday():
         # Get the mongo store for the given user
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
-        aggregates[profile.uuid] = {}
+        aggregates[profile.uuid] = []
         
         for offsetFromMidnight in range(int(midnight), int(currentTime), 3600):
-            hour = (offsetFromMidnight - midnight) / 3600
+            hour = int((offsetFromMidnight - midnight) / 3600)
             
-            aggregates[profile.uuid][hour] = activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600)
-        
+            aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600))
+    
+	#pdb.set_trace()    
         answer = { "key": "activityByHour" }
-        answer["value"] = aggregates[profile.uuid]
+        answer["data"] = aggregates[profile.uuid]
         
         connection[dbName]["answerlist"].insert(answer)
     
