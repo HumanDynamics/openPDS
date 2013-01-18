@@ -61,45 +61,38 @@ def activityForLastHour():
     
     return aggregates
 
+def activityForTimeRange(collection, start, end):
+    lowActivityIntervals = highActivityIntervals = totalIntervals = 0
+    
+    for data in collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : start, "$lt":end }}):
+        #pdb.set_trace()
+        dataValue = data["value"]
+        totalIntervals += dataValue["total_intervals"]
+        lowActivityIntervals += dataValue["low_activity_intervals"]
+        highActivityIntervals += dataValue["high_activity_intervals"]
+    
+    return { "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+
 @task()
 def activityForToday():
     profiles = Profile.objects.all()
-    
-    print "Entered aggregation"
-    
     aggregates = {}
     
     # Note: left off setting midnight to loop over hours until now... 
     currentTime = time.mktime(time.gmtime())
     # Interesting way of getting midnight for the day of the current GM time.... is there a better way?
-    midnight = time.mktime(date.fromtimestamp(currentTime).timetuple())
-    
-    # funf timestamps are represented as millis since epoch
-    #currentTime *= 1000
-    #midnight *= 1000
-    
+    midnight = time.mktime(date.fromtimestamp(currentTime - (3600 * 24 * 2)).timetuple())
+
     for profile in profiles:
         # Get the mongo store for the given user
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
         aggregates[profile.uuid] = {}
         
-        print dbName
-        print profile.id, profile.uuid
-        pdb.set_trace()
         for offsetFromMidnight in range(int(midnight), int(currentTime), 3600):
             hour = (offsetFromMidnight - midnight) / 3600
-            lowActivityIntervals = highActivityIntervals = totalIntervals = 0
             
-            for data in collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : offsetFromMidnight, "$lt": offsetFromMidnight + 3600 }}):
-                #pdb.set_trace()
-                dataValue = data["value"]
-                print dataValue
-                totalIntervals += dataValue["total_intervals"]
-                lowActivityIntervals += dataValue["low_activity_intervals"]
-                highActivityIntervals += dataValue["high_activity_intervals"]
-            
-            aggregates[profile.uuid][hour] = { "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+            aggregates[profile.uuid][hour] = activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600)
     
     return aggregates
         
