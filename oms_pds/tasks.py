@@ -80,8 +80,10 @@ def activityForToday():
     
     # Note: left off setting midnight to loop over hours until now... 
     currentTime = time.mktime(time.gmtime())
+    today = date.fromtimestamp(currentTime)
     # Interesting way of getting midnight for the day of the current GM time.... is there a better way?
-    midnight = time.mktime(date.fromtimestamp(currentTime - (3600 * 24 * 2)).timetuple())
+    midnight = time.mktime(today.timetuple())
+    answerKey = "ActivityByHour" + today.strftime("%Y%m%d")
 
     for profile in profiles:
         # Get the mongo store for the given user
@@ -98,6 +100,13 @@ def activityForToday():
         answer = { "key": "activityByHour" }
         answer["data"] = aggregates[profile.uuid]
         
-        connection[dbName]["answerlist"].insert(answer)
+        answer = connection[dbName]["answerlist"].find({ "key": answerKey })
+        
+        if answer is None:
+            answer = { "key": answerKey }
+            
+        answer["value"] = aggregates[profile.uuid]
+        
+        connection[dbName]["answerlist"].save(answer)
     
     return aggregates
