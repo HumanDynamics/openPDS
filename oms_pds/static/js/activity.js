@@ -49,7 +49,7 @@ $(function () {
 			this.y.domain([maxActivity, 0]);
 			
 			// Orienting the x axis as left so we can rotate it later for vertical labels
-			var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(5).tickFormat(d3.time.format.utc("%b %e"));
+			var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(entries.length);
 			var yAxis = d3.svg.axis().scale(this.y).orient("left").ticks(10);			
 			
 			this.graph = d3.select(this.el).append("svg").attr("class", "chart")
