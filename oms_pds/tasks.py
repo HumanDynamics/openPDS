@@ -95,22 +95,48 @@ def activityForToday():
             hour = int((offsetFromMidnight - midnight) / 3600)
             
             aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600))
-<<<<<<< Updated upstream
         
-=======
-       
->>>>>>> Stashed changes
         answer = connection[dbName]["answerlist"].find({ "key": answerKey })
         
         if answer.count() == 0:
             answer = { "key": answerKey }
-<<<<<<< Updated upstream
             
-=======
-        else:
-            answer = answer[0]
+        answer["data"] = aggregates[profile.uuid]
+        
+        connection[dbName]["answerlist"].save(answer)
     
->>>>>>> Stashed changes
+    return aggregates
+
+
+@task()
+def activityForThisMonth():
+    profiles = Profile.objects.all()
+    aggregates = {}
+    
+    # Note: left off setting midnight to loop over hours until now... 
+    currentTime = time.mktime(time.gmtime())
+    today = date.fromtimestamp(currentTime)
+    # Interesting way of getting midnight for the day of the current GM time.... is there a better way?
+    midnight = time.mktime(today.timetuple())
+    answerKey = "ActivityByHour" + today.strftime("%Y%m")
+    startTime = time.mktime(today.replace(day = 1))
+
+    for profile in profiles:
+        # Get the mongo store for the given user
+        dbName = "User_" + str(profile.id)
+        collection = connection[dbName]["funf"]
+        aggregates[profile.uuid] = []
+        
+        for offsetFromMidnight in range(int(startTime), int(currentTime), 3600):
+            hour = int((offsetFromMidnight - midnight) / 3600)
+            
+            aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600))
+        
+        answer = connection[dbName]["answerlist"].find({ "key": answerKey })
+        
+        if answer.count() == 0:
+            answer = { "key": answerKey }
+            
         answer["data"] = aggregates[profile.uuid]
         
         connection[dbName]["answerlist"].save(answer)
