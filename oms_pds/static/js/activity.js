@@ -42,7 +42,7 @@ $(function () {
 			//startDate = new Date(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
 			//endDate = new Date(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1);
 			
-			this.x = d3.scale.linear().domain([0, entries.length]).rangeRoundBands([0,w], 0.1);
+			this.x = d3.scale.linear().domain([0, entries.length]).range([0,w]);
 			this.y = d3.scale.linear().range([0,h]);
 			var maxActivity = d3.max(entries);
 			
@@ -72,7 +72,7 @@ $(function () {
 				.attr("y", function (d) { 
 					return me.y(d) - 0.5;
 				})
-				.attr("width", me.x.rangeBand())
+				.attr("width", 20)
 				.attr("height", function (d) { return h - me.y(d); });
 		}
 	});
