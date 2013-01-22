@@ -95,12 +95,22 @@ def activityForToday():
             hour = int((offsetFromMidnight - midnight) / 3600)
             
             aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600))
+<<<<<<< Updated upstream
         
+=======
+       
+>>>>>>> Stashed changes
         answer = connection[dbName]["answerlist"].find({ "key": answerKey })
         
-        if answer is None:
+        if answer.count() == 0:
             answer = { "key": answerKey }
+<<<<<<< Updated upstream
             
+=======
+        else:
+            answer = answer[0]
+    
+>>>>>>> Stashed changes
         answer["data"] = aggregates[profile.uuid]
         
         connection[dbName]["answerlist"].save(answer)
