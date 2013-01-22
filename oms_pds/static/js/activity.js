@@ -8,7 +8,7 @@ $(function () {
 		fetch: function (options) {
 			options || (options = {});
 			options.data || (options.data = {});
-			filterMapping = { "key": "ActivityByHour20130122" }
+			filterMapping = { "key": "ActivityByHour201301" }
 			options.data = _.extend(options.data, filterMapping);
 			
 			return Backbone.Collection.prototype.fetch.call(this,options);
@@ -31,8 +31,8 @@ $(function () {
 			if (this.graph) {
 				this.graph.remove();
 			}
-			var padding = [0,20,30,0];
-			var w = $(this.el).width() - 50, h = 150;
+			var padding = [0,20,50,0];
+			var w = $(this.el).width() - 60, h = 150;
 			
 			var entries = this.activityByHourList.at(0).get("value").map(function (a) { return (a.total > 0)? (a.low + a.high) / a.total : 0});
 			
@@ -49,7 +49,7 @@ $(function () {
 			this.y.domain([maxActivity, 0]);
 			
 			// Orienting the x axis as left so we can rotate it later for vertical labels
-			var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(entries.length);
+			var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(22);
 			var yAxis = d3.svg.axis().scale(this.y).orient("left").ticks(10);			
 			
 			this.graph = d3.select(this.el).append("svg").attr("class", "chart")
@@ -72,7 +72,7 @@ $(function () {
 				.attr("y", function (d) { 
 					return me.y(d) - 0.5;
 				})
-				.attr("width", 20)
+				.attr("width", 2)
 				.attr("height", function (d) { return h - me.y(d); });
 		}
 	});

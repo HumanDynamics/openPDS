@@ -119,7 +119,7 @@ def activityForThisMonth():
     # Interesting way of getting midnight for the day of the current GM time.... is there a better way?
     midnight = time.mktime(today.timetuple())
     answerKey = "ActivityByHour" + today.strftime("%Y%m")
-    startTime = time.mktime(today.replace(day = 1))
+    startTime = time.mktime(today.replace(day = 1).timetuple())
 
     for profile in profiles:
         # Get the mongo store for the given user
