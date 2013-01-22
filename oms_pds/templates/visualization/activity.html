@@ -1,0 +1,42 @@
+{% extends "backboneLayout.html" %}
+
+{% load straight_include %}
+
+{% block title %}
+Audit Logs
+{% endblock %}
+
+
+{% block more_scripts %}
+    
+   <!-- <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css" />
+-->
+  <script src="{{ STATIC_URL }}js/jQuery.ui.datepicker.js"></script>
+     <link rel="stylesheet" href="{{ STATIC_URL}}css/jquery.ui.datepicker.mobile.css" /> 
+  <script src="{{ STATIC_URL }}js/jquery.ui.datepicker.mobile.js"></script>
+      
+<script src="http://d3js.org/d3.v2.js"></script>
+
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+</script>
+
+<script type="text/html" id="auditEntryTemplate">
+{% straight_include "auditEntryTemplate.mustache" %}
+</script>
+
+<script src="{{ STATIC_URL }}js/activity.js"></script>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="auditContent">
+	<div id="activityByHourGraphContainer">
+	<h2>Activity by hour</h2>
+	</div>
+</div>
+<div style="clear: both;">
+</div>
+{% endblock %}

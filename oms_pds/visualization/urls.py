@@ -10,4 +10,5 @@ from django.views.generic.simple import direct_to_template
 
 urlpatterns = patterns('oms_pds.trust.views',
     (r'^socialHealthRadial', direct_to_template, { 'template' : 'visualization/socialHealthRadial.html' }),
+    (r'^activity', direct_to_template, { 'template' : 'visualization/activity.html' }),
 )

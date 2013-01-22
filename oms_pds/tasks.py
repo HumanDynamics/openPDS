@@ -95,17 +95,13 @@ def activityForToday():
             hour = int((offsetFromMidnight - midnight) / 3600)
             
             aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600))
-    
-	#pdb.set_trace()    
-        answer = { "key": "activityByHour" }
-        answer["data"] = aggregates[profile.uuid]
         
         answer = connection[dbName]["answerlist"].find({ "key": answerKey })
         
         if answer is None:
             answer = { "key": answerKey }
             
-        answer["value"] = aggregates[profile.uuid]
+        answer["data"] = aggregates[profile.uuid]
         
         connection[dbName]["answerlist"].save(answer)
     
