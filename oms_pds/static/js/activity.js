@@ -36,20 +36,22 @@ $(function () {
 			
 			var entries = this.activityByHourList.at(0).get("value").map(function (a) { return (a.total > 0)? (a.low + a.high) / a.total : 0});
 			
-			//var startDate = new Date(this.fromDate);
-			//var endDate = new Date(this.toDate);//entries[entries.length - 1].date);
+			var endDate = new Date();//entries[entries.length - 1].date);
 			
-			//startDate = new Date(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate());
+			var startDate = new Date(endDate.getUTCFullYear(), endDate.getUTCMonth(), 1);
 			//endDate = new Date(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1);
 			
-			this.x = d3.scale.linear().domain([0, entries.length]).range([0,w]);
+			//this.x = d3.scale.linear().domain([0, entries.length]).range([0,w]);
+			this.x = d3.scale.ordinal().domain(d3.time.days(startDate, endDate)).rangeRoundBands([0,w], 0.1);
 			this.y = d3.scale.linear().range([0,h]);
 			var maxActivity = d3.max(entries);
 			
 			this.y.domain([maxActivity, 0]);
 			
 			// Orienting the x axis as left so we can rotate it later for vertical labels
-			var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(22);
+			//var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(entries.length);
+
+			var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(5).tickFormat(d3.time.format.utc("%b %e"));
 			var yAxis = d3.svg.axis().scale(this.y).orient("left").ticks(10);			
 			
 			this.graph = d3.select(this.el).append("svg").attr("class", "chart")
@@ -67,7 +69,7 @@ $(function () {
 				.append("rect")
 				.attr("transform", "translate(" + padding[2] + "," + padding[1] + ")")
 				.attr("x", function (d, i) { 
-					return me.x(i) - 0.5;
+					return me.x(new Date(endDate.getUTCFullYear(), endDate.getUTCMonth(), (i / 24) + 1)) - 0.5;
 				})
 				.attr("y", function (d) { 
 					return me.y(d) - 0.5;
