@@ -4,7 +4,7 @@ from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
 import time
-from datetime import date 
+from datetime import date, timedelta
 import json
 import pdb
 
@@ -18,49 +18,6 @@ connection = Connection(
     port=getattr(settings, "MONGODB_PORT", None)
 )
 
-
-@task()
-def add(x, y):
-    print "Test"
-    return x + y
-
-@task()
-def activityForLastHour():
-    profiles = Profile.objects.all()
-    
-    print "Entered aggregation"
-    
-    aggregates = {}
-    
-    for profile in profiles:
-        # Get the mongo store for the given user
-        dbName = "User_" + str(profile.id)
-        collection = connection[dbName]["funf"]
-        
-        # funf timestamps are represented as millis since epoch
-        
-        currentTime = time.mktime(time.gmtime())
-        oneHourAgo = currentTime - (3600 * 24 * 30)
-        
-        #currentTime *= 1000
-        #oneHourAgo *= 1000
-        
-        lowActivityIntervals = highActivityIntervals = totalIntervals = 0
-        
-        print dbName
-        print profile.id, profile.uuid
-        
-        for data in collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : oneHourAgo }}):
-            dataValue = json.loads(data.value)
-            print dataValue
-            totalIntervals += dataValue["total_intervals"]
-            lowActivityIntervals += dataValue["low_activity_intervals"]
-            highActivityIntervals += dataValue["high_activity_intervals"]
-        
-        aggregates[profile.uuid] = { "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
-    
-    return aggregates
-
 def activityForTimeRange(collection, start, end):
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
     
@@ -71,66 +28,20 @@ def activityForTimeRange(collection, start, end):
         lowActivityIntervals += dataValue["low_activity_intervals"]
         highActivityIntervals += dataValue["high_activity_intervals"]
     
-    return { "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+    return { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
 
-@task()
-def activityForToday():
+def aggregateActivityForAllUsers(answerKey, startTime, endTime):
     profiles = Profile.objects.all()
     aggregates = {}
     
-    # Note: left off setting midnight to loop over hours until now... 
-    currentTime = time.mktime(time.gmtime())
-    today = date.fromtimestamp(currentTime)
-    # Interesting way of getting midnight for the day of the current GM time.... is there a better way?
-    midnight = time.mktime(today.timetuple())
-    answerKey = "ActivityByHour" + today.strftime("%Y%m%d")
-
     for profile in profiles:
         # Get the mongo store for the given user
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
         aggregates[profile.uuid] = []
         
-        for offsetFromMidnight in range(int(midnight), int(currentTime), 3600):
-            hour = int((offsetFromMidnight - midnight) / 3600)
-            
-            aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600))
-        
-        answer = connection[dbName]["answerlist"].find({ "key": answerKey })
-        
-        if answer.count() == 0:
-            answer = { "key": answerKey }
-            
-        answer["data"] = aggregates[profile.uuid]
-        
-        connection[dbName]["answerlist"].save(answer)
-    
-    return aggregates
-
-
-@task()
-def activityForThisMonth():
-    profiles = Profile.objects.all()
-    aggregates = {}
-    
-    # Note: left off setting midnight to loop over hours until now... 
-    currentTime = time.mktime(time.gmtime())
-    today = date.fromtimestamp(currentTime)
-    # Interesting way of getting midnight for the day of the current GM time.... is there a better way?
-    midnight = time.mktime(today.timetuple())
-    answerKey = "ActivityByHour" + today.strftime("%Y%m")
-    startTime = time.mktime(today.replace(day = 1).timetuple())
-
-    for profile in profiles:
-        # Get the mongo store for the given user
-        dbName = "User_" + str(profile.id)
-        collection = connection[dbName]["funf"]
-        aggregates[profile.uuid] = []
-        
-        for offsetFromMidnight in range(int(startTime), int(currentTime), 3600):
-            hour = int((offsetFromMidnight - midnight) / 3600)
-            
-            aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromMidnight, offsetFromMidnight + 3600))
+        for offsetFromStart in range(int(startTime), int(endTime), 3600):
+            aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromStart, offsetFromStart + 3600))
         
         answer = connection[dbName]["answerlist"].find({ "key": answerKey })
         
@@ -144,3 +55,22 @@ def activityForThisMonth():
         connection[dbName]["answerlist"].save(answer)
     
     return aggregates
+
+@task()
+def recentActivity():
+    # Note: left off setting midnight to loop over hours until now... 
+    currentTime = time.mktime(time.gmtime())
+    today = date.fromtimestamp(currentTime)
+    answerKey = "RecentActivityByHour"
+    startTime = time.mktime((today - timedelta(days=7)).timetuple())
+        
+    return aggregateActivityForAllUsers(answerKey, startTime, currentTime)
+
+@task()
+def activityForThisMonth():
+    currentTime = time.mktime(time.gmtime())
+    today = date.fromtimestamp(currentTime)
+    answerKey = "ActivityByHour" + today.strftime("%Y%m")
+    startTime = time.mktime(today.replace(day = 1).timetuple())
+
+    return aggregateActivityForAllUsers(answerKey, startTime, currentTime)
