@@ -58,8 +58,19 @@ $(function () {
 
 			var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(d3.time.hours, 12);//.tickFormat(d3.time.format.utc("%b %e"));
 			var yAxis = d3.svg.axis().scale(this.y).orient("left").ticks(10);			
-			
-			this.graph = d3.select(this.el).append("svg").attr("class", "chart")
+
+			var me = this;
+			var line = d3.svg.line()
+				.x(function (d, i) { 
+					var thisDate = new Date();
+					thisDate.setTime(timestamps[i]);
+					return me.x(thisDate);
+				})
+				.y(function (d) { 
+					return me.y(d) - 0.5;
+				});
+
+			this.graph = d3.select(this.el).append("svg").attr("class", "chart");
 			
 			// Append the x axis
 			this.graph.append("g").attr("class", "axis").attr("transform", "translate(" + padding[2] + "," + (h + padding[1]) + ")rotate(-90 )").call(xAxis);
@@ -67,22 +78,24 @@ $(function () {
 			// Append the y axis
 			this.graph.append("g").attr("class", "axis").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").call(yAxis);
 
+			this.graph.append("svg:path").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").attr("d", line(entries));
+
 			// Note: a bit of a hack below. D3 dates are in the current timezone at midnight.			
-			var me = this;
-			
-			this.graph.selectAll("rect").data(entries).enter()
-				.append("rect")
-				.attr("transform", "translate(" + padding[2] + "," + padding[1] + ")")
-				.attr("x", function (d, i) { 
-					var thisDate = new Date();
-					thisDate.setTime(timestamps[i]);
-					return me.x(thisDate);// + 3 * (i % 24) - 0.5;
-				})
-				.attr("y", function (d) { 
-					return me.y(d) - 0.5;
-				})
-				.attr("width", 2)
-				.attr("height", function (d) { return h - me.y(d); });
+			//var me = this;
+
+			//this.graph.selectAll("rect").data(entries).enter()
+			//	.append("rect")
+			//	.attr("transform", "translate(" + padding[2] + "," + padding[1] + ")")
+			//	.attr("x", function (d, i) { 
+			//		var thisDate = new Date();
+			//		thisDate.setTime(timestamps[i]);
+			//		return me.x(thisDate);// + 3 * (i % 24) - 0.5;
+			//	})
+			//	.attr("y", function (d) { 
+			//		return me.y(d) - 0.5;
+			//	})
+			//	.attr("width", 2)
+			//	.attr("height", function (d) { return h - me.y(d); });
 		}
 	});
 	
