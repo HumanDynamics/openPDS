@@ -136,7 +136,9 @@ def activityForThisMonth():
         
         if answer.count() == 0:
             answer = { "key": answerKey }
-            
+        else:
+            answer = answer[0]
+ 
         answer["data"] = aggregates[profile.uuid]
         
         connection[dbName]["answerlist"].save(answer)

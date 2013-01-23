@@ -69,7 +69,7 @@ $(function () {
 				.append("rect")
 				.attr("transform", "translate(" + padding[2] + "," + padding[1] + ")")
 				.attr("x", function (d, i) { 
-					return me.x(new Date(endDate.getUTCFullYear(), endDate.getUTCMonth(), (i / 24) + 1)) - 0.5;
+					return me.x(new Date(endDate.getUTCFullYear(), endDate.getUTCMonth(), (i / 24) + 1)) + 3 * (i % 24) - 0.5;
 				})
 				.attr("y", function (d) { 
 					return me.y(d) - 0.5;
