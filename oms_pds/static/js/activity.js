@@ -23,6 +23,7 @@ $(function () {
 			
 			this.activityByHourList = new ActivityByHourCollection();
 			this.activityByHourList.bind("reset", this.render);
+			this.activityByHourList.fetch();
 		},
 		
 		render: function () {
@@ -84,4 +85,7 @@ $(function () {
 				.attr("height", function (d) { return h - me.y(d); });
 		}
 	});
+	
+	window.activityGraph = new ActivityByHourGraph();
+	$(window).bind("resize", function () { activityGraph.render(); });
 });
