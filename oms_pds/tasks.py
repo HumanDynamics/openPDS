@@ -7,6 +7,7 @@ import time
 from datetime import date, timedelta
 import json
 import pdb
+import math
 
 from oms_pds.pds.models import Profile
 
@@ -58,7 +59,6 @@ def aggregateActivityForAllUsers(answerKey, startTime, endTime):
 
 @task()
 def recentActivity():
-    # Note: left off setting midnight to loop over hours until now... 
     currentTime = time.mktime(time.gmtime())
     today = date.fromtimestamp(currentTime)
     answerKey = "RecentActivityByHour"
@@ -74,3 +74,17 @@ def activityForThisMonth():
     startTime = time.mktime(today.replace(day = 1).timetuple())
 
     return aggregateActivityForAllUsers(answerKey, startTime, currentTime)
+
+def totalActivityForHour(activityForHour):
+    return activityForHour.low + activityForHour.high
+
+@task 
+def recentActivityScore():
+    recentActivity = recentActivity()
+    score = {}
+    
+    for uuid, activityList in recentActivity:
+        recentTotals = map(totalActivityForHour, activityList)
+        score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / 50.0) - 1, 10)
+    
+    return score[uuid]
