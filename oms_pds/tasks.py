@@ -76,15 +76,15 @@ def activityForThisMonth():
     return aggregateActivityForAllUsers(answerKey, startTime, currentTime)
 
 def totalActivityForHour(activityForHour):
-    return activityForHour.low + activityForHour.high
+    return activityForHour["low"] + activityForHour["high"]
 
 @task 
 def recentActivityScore():
     data = recentActivity()
     score = {}
-    
-    for uuid, activityList in data:
+    #pdb.set_trace() 
+    for uuid, activityList in data.iteritems():
         recentTotals = map(totalActivityForHour, activityList)
         score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / 50.0) - 1, 10)
     
-    return score[uuid]
+    return score
