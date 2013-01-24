@@ -40,32 +40,6 @@ def focusForTimeRange(collection, start, end):
     
     return { "start": start, "end": end, "focus": screenOnCount }
 
-def aggregateActivityForAllUsers(answerKey, startTime, endTime):
-    profiles = Profile.objects.all()
-    aggregates = {}
-    
-    for profile in profiles:
-        # Get the mongo store for the given user
-        dbName = "User_" + str(profile.id)
-        collection = connection[dbName]["funf"]
-        aggregates[profile.uuid] = []
-        
-        for offsetFromStart in range(int(startTime), int(endTime), 3600):
-            aggregates[profile.uuid].append(activityForTimeRange(collection, offsetFromStart, offsetFromStart + 3600))
-        
-        answer = connection[dbName]["answerlist"].find({ "key": answerKey })
-        
-        if answer.count() == 0:
-            answer = { "key": answerKey }
-        else:
-            answer = answer[0]
- 
-        answer["data"] = aggregates[profile.uuid]
-        
-        connection[dbName]["answerlist"].save(answer)
-    
-    return aggregates
-
 def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
     profiles = Profile.objects.all()
     aggregates = {}
@@ -97,7 +71,7 @@ def recentActivity():
     answerKey = "RecentActivityByHour"
     startTime = time.mktime((today - timedelta(days=7)).timetuple())
         
-    return aggregateActivityForAllUsers(answerKey, startTime, currentTime)
+    return aggregateForAllUsers(answerKey, startTime, currentTime, activityForTimeRange)
 
 @task()
 def recentFocus():
@@ -115,7 +89,7 @@ def activityForThisMonth():
     answerKey = "ActivityByHour" + today.strftime("%Y%m")
     startTime = time.mktime(today.replace(day = 1).timetuple())
 
-    return aggregateActivityForAllUsers(answerKey, startTime, currentTime)
+    return aggregateForAllUsers(answerKey, startTime, currentTime, activityForTimeRange)
 
 def totalActivityForHour(activityForHour):
     return activityForHour["low"] + activityForHour["high"]
@@ -129,4 +103,15 @@ def recentActivityScore():
         recentTotals = map(totalActivityForHour, activityList)
         score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / 50.0) - 1, 10)
     
+    return score
+
+@task 
+def recentFocusScore():
+    data = recentFocus()
+    score = {}
+
+    for uuid, activityList in data.iteritems():
+        recentTotals = [item["focus"] for item in activityList]
+        score[uuid] = min(math.log(1 + sum(recentTotals)), 10)
+
     return score

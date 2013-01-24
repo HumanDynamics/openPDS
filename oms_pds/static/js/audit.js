@@ -155,8 +155,8 @@ $(function () {
 			if (this.graph) {
 				this.graph.remove();
 			}
-			var padding = [0,20,30,0];
-			var w = $(this.el).width() - 50, h = 150;
+			var padding = [0,20,50,0];
+			var w = $(this.el).width() - 60, h = 150;
 			
 			var entries = this.auditEntryCounts.map(function (model) { return { date: model.attributes['date'], count: model.attributes['count']}});
 			
