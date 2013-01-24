@@ -40,6 +40,23 @@ def focusForTimeRange(collection, start, end):
     
     return { "start": start, "end": end, "focus": screenOnCount }
 
+def socialForTimeRange(collection, start, end):
+    smsCount = callCount = 0
+    
+    # For now, we're just taking the most recent SMS probe value and checking message dates within it
+    # This will not account for messages that might have been deleted.
+    
+    entries = collection.find({ "key": { "$regex": "SMSProbe$" }, "time": { "$gte": start, "$lt": end }}).sort("time", -1)
+    
+    if entries.count() > 0:
+        dataValue = entries[0]["value"]
+        messages = [message for message in dataValue["messages"] if message["date"] >= start*1000 and message["date"] < end*1000]
+        smsCount = messages.count()
+    
+        #dataValue = data["value"]
+        #messages = [message for message in dataValue["messages"] if message["date"] >= start*1000 and message["date"] < end*1000]
+    return { "start": start, "end": end, "social": smsCount + callCount}
+
 def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
     profiles = Profile.objects.all()
     aggregates = {}
@@ -81,6 +98,15 @@ def recentFocus():
     startTime = time.mktime((today - timedelta(days=7)).timetuple())
     
     return aggregateForAllUsers(answerKey, startTime, currentTime, focusForTimeRange)
+
+@task()
+def recentSocial():
+    currentTime = time.mktime(time.gmtime())
+    answerKey = "RecentSocialByHour"
+    today = date.fromtimestamp(currentTime)
+    startTime = time.mktime((today - timedelta(days=7)).timetuple())
+    
+    return aggregateForAllUsers(answerKey, startTime, currentTime, socialForTimeRange)
 
 @task()
 def activityForThisMonth():
