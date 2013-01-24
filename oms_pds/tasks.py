@@ -31,6 +31,15 @@ def activityForTimeRange(collection, start, end):
     
     return { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
 
+def focusForTimeRange(collection, start, end):
+    screenOnCount = 0
+    
+    for data in collection.find({ "key": { "$regex": "ScreenProbe$" }, "time": {"$gte": start, "$lt": end }}):
+        dataValue = data["value"]
+        screenOnCount += 1 if dataValue["screen_on"] else 0
+    
+    return { "start": start, "end": end, "focus": screenOnCount }
+
 def aggregateActivityForAllUsers(answerKey, startTime, endTime):
     profiles = Profile.objects.all()
     aggregates = {}
@@ -57,6 +66,30 @@ def aggregateActivityForAllUsers(answerKey, startTime, endTime):
     
     return aggregates
 
+def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
+    profiles = Profile.objects.all()
+    aggregates = {}
+    
+    for profile in profiles:
+        dbName = "User_" + str(profile.id)
+        collection = connection[dbName]["funf"]
+        aggregates[profile.uuid] = []
+        
+        for offsetFromStart in range(int(startTime), int(endTime), 3600):
+            aggregates[profile.uuid].append(aggregator(collection, offsetFromStart, offsetFromStart + 3600))
+        
+        answer = connection[dbName]["answerlist"].find({ "key" : answerKey })
+        
+        if answer.count() == 0:
+            answer = { "key": answerKey }
+        else:
+            answer = answer[0]
+            
+        answer["data"] = aggregates[profile.uuid]
+        
+        connection[dbName]["answerlist"].save(answer)
+    return aggregates
+
 @task()
 def recentActivity():
     currentTime = time.mktime(time.gmtime())
@@ -65,6 +98,15 @@ def recentActivity():
     startTime = time.mktime((today - timedelta(days=7)).timetuple())
         
     return aggregateActivityForAllUsers(answerKey, startTime, currentTime)
+
+@task()
+def recentFocus():
+    currentTime = time.mktime(time.gmtime())
+    answerKey = "RecentFocusByHour"
+    today = date.fromtimestamp(currentTime)
+    startTime = time.mktime((today - timedelta(days=7)).timetuple())
+    
+    return aggregateForAllUsers(answerKey, startTime, currentTime, focusForTimeRange)
 
 @task()
 def activityForThisMonth():
