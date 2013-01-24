@@ -80,10 +80,10 @@ def totalActivityForHour(activityForHour):
 
 @task 
 def recentActivityScore():
-    recentActivity = recentActivity()
+    data = recentActivity()
     score = {}
     
-    for uuid, activityList in recentActivity:
+    for uuid, activityList in data:
         recentTotals = map(totalActivityForHour, activityList)
         score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / 50.0) - 1, 10)
     
