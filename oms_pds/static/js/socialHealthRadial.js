@@ -1,5 +1,13 @@
 $(function () {
 
+window.handleTabChange = function (tabNum) {
+	if (typeof android !== "undefined" && android.handleTabChange) {
+		return android.handleTabChange(tabNum);
+	}
+	
+	return true;
+};
+
 window.AnswerList = Backbone.Model.extend({});
 
 window.AnswerListCollection = Backbone.Collection.extend({
@@ -124,26 +132,7 @@ window.SocialHealthRadialView = Backbone.View.extend({
 		// Center the chart itself on the page
 		chartSvg = chartSvg.append("g")
 			.attr("transform", "translate("+chartCenter[0]+","+chartCenter[1]+")");
-			
-		// create Axis		
-		chartSvg.selectAll(".axis")
-			.data(dimensions)
-			.enter().append("g")
-			.attr("class", "axis")
-			.attr("transform", function(d, i) { return "rotate(" + angle(d) + ")"; })
-			.call(d3.svg.axis()
-				.scale(radius.copy().range([-10, -maxRadius]))
-				.ticks(5)
-				.orient("left"))
-				.append("text")
-				.attr("y", -maxRadius - 10)
-				.attr("text-anchor", "middle")
-				.text(function(d) { return d; }) 
-				.attr("style","font-size:16px;")
-				.style("fill", function(d,i) {
-					return "black"; // Insert means of determining unhealthy value here
-				});
-		
+	
 		// Draw the layers
 		chartSvg.selectAll(".layer")
 			.data(layers)
@@ -153,6 +142,29 @@ window.SocialHealthRadialView = Backbone.View.extend({
 			.style("fill",
 				function(d, i) { return (d.key == "User")? pink:lightblue; })
 			.style("opacity", 0.6);
+			
+		// create Axis		
+		chartSvg.selectAll(".axis")
+			.data(dimensions)
+			.enter().append("g")
+			.attr("class", "axis")
+			.attr("transform", function(d, i) { return "rotate(" + angle(d) + ")"; })
+			.on("click", function (d,i) { return handleTabChange(i); })
+			.call(d3.svg.axis()
+				.scale(radius.copy().range([-10, -maxRadius]))
+				.ticks(5)
+				.orient("left"))
+			//	.on("click", function (d,i) { return handleTabChange(i); })
+				.append("text")
+				.attr("y", -maxRadius - 10)
+				.attr("text-anchor", "middle")				
+				.text(function(d) { return d; })
+				//.on("click", function (d,i) { return handleTabChange(i); }) 
+				.attr("style","font-size:16px;")
+				.style("fill", function(d,i) {
+					return "black"; // Insert means of determining unhealthy value here
+				});
+	
 	}
 });
 
