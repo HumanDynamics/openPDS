@@ -43,18 +43,23 @@ def focusForTimeRange(collection, start, end):
 def socialForTimeRange(collection, start, end):
     smsCount = callCount = 0
     
-    # For now, we're just taking the most recent SMS probe value and checking message dates within it
-    # This will not account for messages that might have been deleted.
+    # For now, we're just taking the most recent probe value and checking message / call dates within it
+    # This will not account for messages or call log entries that might have been deleted.
     
-    entries = collection.find({ "key": { "$regex": "SMSProbe$" }, "time": { "$gte": start, "$lt": end }}).sort("time", -1)
+    smsEntries = collection.find({ "key": { "$regex": "SMSProbe$" }}).sort("time", -1)
     
-    if entries.count() > 0:
-        dataValue = entries[0]["value"]
+    if smsEntries.count() > 0:
+        dataValue = smsEntries[0]["value"]
         messages = [message for message in dataValue["messages"] if message["date"] >= start*1000 and message["date"] < end*1000]
         smsCount = len(messages)
     
-        #dataValue = data["value"]
-        #messages = [message for message in dataValue["messages"] if message["date"] >= start*1000 and message["date"] < end*1000]
+    callEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }}).sort("time", -1)
+    
+    if callEntries.count() > 0:
+        dataValue = callEntries[0]["value"]
+        calls = [call for call in dataValue["calls"] if call["date"] >= start*1000 and call["date"] < end*1000]
+        callCount = len(calls)
+
     return { "start": start, "end": end, "social": smsCount + callCount}
 
 def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
