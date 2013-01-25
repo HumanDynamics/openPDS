@@ -46,14 +46,18 @@ def socialForTimeRange(collection, start, end):
     # For now, we're just taking the most recent probe value and checking message / call dates within it
     # This will not account for messages or call log entries that might have been deleted.
     
-    smsEntries = collection.find({ "key": { "$regex": "SMSProbe$" }}).sort("time", -1)
+    # NOTE: we're including the start date in the queries below to simply shrink the number of entries we need to sort
+    # Given that SMS and call log probes include all messages and calls stored on the phone, only the most recent is 
+    # completely necessary.
+    
+    smsEntries = collection.find({ "key": { "$regex": "SMSProbe$" }, "time": {"$gte": start}}).sort("time", -1)
     
     if smsEntries.count() > 0:
         dataValue = smsEntries[0]["value"]
         messages = [message for message in dataValue["messages"] if message["date"] >= start*1000 and message["date"] < end*1000]
         smsCount = len(messages)
     
-    callEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }}).sort("time", -1)
+    callEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }, "time": {"$gte": start}}).sort("time", -1)
     
     if callEntries.count() > 0:
         dataValue = callEntries[0]["value"]
