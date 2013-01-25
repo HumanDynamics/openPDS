@@ -53,15 +53,19 @@ def socialForTimeRange(collection, start, end):
     smsEntries = collection.find({ "key": { "$regex": "SMSProbe$" }, "time": {"$gte": start}})
     
     if smsEntries.count() > 0:
-        messages = reduce(lambda set1, set2: set1.extend(set2), [smsEntry["value"]["messages"] for smsEntry in smsEntries])
+        #messages = reduce(lambda set1, set2: set1.extend(set2), [smsEntry["value"]["messages"] for smsEntry in smsEntries], [])
         # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages
+        messageSets = [smsEntry["value"]["messages"] for smsEntry in smsEntries]
+	messages = [message for messageSet in messageSets for message in messageSet]
         messageTimes = set([message["date"] for message in messages if message["date"] >= start*1000 and message["date"] < end*1000])
         smsCount = len(messageTimes)
     
     callLogEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }, "time": {"$gte": start}})
     
     if callLogEntries.count() > 0:
-        calls = reduce(lambda callSet1, callSet2: callSet1.extend(callSet2), [callLogEntry["value"]["calls"] for callLogEntry in callLogEntries])
+        #calls = reduce(lambda callSet1, callSet2: callSet1.extend(callSet2), [callLogEntry["value"]["calls"] for callLogEntry in callLogEntries], [])
+        callSets = [callEntry["value"]["calls"] for callEntry in callLogEntries]
+        calls = [call for callSet in callSets for call in callSet]
         callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
         callCount = len(callTimes)
 
@@ -76,6 +80,7 @@ def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
         collection = connection[dbName]["funf"]
         aggregates[profile.uuid] = []
         
+        pdb.set_trace()
         for offsetFromStart in range(int(startTime), int(endTime), 3600):
             aggregates[profile.uuid].append(aggregator(collection, offsetFromStart, offsetFromStart + 3600))
         
