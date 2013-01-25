@@ -50,19 +50,20 @@ def socialForTimeRange(collection, start, end):
     # Given that SMS and call log probes include all messages and calls stored on the phone, only the most recent is 
     # completely necessary.
     
-    smsEntries = collection.find({ "key": { "$regex": "SMSProbe$" }, "time": {"$gte": start}}).sort("time", -1)
+    smsEntries = collection.find({ "key": { "$regex": "SMSProbe$" }, "time": {"$gte": start}})
     
     if smsEntries.count() > 0:
-        dataValue = smsEntries[0]["value"]
-        messages = [message for message in dataValue["messages"] if message["date"] >= start*1000 and message["date"] < end*1000]
-        smsCount = len(messages)
+        messages = reduce(lambda set1, set2: set1.extend(set2), [smsEntry["value"]["messages"] for smsEntry in smsEntries])
+        # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages
+        messageTimes = set([message["date"] for message in messages if message["date"] >= start*1000 and message["date"] < end*1000])
+        smsCount = len(messageTimes)
     
-    callEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }, "time": {"$gte": start}}).sort("time", -1)
+    callLogEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }, "time": {"$gte": start}})
     
-    if callEntries.count() > 0:
-        dataValue = callEntries[0]["value"]
-        calls = [call for call in dataValue["calls"] if call["date"] >= start*1000 and call["date"] < end*1000]
-        callCount = len(calls)
+    if callLogEntries.count() > 0:
+        calls = reduce(lambda callSet1, callSet2: callSet1.extend(callSet2), [callLogEntry["value"]["calls"] for callLogEntry in callLogEntries])
+        callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
+        callCount = len(callTimes)
 
     return { "start": start, "end": end, "social": smsCount + callCount}
 
