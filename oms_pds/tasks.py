@@ -51,7 +51,7 @@ def socialForTimeRange(collection, start, end):
     if entries.count() > 0:
         dataValue = entries[0]["value"]
         messages = [message for message in dataValue["messages"] if message["date"] >= start*1000 and message["date"] < end*1000]
-        smsCount = messages.count()
+        smsCount = len(messages)
     
         #dataValue = data["value"]
         #messages = [message for message in dataValue["messages"] if message["date"] >= start*1000 and message["date"] < end*1000]
