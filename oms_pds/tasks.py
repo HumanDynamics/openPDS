@@ -70,8 +70,10 @@ def socialForTimeRange(collection, start, end):
     if callLogEntries.count() > 0:
         callSets = [callEntry["value"]["calls"] for callEntry in callLogEntries]
         calls = [call for callSet in callSets for call in callSet if call["date"] >= start*1000 and call["date"] < end*1000]
+        if len(calls) > 0:
+            pdb.set_trace()
         #callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
-        countsByNumber = [len([call for call in calls if call["number"]["ONE_WAY_HASH"] == numberHash]) for numberHash in [call["number"]["ONE_WAY_HASH"] for call in calls]]
+        countsByNumber = [float(len([call for call in calls if call["number"] == numberHash])) for numberHash in [call["number"] for call in calls]]
         totalCalls = sum(countsByNumber)
         frequencies = [count / totalCalls for count in countsByNumber]
         score =sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
