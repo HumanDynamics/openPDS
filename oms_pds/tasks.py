@@ -41,35 +41,42 @@ def focusForTimeRange(collection, start, end):
     return { "start": start, "end": end, "focus": screenOnCount }
 
 def socialForTimeRange(collection, start, end):
-    smsCount = callCount = 0
+    score = 0
     
     # For now, we're just taking the most recent probe value and checking message / call dates within it
     # This will not account for messages or call log entries that might have been deleted.
     
     # NOTE: we're including the start date in the queries below to simply shrink the number of entries we need to sort
-    # Given that SMS and call log probes include all messages and calls stored on the phone, only the most recent is 
-    # completely necessary.
+    # Given that SMS and call log probes may include all messages and calls stored on the phone, we can't just look
+    # at entries collected during that time frame
     
-    smsEntries = collection.find({ "key": { "$regex": "SMSProbe$" }, "time": {"$gte": start}})
-    
-    if smsEntries.count() > 0:
-        #messages = reduce(lambda set1, set2: set1.extend(set2), [smsEntry["value"]["messages"] for smsEntry in smsEntries], [])
-        # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages
-        messageSets = [smsEntry["value"]["messages"] for smsEntry in smsEntries]
-	messages = [message for messageSet in messageSets for message in messageSet]
-        messageTimes = set([message["date"] for message in messages if message["date"] >= start*1000 and message["date"] < end*1000])
-        smsCount = len(messageTimes)
+#    smsEntries = collection.find({ "key": { "$regex": "SMSProbe$" }, "time": {"$gte": start}})
+#    
+#    if smsEntries.count() > 0:
+#        # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages
+#        messageSets = [smsEntry["value"]["messages"] for smsEntry in smsEntries]
+#        messages = set([message for messageSet in messageSets for message in messageSet if message["date"] >= start*1000 and message["date"] < end*1000])
+#        
+#        # We're assuming a hit on a thread is equivalent to a single phone call
+#        messageCountByThread = {}
+#        
+#        for threadId in [message["thread_id"] for message in messages]:
+#            messageCountByAddress[threadId] = len([message for message in messages if message["threadId"] if message["thread_id"] = ])
+#        #messageTimes = set([message["date"] for message in messages if message["date"] >= start*1000 and message["date"] < end*1000])
+#        smsCount = len(messageTimes)
     
     callLogEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }, "time": {"$gte": start}})
     
     if callLogEntries.count() > 0:
-        #calls = reduce(lambda callSet1, callSet2: callSet1.extend(callSet2), [callLogEntry["value"]["calls"] for callLogEntry in callLogEntries], [])
         callSets = [callEntry["value"]["calls"] for callEntry in callLogEntries]
-        calls = [call for callSet in callSets for call in callSet]
-        callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
-        callCount = len(callTimes)
-
-    return { "start": start, "end": end, "social": smsCount + callCount}
+        calls = [call for callSet in callSets for call in callSet if call["date"] >= start*1000 and call["date"] < end*1000]
+        #callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
+        countsByNumber = [len([call for call in calls if call["number"]["ONE_WAY_HASH"] == numberHash]) for numberHash in [call["number"]["ONE_WAY_HASH"] for call in calls]]
+        totalCalls = sum(countsByNumber)
+        frequencies = [count / totalCalls for count in countsByNumber]
+        score =sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
+    
+    return { "start": start, "end": end, "social": score}
 
 def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
     profiles = Profile.objects.all()
@@ -142,7 +149,7 @@ def recentActivityScore():
     #pdb.set_trace() 
     for uuid, activityList in data.iteritems():
         recentTotals = map(totalActivityForHour, activityList)
-        score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / 50.0) - 1, 10)
+        score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / 50.0, 2) - 1, 10)
     
     return score
 
@@ -151,8 +158,9 @@ def recentFocusScore():
     data = recentFocus()
     score = {}
 
-    for uuid, activityList in data.iteritems():
-        recentTotals = [item["focus"] for item in activityList]
-        score[uuid] = min(math.log(1 + sum(recentTotals)), 10)
+    for uuid, focusList in data.iteritems():
+        recentTotals = [item["focus"] for item in focusList]
+        score[uuid] = min(math.log(1 + sum(recentTotals), 2), 10)
 
     return score
+
