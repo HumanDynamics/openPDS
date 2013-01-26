@@ -70,8 +70,7 @@ def socialForTimeRange(collection, start, end):
     if callLogEntries.count() > 0:
         callSets = [callEntry["value"]["calls"] for callEntry in callLogEntries]
         calls = [call for callSet in callSets for call in callSet if call["date"] >= start*1000 and call["date"] < end*1000]
-        if len(calls) > 0:
-            pdb.set_trace()
+        
         #callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
         countsByNumber = [float(len([call for call in calls if call["number"] == numberHash])) for numberHash in [call["number"] for call in calls]]
         totalCalls = sum(countsByNumber)
@@ -89,7 +88,6 @@ def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
         collection = connection[dbName]["funf"]
         aggregates[profile.uuid] = []
         
-        pdb.set_trace()
         for offsetFromStart in range(int(startTime), int(endTime), 3600):
             aggregates[profile.uuid].append(aggregator(collection, offsetFromStart, offsetFromStart + 3600))
         
@@ -166,3 +164,42 @@ def recentFocusScore():
 
     return score
 
+@task
+def recentSocialScore():
+    data = recentSocial()
+    score = {}
+    
+    for uuid, socialList in data.iteritems():
+        recentTotals = [item["social"] for item in socialList]
+        score[uuid] = float(sum(recentTotals)) / len(recentTotals)
+        
+    return score
+
+def recentSocialHealthScores():
+    profiles = Profile.objects.all()
+    data = {}
+    
+    activityScores = recentActivityScore()
+    socialScores = recentSocialScore()
+    focusScores = recentFocusScore()
+    
+    for profile in profiles:
+        dbName = "User_" + str(profile.id)
+        collection = connection[dbName]["answerlist"]
+        
+        answer = collection.find({ "key" : "socialhealth" })
+        
+        if answer.count() == 0:
+            answer = { "key": "socialhealth", "data": [] }
+        else:
+            answer = answer[0]
+        
+        data[profile.uuid] = [datum for datum in answer["data"] if datum["layer"] != "User"]
+        data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores[profile.uuid] })
+        data[profile.uuid].append({ "key": "social", "layer": "User", "value": socialScores[profile.uuid] })
+        data[profile.uuid].append({ "key": "focus", "layer": "User", "value": focusScores[profile.uuid] })
+        
+        answer["data"] = data[profile.uuid]
+        
+        collection.save(answer)
+    return data
