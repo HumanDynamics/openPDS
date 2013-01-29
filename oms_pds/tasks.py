@@ -142,7 +142,7 @@ def activityForThisMonth():
 def totalActivityForHour(activityForHour):
     return activityForHour["low"] + activityForHour["high"]
 
-@task 
+@task() 
 def recentActivityScore():
     data = recentActivity()
     score = {}
@@ -153,7 +153,7 @@ def recentActivityScore():
     
     return score
 
-@task 
+@task()
 def recentFocusScore():
     data = recentFocus()
     score = {}
@@ -164,7 +164,7 @@ def recentFocusScore():
 
     return score
 
-@task
+@task()
 def recentSocialScore():
     data = recentSocial()
     score = {}
@@ -175,6 +175,7 @@ def recentSocialScore():
         
     return score
 
+@task()
 def recentSocialHealthScores():
     profiles = Profile.objects.all()
     data = {}
@@ -188,11 +189,7 @@ def recentSocialHealthScores():
         collection = connection[dbName]["answerlist"]
         
         answer = collection.find({ "key" : "socialhealth" })
-        
-        if answer.count() == 0:
-            answer = { "key": "socialhealth", "data": [] }
-        else:
-            answer = answer[0]
+        answer = answer[0] if answer.count() > 0 else {"key": "socialhealth", "data":[]} 
         
         data[profile.uuid] = [datum for datum in answer["data"] if datum["layer"] != "User"]
         data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores[profile.uuid] })
