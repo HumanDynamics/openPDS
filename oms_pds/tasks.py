@@ -139,9 +139,6 @@ def activityForThisMonth():
 
     return aggregateForAllUsers(answerKey, startTime, currentTime, activityForTimeRange)
 
-def totalActivityForHour(activityForHour):
-    return activityForHour["low"] + activityForHour["high"]
-
 @task() 
 def recentActivityScore():
     data = recentActivity()
