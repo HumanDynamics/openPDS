@@ -44,6 +44,13 @@ $(function () {
 			// We're performing some simple smoothing on the data here to avoid the drastic peaks and valleys typical of activity data
 			//entries = entries.map(function (a, i) { return 0.5 * a + (0.25 * entries[Math.max(0, i - 1)]) + (0.25 * entries[Math.min(entries.length - 1, i + 1)]); });
 
+			// Add zero entries to the beginning and end of entries, with duplicate beginning and end timestamps associated with them
+			// This closes up the data in case we want to do an area graph
+			entries.push(0);
+			entries.unshift(0);
+			timestamps.push(timestamps[timestamps.length-1]);
+			timestamps.unshift(timestamps[0]);
+	
 			var endDate = new Date();//entries[entries.length - 1].date);
 			endDate.setTime(timestamps[timestamps.length - 1]);
 			
@@ -75,7 +82,7 @@ $(function () {
 					return me.x(thisDate);
 				})
 				.y(function (d) { 
-					return me.y(d) - 0.5;
+					return me.y(d);
 				})
 				.interpolate("basis");
 
@@ -92,6 +99,7 @@ $(function () {
 			// Note: a bit of a hack below. D3 dates are in the current timezone at midnight.			
 			//var me = this;
 
+			//var barWidth = this.x(
 			//this.graph.selectAll("rect").data(entries).enter()
 			//	.append("rect")
 			//	.attr("transform", "translate(" + padding[2] + "," + padding[1] + ")")
