@@ -1,8 +1,8 @@
 $(function () {
 
-window.handleTabChange = function (tabNum) {
+window.handleTabChange = function (dimension, tabNum) {
 	if (typeof android !== "undefined" && android.handleTabChange) {
-		return android.handleTabChange(tabNum);
+		return android.handleTabChange(dimension, tabNum);
 	}
 	
 	return true;
@@ -158,17 +158,15 @@ window.SocialHealthRadialView = Backbone.View.extend({
 			.enter().append("g")
 			.attr("class", "axis")
 			.attr("transform", function(d, i) { return "rotate(" + angle(d) + ")"; })
-			.on("click", function (d,i) { return handleTabChange(i); })
+			.on("click", function (d,i) { return handleTabChange(d,i); })
 			.call(d3.svg.axis()
 				.scale(radius.copy().range([-10, -maxRadius]))
 				.ticks(5)
 				.orient("left"))
-			//	.on("click", function (d,i) { return handleTabChange(i); })
 				.append("text")
 				.attr("y", -maxRadius - 10)
-				.attr("text-anchor", "middle")				
+				.attr("text-anchor", "middle")
 				.text(function(d) { return d; })
-				//.on("click", function (d,i) { return handleTabChange(i); }) 
 				.attr("style","font-size:16px;")
 				.style("fill", function(d,i) {
 					return "black"; // Insert means of determining unhealthy value here
