@@ -16,7 +16,7 @@ $(function () {
 	});
 	
 	window.ActivityByHourGraph = Backbone.View.extend({
-		el: "#activityByHourGraphContainer",
+		el: "#answerByHourGraphContainer",
 		
 		initialize: function () {
 			_.bindAll(this, "render");

@@ -1,7 +1,7 @@
 {% extends "backboneLayout.html" %}
 
 {% block title %}
-Recent Activity
+Recent Social
 {% endblock %}
 
 {% block more_scripts %}
@@ -9,8 +9,8 @@ Recent Activity
 
 <script>
     ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
-    ANSWERLIST_KEY = "RecentActivityByHour";
-    ANSWERLIST_VALUE_SELECTOR = function (a) { return (a.total > 0)? 10 * ((a.low + a.high) / a.total) : 0; };
+    ANSWERLIST_KEY = "RecentSocialByHour";
+    ANSWERLIST_VALUE_SELECTOR = function (a) { return a.social; };
 </script>
 
 <script src="{{ STATIC_URL }}js/answerListTimeGraph.js"></script>
@@ -18,8 +18,8 @@ Recent Activity
 
 {% block content %}
 <div class="answerContent">
-	<div id="answerByHourGraphContainer">
-	<h2>Recent Activity Levels</h2>
-	</div>
+    <div id="answerByHourGraphContainer">
+    <h2>Recent Social Levels</h2>
+    </div>
 </div>
 {% endblock %}
