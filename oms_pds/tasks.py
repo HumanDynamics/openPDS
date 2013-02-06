@@ -1,5 +1,5 @@
 from celery import task
-from oms_pds.pds.models import Profile
+from oms_pds.pds.models import Profile, Notification
 from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
@@ -104,7 +104,7 @@ def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
     return aggregates
 
 @task()
-def recentActivity():
+def recentActivityLevels():
     currentTime = time.mktime(time.gmtime())
     today = date.fromtimestamp(currentTime)
     answerKey = "RecentActivityByHour"
@@ -113,7 +113,7 @@ def recentActivity():
     return aggregateForAllUsers(answerKey, startTime, currentTime, activityForTimeRange)
 
 @task()
-def recentFocus():
+def recentFocusLevels():
     currentTime = time.mktime(time.gmtime())
     answerKey = "RecentFocusByHour"
     today = date.fromtimestamp(currentTime)
@@ -122,7 +122,7 @@ def recentFocus():
     return aggregateForAllUsers(answerKey, startTime, currentTime, focusForTimeRange)
 
 @task()
-def recentSocial():
+def recentSocialLevels():
     currentTime = time.mktime(time.gmtime())
     answerKey = "RecentSocialByHour"
     today = date.fromtimestamp(currentTime)
@@ -130,18 +130,9 @@ def recentSocial():
     
     return aggregateForAllUsers(answerKey, startTime, currentTime, socialForTimeRange)
 
-@task()
-def activityForThisMonth():
-    currentTime = time.mktime(time.gmtime())
-    today = date.fromtimestamp(currentTime)
-    answerKey = "ActivityByHour" + today.strftime("%Y%m")
-    startTime = time.mktime(today.replace(day = 1).timetuple())
-
-    return aggregateForAllUsers(answerKey, startTime, currentTime, activityForTimeRange)
-
 @task() 
 def recentActivityScore():
-    data = recentActivity()
+    data = recentActivityLevels()
     score = {}
     
     for uuid, activityList in data.iteritems():
@@ -152,7 +143,7 @@ def recentActivityScore():
 
 @task()
 def recentFocusScore():
-    data = recentFocus()
+    data = recentFocusLevels()
     score = {}
 
     for uuid, focusList in data.iteritems():
@@ -163,7 +154,7 @@ def recentFocusScore():
 
 @task()
 def recentSocialScore():
-    data = recentSocial()
+    data = recentSocialLevels()
     score = {}
     
     for uuid, socialList in data.iteritems():
@@ -197,3 +188,23 @@ def recentSocialHealthScores():
         
         collection.save(answer)
     return data
+
+@task 
+def checkDataAndNotify():
+    profiles = Profile.objects.all()
+    data = {}
+    
+    currentTime = time.mktime(time.gmtime())
+    recentTime = (currentTime - 3600 * 6) * 1000
+    
+    for profile in profiles:
+        dbName = "User_" + str(profile.id)
+        collection = connection[dbName]["funf"]
+        
+        recentEntries = collection.find({ "time": {"$gte": recentTime }})
+        
+        if (recentEntries.count() == 0):
+            uploadIssue = Notification(type = "StaleData", title = "Behavioral data seems out of date", content="Reality Analysis figures will not accurately reflect your behavior. Have you had connectivity issues recently?")
+            uploadIssue.datastore_owner = profile
+            uploadIssue.save()
+    

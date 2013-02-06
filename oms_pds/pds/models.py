@@ -60,19 +60,14 @@ class SharingLevel(models.Model):
     def __unicode__(self):
         return str(self.level) + "(" + self.datastore_owner.uuid + ")"
 
-#class Tokens(Document):
-#    id = StringField(required=True)
-#    roles = ListField(ReferenceField(Role))
-#    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="token_owner")
-
-
-# Represents an audit of a request against the PDS
-# Given that there will be many entries (one for each request), 
-# we are strictly limiting the size of data entered for each row
-# The assumption is that script names and symbolic user ids
-# will be under 64 characters 
 class AuditEntry(models.Model):
-    
+    '''
+    Represents an audit of a request against the PDS
+    Given that there will be many entries (one for each request), 
+    we are strictly limiting the size of data entered for each row
+    The assumption is that script names and symbolic user ids
+    will be under 64 characters 
+    '''
     datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="auditentry_owner")
     requester = models.ForeignKey(Profile, blank = False, null = False, related_name="auditentry_requester")
     method = models.CharField(max_length=10)
@@ -82,6 +77,19 @@ class AuditEntry(models.Model):
     token = models.CharField(max_length=64)
     system_entity_toggle = models.BooleanField()
     trustwrapper_result = models.CharField(max_length=64)
+    timestamp = models.DateTimeField(auto_now_add = True)
+    
+    def __unicode__(self):
+        self.pk
+
+class Notification(models.Model):
+    '''
+    Represents a notification about a user's data. This can be filled in while constructing answers
+    '''
+    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="notification_owner")
+    title = models.CharField(max_length = 64)
+    content = models.CharField(max_length = 1024)
+    type = models.CharField(max_length=32)
     timestamp = models.DateTimeField(auto_now_add = True)
     
     def __unicode__(self):
