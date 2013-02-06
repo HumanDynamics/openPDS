@@ -87,9 +87,9 @@ class Notification(models.Model):
     Represents a notification about a user's data. This can be filled in while constructing answers
     '''
     datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="notification_owner")
-    title = models.CharField(max_length = 64)
-    content = models.CharField(max_length = 1024)
-    type = models.CharField(max_length=32)
+    title = models.CharField(max_length = 64, blank = False, null = False)
+    content = models.CharField(max_length = 1024, blank = False, null = False)
+    type = models.IntegerField(blank = False, null = False)
     timestamp = models.DateTimeField(auto_now_add = True)
     
     def __unicode__(self):
