@@ -87,7 +87,6 @@ class MongoDBResource(Resource):
         """
         Maps mongodb documents to Document class.
         """
-#        pdb.set_trace()
         filter_object = self.get_filter_object(request)
         
         return map(Document, self.get_collection(request).find(filter_object))

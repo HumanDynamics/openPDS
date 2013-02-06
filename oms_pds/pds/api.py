@@ -28,20 +28,9 @@ class FunfResource(MongoDBResource):
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         resource_name = "funf"
         list_allowed_methods = ["delete", "get", "post"]
-#        authorization = Authorization()
         object_class = Document
         collection = "funf" # collection name
         filtering = { "key" : ["exact"]}
-    
-#    def obj_get_list(self, request=None, **kwargs):
-#        """
-#        Maps mongodb documents to Document class.
-#        """
-#        if (request and "key" in request.GET):
-#            return map(Document, self.get_collection(request).find(key = request.GET["key"]))
-#        if (request and "key__endsin" in request.GET):
-#            return map(Document, self.get_collection(request).find({"key" : { "$regex" : request.GET["key__endsin"] + "$"}}))
-#        return map(Document, self.get_collection(request).find())
 
 class FunfConfigResource(MongoDBResource):
 
@@ -58,7 +47,6 @@ class FunfConfigResource(MongoDBResource):
 class AnswerResource(MongoDBResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
-#    data = fields.ToManyField('oms_pds.pds.api.resources.SocialHealthResource', 'socialhealth_set', related_name='realityanalysis')
     value = fields.DictField(attribute="data", help_text='A json blob of answer data.', null=True, )
 
     class Meta:
@@ -73,13 +61,13 @@ class AnswerResource(MongoDBResource):
 class AnswerListResource(MongoDBResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
-#    data = fields.ToManyField('oms_pds.pds.api.resources.SocialHealthResource', 'socialhealth_set', related_name='realityanalysis')
     value = fields.ListField(attribute="data", help_text='A list json blob of answer data.', null=True, )
 
     class Meta:
         resource_name = "answerlist"
         list_allowed_methods = ["delete", "get", "post"]
         help_text='resource help text...'
+        authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         object_class = Document
         collection = "answerlist" # collection name
