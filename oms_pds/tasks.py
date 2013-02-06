@@ -201,6 +201,10 @@ def checkDataAndNotify():
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
         
+        heartbeat = Notification(type="heartbeat", title="Notifications working properly", content="If no other notifications shown, data is uploading properly")
+        heartbeat.datastore_owner = profile
+        heartbeat.save()
+        
         recentEntries = collection.find({ "time": {"$gte": recentTime }})
         
         if (recentEntries.count() == 0):
