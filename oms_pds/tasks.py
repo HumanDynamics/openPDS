@@ -105,28 +105,28 @@ def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
 
 @task()
 def recentActivityLevels():
-    currentTime = time.mktime(time.gmtime())
+    currentTime = time.time()
     today = date.fromtimestamp(currentTime)
     answerKey = "RecentActivityByHour"
-    startTime = time.mktime((today - timedelta(days=7)).timetuple())
+    startTime = time.mktime((today - timedelta(days=6)).timetuple())
         
     return aggregateForAllUsers(answerKey, startTime, currentTime, activityForTimeRange)
 
 @task()
 def recentFocusLevels():
-    currentTime = time.mktime(time.gmtime())
+    currentTime = time.time()
     answerKey = "RecentFocusByHour"
     today = date.fromtimestamp(currentTime)
-    startTime = time.mktime((today - timedelta(days=7)).timetuple())
+    startTime = time.mktime((today - timedelta(days=6)).timetuple())
     
     return aggregateForAllUsers(answerKey, startTime, currentTime, focusForTimeRange)
 
 @task()
 def recentSocialLevels():
-    currentTime = time.mktime(time.gmtime())
+    currentTime = time.time()
     answerKey = "RecentSocialByHour"
     today = date.fromtimestamp(currentTime)
-    startTime = time.mktime((today - timedelta(days=7)).timetuple())
+    startTime = time.mktime((today - timedelta(days=6)).timetuple())
     
     return aggregateForAllUsers(answerKey, startTime, currentTime, socialForTimeRange)
 
@@ -175,7 +175,7 @@ def checkDataAndNotify():
     profiles = Profile.objects.all()
     data = {}
     
-    currentTime = time.mktime(time.gmtime())
+    currentTime = time.time()
     recentTime = (currentTime - 3600 * 6) * 1000
     
     for profile in profiles:
@@ -186,7 +186,7 @@ def checkDataAndNotify():
         
         if (recentEntries.count() == 0):
             addNotification(profile, 1, "Stale behavioral data", "Analysis may not accurately reflect your behavior.")
-
+        
         addNotification(profile, 0, "PDS is online", "If no other notifications shown, data is uploading properly.")
 
 @task()
