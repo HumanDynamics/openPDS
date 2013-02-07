@@ -163,6 +163,32 @@ def recentSocialScore():
         
     return score
 
+def addNotification(profile, notificationType, title, content):    
+    notification, created = Notification.objects.get_or_create(datastore_owner=profile, type=notificationType)
+    notification.title = title
+    notification.content = content
+    notification.datastore_owner = profile
+    notification.save()    
+
+@task 
+def checkDataAndNotify():
+    profiles = Profile.objects.all()
+    data = {}
+    
+    currentTime = time.mktime(time.gmtime())
+    recentTime = (currentTime - 3600 * 6) * 1000
+    
+    for profile in profiles:
+        dbName = "User_" + str(profile.id)
+        collection = connection[dbName]["funf"]
+       
+        recentEntries = collection.find({ "time": {"$gte": recentTime }})
+        
+        if (recentEntries.count() == 0):
+            addNotification(profile, 1, "Stale behavioral data", "Analysis may not accurately reflect your behavior.")
+
+        addNotification(profile, 0, "PDS is online", "If no other notifications shown, data is uploading properly.")
+
 @task()
 def recentSocialHealthScores():
     profiles = Profile.objects.all()
@@ -188,27 +214,4 @@ def recentSocialHealthScores():
         
         collection.save(answer)
     return data
-
-@task 
-def checkDataAndNotify():
-    profiles = Profile.objects.all()
-    data = {}
-    
-    currentTime = time.mktime(time.gmtime())
-    recentTime = (currentTime - 3600 * 6) * 1000
-    
-    for profile in profiles:
-        dbName = "User_" + str(profile.id)
-        collection = connection[dbName]["funf"]
-        
-        heartbeat = Notification(type=0, title="Notifications working properly", content="If no other notifications shown, data is uploading properly")
-        heartbeat.datastore_owner = profile
-        heartbeat.save()
-        
-        recentEntries = collection.find({ "time": {"$gte": recentTime }})
-        
-        if (recentEntries.count() == 0):
-            uploadIssue = Notification(type = 1, title = "Behavioral data seems out of date", content="Reality Analysis figures will not accurately reflect your behavior. Have you had connectivity issues recently?")
-            uploadIssue.datastore_owner = profile
-            uploadIssue.save()
-    
+   

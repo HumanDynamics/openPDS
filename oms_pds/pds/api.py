@@ -210,7 +210,7 @@ class NotificationResource(ModelResource):
     
     class Meta:
         queryset = Notification.objects.all()
-        allowed_methods = ("get", "post")
+        allowed_methods = ("get", "post", "delete")
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "datastore_owner": ALL_WITH_RELATIONS }
