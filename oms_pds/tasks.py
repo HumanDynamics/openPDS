@@ -201,14 +201,14 @@ def checkDataAndNotify():
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
         
-        heartbeat = Notification(type="heartbeat", title="Notifications working properly", content="If no other notifications shown, data is uploading properly")
+        heartbeat = Notification(type=0, title="Notifications working properly", content="If no other notifications shown, data is uploading properly")
         heartbeat.datastore_owner = profile
         heartbeat.save()
         
         recentEntries = collection.find({ "time": {"$gte": recentTime }})
         
         if (recentEntries.count() == 0):
-            uploadIssue = Notification(type = "StaleData", title = "Behavioral data seems out of date", content="Reality Analysis figures will not accurately reflect your behavior. Have you had connectivity issues recently?")
+            uploadIssue = Notification(type = 1, title = "Behavioral data seems out of date", content="Reality Analysis figures will not accurately reflect your behavior. Have you had connectivity issues recently?")
             uploadIssue.datastore_owner = profile
             uploadIssue.save()
     
