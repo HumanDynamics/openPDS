@@ -1,5 +1,5 @@
 from bson import ObjectId
-from pymongo import Connection
+from pymongo import Connection, ASCENDING, DESCENDING
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
@@ -42,8 +42,6 @@ class MongoDBResource(Resource):
             if (request and "datastore_owner__uuid" in request.GET):
                 profile, created = Profile.objects.get_or_create(uuid = request.GET["datastore_owner__uuid"])
                 database = "User_" + str(profile.id)
-            
-            print database
             return db[database][self._meta.collection]
         except AttributeError:
             raise ImproperlyConfigured("Define a collection in your resource.")
@@ -73,7 +71,7 @@ class MongoDBResource(Resource):
             return filter_object
         
         for var in request.GET:
-            if (var not in ["datastore_owner__uuid", "format", "bearer_token"]):
+            if (var not in ["datastore_owner__uuid", "format", "bearer_token", "order_by"]):
                 # Ignoring known required querystring parameters, build the filters
                 value = request.GET[var]
                 parts = var.split("__")
@@ -83,11 +81,29 @@ class MongoDBResource(Resource):
         
         return filter_object
 
+    def get_order_field_and_direction(self, request):
+        if (request is None or "order_by" not in request.GET):
+            return None, None
+        
+        field_name = request.GET["order_by"]
+        direction = ASCENDING
+        
+        if field_name[0] == "-":
+            field_name = field_name[1:]
+            direction = DESCENDING
+        
+        return field_name, direction
+
     def obj_get_list(self, request=None, **kwargs):
         """
         Maps mongodb documents to Document class.
         """
         filter_object = self.get_filter_object(request)
+        list = self.get_collection(request).find(filter_object)
+        order_field, direction = self.get_order_field_and_direction(request)
+        
+        if (order_field is not None):
+            list.sort(order_field, direction)        
         
         return map(Document, self.get_collection(request).find(filter_object))
 
