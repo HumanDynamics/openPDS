@@ -170,13 +170,13 @@ def addNotification(profile, notificationType, title, content):
     notification.datastore_owner = profile
     notification.save()    
 
-@task 
+@task() 
 def checkDataAndNotify():
     profiles = Profile.objects.all()
     data = {}
     
     currentTime = time.time()
-    recentTime = (currentTime - 3600 * 6) * 1000
+    recentTime = currentTime - 3600 * 2
     
     for profile in profiles:
         dbName = "User_" + str(profile.id)
@@ -186,8 +186,6 @@ def checkDataAndNotify():
         
         if (recentEntries.count() == 0):
             addNotification(profile, 1, "Stale behavioral data", "Analysis may not accurately reflect your behavior.")
-        
-        addNotification(profile, 0, "PDS is online", "If no other notifications shown, data is uploading properly.")
 
 @task()
 def recentSocialHealthScores():
