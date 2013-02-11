@@ -103,9 +103,9 @@ class MongoDBResource(Resource):
         order_field, direction = self.get_order_field_and_direction(request)
         
         if (order_field is not None):
-            list.sort(order_field, direction)        
+            list.sort(order_field, direction)
         
-        return map(Document, self.get_collection(request).find(filter_object))
+        return map(Document, list)
 
     def obj_get(self, request=None, **kwargs):
         """
