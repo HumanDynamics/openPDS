@@ -2,7 +2,7 @@
 
 import os
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
@@ -34,7 +34,7 @@ DATABASES = {
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # In a Windows environment this must be set to your system time zone.
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'America/New_York'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -145,10 +145,18 @@ from celery.schedules import crontab
 CELERY_IMPORTS = ('oms_pds.tasks',)
 BROKER_URL = "django://"
 CELERYBEAT_SCHEDULE = {
-    "aggregate-hourly-activity": {
-        "task": "tasks.aggregateAllActivityForLastHour",
-        "schedule": crontab(minute="*")
+    "check-data-and-notify": {
+        "task": "oms_pds.tasks.checkDataAndNotify", 
+        "schedule": crontab(hour="*", minute="0")
+    },
+    "compute-social-health-scores": {
+        "task": "oms_pds.tasks.recentSocialHealthScores",
+        "schedule": crontab(hour="*", minute="*/30")
      },
+    "ensure-funf-indexes": {
+        "task": "oms_pds.tasks.ensureFunfIndexes",
+        "schedule": crontab(hour="*", minute="15")
+    }
 }
 
 

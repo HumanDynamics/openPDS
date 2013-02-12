@@ -187,6 +187,15 @@ def checkDataAndNotify():
         if (recentEntries.count() == 0):
             addNotification(profile, 1, "Stale behavioral data", "Analysis may not accurately reflect your behavior.")
 
+@task() 
+def ensureFunfIndexes():
+    profiles = Profile.objects.all()
+
+    for profile in profiles:
+        dbName = "User_" + str(profile.id)
+        collection = connection[dbName]["funf"]        
+        collection.ensure_index([("time", -1), ("key", 1)], cache_for=7200, background=True)
+
 @task()
 def recentSocialHealthScores():
     profiles = Profile.objects.all()
