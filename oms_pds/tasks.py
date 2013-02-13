@@ -235,7 +235,7 @@ def distanceBetweenLatLongs(latlong1, latlong2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return earthRadius * c * 1000 # Converting to meters here... more useful for our purposes than km
 
-def findLocationClusters():
+def findWorkLocationBounds():
     profiles = Profile.objects.all()
     currentTime = time.time()
     today = date.fromtimestamp(currentTime)
@@ -254,6 +254,11 @@ def findLocationClusters():
             locations.extend([entry["value"]["location"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": nineToFive[0], "$lt": nineToFive[1]}})])
         latlongs = [(location["mlatitude"], location["mlongitude"]) for location in locations]
         clustering = cluster.HierarchicalClustering(latlongs, distanceBetweenLatLongs)
-        data[profile.uuid] = clustering.getlevel(100)
+        clusters = clustering.getlevel(100)
+        if (len(clusters) > 0):
+            workLocations = max(clusters, key= lambda cluster: len(cluster))
+            workLats = [loc[0] for loc in workLocations]
+            workLongs = [loc[1] for loc in workLocations]
+            data[profile.uuid] = [(min(workLats), min(workLongs)), (max(workLats), max(workLongs))]
     
     return data
