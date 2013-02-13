@@ -13,4 +13,6 @@ urlpatterns = patterns('oms_pds.trust.views',
     (r'^activity', direct_to_template, { 'template' : 'visualization/activity.html' }),
     (r'^social', direct_to_template, { 'template' : 'visualization/social.html' }),
     (r'^focus', direct_to_template, { 'template' : 'visualization/focus.html' }),
+    (r'^places', direct_to_template, { 'template' : 'visualization/locationMap.html' }),
+
 )
