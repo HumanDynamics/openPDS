@@ -235,6 +235,7 @@ def distanceBetweenLatLongs(latlong1, latlong2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return earthRadius * c * 1000 # Converting to meters here... more useful for our purposes than km
 
+@task()
 def findRecentPlacesBounds():
     profiles = Profile.objects.all()
     currentTime = time.time()
@@ -260,7 +261,7 @@ def findRecentPlacesBounds():
             workLocations = max(clusters, key= lambda cluster: len(cluster))
             workLats = [loc[0] for loc in workLocations]
             workLongs = [loc[1] for loc in workLocations]
-            data[profile.uuid] = [{ "work": [[min(workLats), min(workLongs)], [max(workLats), max(workLongs)]] }]
+            data[profile.uuid] = [{ "work": [min(workLats), min(workLongs), max(workLats), max(workLongs)] }]
             answerlistCollection = connection[dbName]["answerlist"]
             answer = answerlistCollection.find({ "key" : "RecentPlaces" })
             answer = answer[0] if answer.count() > 0 else {"key": "RecentPlaces", "data":[]}
