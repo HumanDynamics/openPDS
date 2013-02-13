@@ -176,7 +176,7 @@ def checkDataAndNotify():
     data = {}
     
     currentTime = time.time()
-    recentTime = currentTime - 3600 * 2
+    recentTime = currentTime - 3600 
     
     for profile in profiles:
         dbName = "User_" + str(profile.id)
