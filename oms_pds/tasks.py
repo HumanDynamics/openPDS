@@ -8,6 +8,7 @@ from datetime import date, timedelta
 import json
 import pdb
 import math
+import cluster
 
 from oms_pds.pds.models import Profile
 
@@ -221,4 +222,32 @@ def recentSocialHealthScores():
         
         collection.save(answer)
     return data
-   
+
+def distanceBetweenLatLongs(latlong1, latlong2):  
+    earthRadius = 6371 # km
+    dLat = math.fabs(math.radians(latlong2[0] - latlong1[0]))
+    dLong = math.fabs(math.radians(latlong2[1] - latlong1[1]))
+    lat1 = math.radians(latlong1[0])
+    lat2 = math.radians(latlong2[0])
+    dLatSin = math.sin(dLat / 2.0)
+    dLongSin = math.sin(dLong / 2.0)
+    a = dLatSin*dLatSin + dLongSin*dLongSin*math.cos(lat1)*math.cos(lat2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return earthRadius * c * 1000 # Converting to meters here... more useful for our purposes than km
+
+def findLocationClusters():
+    profiles = Profile.objects.all()
+    currentTime = time.time()
+    startTime = currentTime - 3600 * 24 * 7
+    data = {}
+    
+    for profile in profiles:
+        dbName = "User_" + str(profile.id)
+        collection = connection[dbName]["funf"]
+        
+        locations = [entry["value"]["location"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": startTime}})]
+        latlongs = [(location["mlatitude"], location["mlongitude"]) for location in locations]
+        clustering = cluster.HierarchicalClustering(latlongs, distanceBetweenLatLongs)
+        data[profile.uuid] = clustering.getlevel(100)
+    
+    return data
