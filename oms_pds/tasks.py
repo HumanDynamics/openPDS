@@ -194,7 +194,7 @@ def ensureFunfIndexes():
 
     for profile in profiles:
         dbName = "User_" + str(profile.id)
-        collection = connection[dbName]["funf"]        
+        collection = connection[dbName]["funf"]
         collection.ensure_index([("time", -1), ("key", 1)], cache_for=7200, background=True)
 
 @task()
@@ -238,14 +238,20 @@ def distanceBetweenLatLongs(latlong1, latlong2):
 def findLocationClusters():
     profiles = Profile.objects.all()
     currentTime = time.time()
-    startTime = currentTime - 3600 * 24 * 7
+    today = date.fromtimestamp(currentTime)
+    startTime = time.mktime((today - timedelta(days=6)).timetuple())
+        
+    nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
+    
     data = {}
     
     for profile in profiles:
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
+        locations = []
         
-        locations = [entry["value"]["location"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": startTime}})]
+        for nineToFive in nineToFives:
+            locations.extend([entry["value"]["location"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": nineToFive[0], "$lt": nineToFive[1]}})])
         latlongs = [(location["mlatitude"], location["mlongitude"]) for location in locations]
         clustering = cluster.HierarchicalClustering(latlongs, distanceBetweenLatLongs)
         data[profile.uuid] = clustering.getlevel(100)
