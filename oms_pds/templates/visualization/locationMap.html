@@ -1,0 +1,25 @@
+{% extends "backboneLayout.html" %}
+
+{% block title %}
+Recent Activity
+{% endblock %}
+
+{% block more_scripts %}
+<script src="http://openlayers.org/dev/OpenLayers.js"></script>
+<script src="http://d3js.org/d3.v2.js"></script>
+
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+    ANSWERLIST_KEY = "RecentPlaces";
+</script>
+
+<script src="{{ STATIC_URL }}js/answerListTimeMap.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="answerContent">
+    <div id="answerListMapContainer">
+    <h2>Recent Places</h2>
+    </div>
+</div>
+{% endblock %}
