@@ -21,7 +21,7 @@
 <script>
 $(function () {
 	window.radialApp = new SocialHealthRadialView();
-	window.answerRating = new AnswerRatingTextView({ el: "#answer_rating", key: "SocialHealthAnswerRating" });
+	window.answerRating = new AnswerRatingStarView({ el: "#answer_rating", key: "SocialHealthAnswerRating" });
 	$(window).bind("resize", function () { radialApp.render(); });
 });
 </script>
