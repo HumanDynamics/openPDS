@@ -3,7 +3,7 @@ window.AnswerRatingTextView = Backbone.View.Extend({
     
     initialize: function (options) {
         _.bindAll(this, "render");
-        this.ratingListCollection = new AnswerListCollection({ key: options.key });
+        this.ratingListCollection = new AnswerListCollection([], { key: options.key });
         this.ratingListCollection.bind("reset", this.render);
         this.ratingListCollection.fetch();
     }, 

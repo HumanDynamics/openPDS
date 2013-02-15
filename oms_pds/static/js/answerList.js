@@ -7,7 +7,8 @@ window.AnswerListCollection = Backbone.Collection.extend({
     fetch: function (options) {
         options || (options = {});
         options.data || (options.data = {});
-        filterMapping = { "key": (typeof(this.key) == "undefined")? ANSWERLIST_KEY : this.key }
+        this.options || (this.options = { key: ANSWERLIST_KEY })
+        filterMapping = { "key": this.options.key }
         options.data = _.extend(options.data, filterMapping);
         
         return Backbone.Collection.prototype.fetch.call(this,options);
