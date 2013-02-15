@@ -16,11 +16,13 @@ Recent Places
 <script src="{{ STATIC_URL }}js/answerListMap.js"></script>
 
 <script>
-window.answerListMap = new AnswerListMap();
-$(window).bind("orientationchange resize pageshow", fixContentHeight);
-$("#plus").live('click', answerListMap.zoomIn);
+$(function () {
+    window.answerListMap = new AnswerListMap();
+    $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
+    $("#plus").live('click', answerListMap.zoomIn);
 
-$("#minus").live('click', answerListMap.zoomOut);
+    $("#minus").live('click', answerListMap.zoomOut);
+});
 </script>
 
 {% endblock %}

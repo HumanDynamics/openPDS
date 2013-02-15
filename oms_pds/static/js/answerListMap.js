@@ -90,7 +90,7 @@ $(function () {
             }
         },
         
-        updateSize(): function () {
+        updateSize: function () {
             var navbar= $("div[data-role='navbar']:visible"),
             content = $("div[data-role='content']:visible:visible"),
             footer = $("div[data-role='footer']:visible"),
