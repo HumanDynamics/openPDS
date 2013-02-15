@@ -20,6 +20,7 @@
 <script>
 $(function () {
 	window.radialApp = new SocialHealthRadialView();
+	window.answerRating = new AnswerRatingTextView({ el: "#answer_rating", key: "socialHealthAnswerRating" })l;
 	$(window).bind("resize", function () { radialApp.render(); });
 });
 </script>
@@ -29,5 +30,6 @@ $(function () {
 {% block content %}
 
 <div id="radial_chart"></div>
+<div id="answer_rating"></div>
 
 {% endblock %}
