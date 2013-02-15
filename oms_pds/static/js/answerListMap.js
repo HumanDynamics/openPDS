@@ -15,25 +15,6 @@ $(function () {
         }
     });
 
-// fix height of content
-function fixContentHeight() {
-    var navbar= $("div[data-role='navbar']:visible"),
-        content = $("div[data-role='content']:visible:visible"),
-        footer = $("div[data-role='footer']:visible"),
-        viewHeight = $(window).height(),
-        contentHeight = viewHeight - navbar.outerHeight() - footer.outerHeight();
-
-    if (content.outerHeight() !== contentHeight) {
-        //contentHeight = viewHeight - footer.outerHeight();
-        content.height(contentHeight);
-    }
-
-    if (window.map && window.map instanceof OpenLayers.Map) {
-        map.updateSize();
-    }
-}
-
-
     window.AnswerListMap = Backbone.View.extend({
         el: "#answerListMapContainer",
         
@@ -47,8 +28,6 @@ function fixContentHeight() {
         
         render: function () {
             var entries = this.answerLists.at(0).get("value");
-            //var height = $("div[data-role='content']:visible:visible").outerHeight();
-            //$(this.el).height(height)
             this.map = new OpenLayers.Map({ 
                 div: "answerListMapContainer",
                 projection: new OpenLayers.Projection("EPSG:900913"),
@@ -62,14 +41,12 @@ function fixContentHeight() {
             
             var osm = new OpenLayers.Layer.OSM();
             var boxes  = new OpenLayers.Layer.Vector( "Boxes" );
-            var ol_wms = new OpenLayers.Layer.WMS( "OpenLayers WMS",
-                    "http://vmap0.tiles.osgeo.org/wms/vmap0?", {layers: 'basic'} );
             this.map.addLayers([osm]);
 
             minLat = minLong = Number.MAX_VALUE;
             maxLat = maxLong = -Number.MAX_VALUE;
             this.entryBounds = [];
-	    for (i in entries) {
+            for (i in entries) {
                 entry = entries[i];
                 ext = entry["bounds"];
 
@@ -83,8 +60,6 @@ function fixContentHeight() {
                 box = new OpenLayers.Feature.Vector(bounds.toGeometry());
                 boxes.addFeatures([box]);
                 this.entryBounds[i] = bounds.clone();
-                //selectorButton = new OpenLayers.Control.Button({ trigger: function () { this.map.zoomToExtent(this.entryBounds[i]); }});
-                //this.map.addControl(selectorButton);
                 var me = this;                
 
                 $("#footer").append($("<input type='radio' name='place' value='"+i+"'>"+entry["key"]+"</input>").click(
@@ -97,27 +72,39 @@ function fixContentHeight() {
 
             bounds = OpenLayers.Bounds.fromArray([minLong, minLat, maxLong, maxLat]);
             bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
-
-            //this.map.addControl(new OpenLayers.Control.LayerSwitcher());
             
-            window.map = this.map;
-            fixContentHeight(); 
+            this.updateSize();
             this.map.zoomToExtent(bounds);
 
+        },
+        
+        zoomIn: function () {
+            if (this.map) {
+                this.map.zoomIn();
+            }
+        },
+        
+        zoomOut: function () {
+            if (this.map) {
+                this.map.zoomOut();
+            }
+        },
+        
+        updateSize(): function () {
+            var navbar= $("div[data-role='navbar']:visible"),
+            content = $("div[data-role='content']:visible:visible"),
+            footer = $("div[data-role='footer']:visible"),
+            viewHeight = $(window).height(),
+            contentHeight = viewHeight - navbar.outerHeight() - footer.outerHeight();
+        
+            if (content.outerHeight() !== contentHeight) {
+                content.height(contentHeight);
+            }
+        
+            if (this.map && this.map instanceof OpenLayers.Map) {
+                this.map.updateSize();
+            }
         }
+        
     });
-    
-    window.answerListMap = new AnswerListMap();
-    //$("#answerListMapContainer").live("resize", function () { fixContentHeight(); });
-    //$(window).bind("resize", function () { activityGraph.render(); });
-$(window).bind("orientationchange resize pageshow", fixContentHeight);
-$("#plus").live('click', function(){
-    map.zoomIn();
-});
-
-$("#minus").live('click', function(){
-    map.zoomOut();
-});
-
-
 });
