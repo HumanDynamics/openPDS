@@ -143,7 +143,7 @@ INSTALLED_APPS = (
 from celery.schedules import crontab
 
 CELERY_IMPORTS = ('oms_pds.tasks',)
-BROKER_URL = "django://"
+BROKER_URL = "mongodb://celery:celery@localhost:27017/celery_broker"
 CELERYBEAT_SCHEDULE = {
     "check-data-and-notify": {
         "task": "oms_pds.tasks.checkDataAndNotify", 
@@ -155,7 +155,11 @@ CELERYBEAT_SCHEDULE = {
      },
     "ensure-funf-indexes": {
         "task": "oms_pds.tasks.ensureFunfIndexes",
-        "schedule": crontab(hour="*", minute="15")
+        "schedule": crontab(hour="*/2", minute="15")
+    },
+    "find-recent-places": {
+        "task": "oms_pds.tasks.findRecentPlaces", 
+        "schedule": crontab(hour="*/2", minute="0")
     }
 }
 

@@ -235,15 +235,8 @@ def distanceBetweenLatLongs(latlong1, latlong2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return earthRadius * c * 1000 # Converting to meters here... more useful for our purposes than km
 
-@task()
-def findRecentPlacesBounds():
+def findRecentPlaceBounds(recentPlaceKey, timeRanges):
     profiles = Profile.objects.all()
-    currentTime = time.time()
-    today = date.fromtimestamp(currentTime)
-    startTime = time.mktime((today - timedelta(days=6)).timetuple())
-        
-    nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
-    
     data = {}
     
     for profile in profiles:
@@ -251,8 +244,8 @@ def findRecentPlacesBounds():
         collection = connection[dbName]["funf"]
         locations = []
         
-        for nineToFive in nineToFives:
-            locations.extend([entry["value"]["location"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": nineToFive[0], "$lt": nineToFive[1]}})])
+        for timeRange in timeRanges:
+            locations.extend([entry["value"]["location"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": timeRange[0], "$lt": timeRange[1]}})])
         latlongs = [(location["mlatitude"], location["mlongitude"]) for location in locations]
         clustering = cluster.HierarchicalClustering(latlongs, distanceBetweenLatLongs)
         clusters = clustering.getlevel(100)
@@ -261,11 +254,27 @@ def findRecentPlacesBounds():
             workLocations = max(clusters, key= lambda cluster: len(cluster))
             workLats = [loc[0] for loc in workLocations]
             workLongs = [loc[1] for loc in workLocations]
-            data[profile.uuid] = [{ "key": "work", "bounds": [min(workLats), min(workLongs), max(workLats), max(workLongs)] }]
             answerlistCollection = connection[dbName]["answerlist"]
             answer = answerlistCollection.find({ "key" : "RecentPlaces" })
             answer = answer[0] if answer.count() > 0 else {"key": "RecentPlaces", "data":[]}
+            data[profile.uuid] = [datum for datum in answer["data"] if datum["key"] != recentPlaceKey]
+            data[profile.uuid].append({ "key": recentPlaceKey, "bounds": [min(workLats), min(workLongs), max(workLats), max(workLongs)] })
             answer["data"] = data[profile.uuid]
             answerlistCollection.save(answer)
             
+    return data
+
+@task()
+def findRecentPlaces():
+    currentTime = time.time()
+    today = date.fromtimestamp(currentTime)
+    startTime = time.mktime((today - timedelta(days=6)).timetuple())
+        
+    nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
+           
+    data = findRecentPlaceBounds("work", nineToFives)
+    midnightToSixes = [(midnight, midnight + 3600*6) for midnight in range(int(startTime), int(currentTime), 3600* 24)]
+
+    data = findRecentPlaceBounds("home", midnightToSixes)
+
     return data
