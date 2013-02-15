@@ -13,7 +13,15 @@ Recent Focus
     ANSWERLIST_VALUE_SELECTOR = function (a) { return a.focus; };
 </script>
 
+<script src="{{ STATIC_URL}}js/answerList.js"></script>
 <script src="{{ STATIC_URL }}js/answerListTimeGraph.js"></script>
+
+<script>
+$(function () {
+    window.activityGraph = new AnswerByHourGraph();
+    $(window).bind("resize", function () { activityGraph.render(); });
+});
+</script>
 {% endblock %}
 
 {% block content %}

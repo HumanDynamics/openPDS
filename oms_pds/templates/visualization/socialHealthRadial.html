@@ -11,10 +11,18 @@
 
 <script>
     ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+    ANSWERLIST_KEY = "socialhealth";
 </script>
 
-
+<script src="{{ STATIC_URL}}js/answerList.js"></script>
 <script src="{{ STATIC_URL }}js/socialHealthRadial.js"></script>
+
+<script>
+$(function () {
+	window.radialApp = new SocialHealthRadialView();
+	$(window).bind("resize", function () { radialApp.render(); });
+});
+</script>
 
 {% endblock %}
 
