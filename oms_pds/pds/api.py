@@ -47,7 +47,7 @@ class FunfConfigResource(MongoDBResource):
 class AnswerResource(MongoDBResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
-    value = fields.DictField(attribute="data", help_text='A json blob of answer data.', null=True, )
+    value = fields.DictField(attribute="value", help_text='A json blob of answer data.', null=True, )
 
     class Meta:
         resource_name = "answer"
@@ -61,7 +61,7 @@ class AnswerResource(MongoDBResource):
 class AnswerListResource(MongoDBResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
-    value = fields.ListField(attribute="data", help_text='A list json blob of answer data.', null=True, )
+    value = fields.ListField(attribute="value", help_text='A list json blob of answer data.', null=True, )
 
     class Meta:
         resource_name = "answerlist"

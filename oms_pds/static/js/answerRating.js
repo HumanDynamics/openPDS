@@ -1,4 +1,4 @@
-window.AnswerRatingTextView = Backbone.View.Extend({
+window.AnswerRatingTextView = Backbone.View.extend({
     tagName: "div", 
     
     initialize: function (options) {
@@ -10,9 +10,10 @@ window.AnswerRatingTextView = Backbone.View.Extend({
     
     render: function () {
         var entriesModel = this.ratingListCollection.at(0);
+        entriesModel || (entriesModel = new AnswerList({ key: this.options.key, value:[]}));
         var me = this;
         $(this.el).append($("<input type='text' />").change(function () { 
-            entriesModel.get("value").push({time: (new Date).getTime() * 1000,  value: $(this).text() });
+            entriesModel.get("value").push({time: (new Date).getTime() / 1000, value: $(this).val() });
             entriesModel.save();
         }) );
     }

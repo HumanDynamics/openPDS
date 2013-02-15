@@ -53,7 +53,7 @@ window.SocialHealthRadialView = Backbone.View.extend({
 			.x(function(d, i) { return d.key; })
 			.y(function(d) { return d.value; });
 		
-		var layers = stack(nest.entries(averageData));
+		var layers = (averageData != null && averageData.length > 0)? stack(nest.entries(averageData)):[];
 		
 		// Now that we got the stacking out of the way, we know the inner and outer radius for the average layer
 		// To simplify things (and optimize a bit), let's throw out the averageLow and replace it with the user data

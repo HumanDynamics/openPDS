@@ -99,7 +99,7 @@ def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
         else:
             answer = answer[0]
             
-        answer["data"] = aggregates[profile.uuid]
+        answer["value"] = aggregates[profile.uuid]
         
         connection[dbName]["answerlist"].save(answer)
     return aggregates
@@ -211,14 +211,14 @@ def recentSocialHealthScores():
         collection = connection[dbName]["answerlist"]
         
         answer = collection.find({ "key" : "socialhealth" })
-        answer = answer[0] if answer.count() > 0 else {"key": "socialhealth", "data":[]} 
+        answer = answer[0] if answer.count() > 0 else {"key": "socialhealth", "value":[]} 
         
-        data[profile.uuid] = [datum for datum in answer["data"] if datum["layer"] != "User"]
+        data[profile.uuid] = [datum for datum in answer["value"] if datum["layer"] != "User"]
         data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores[profile.uuid] })
         data[profile.uuid].append({ "key": "social", "layer": "User", "value": socialScores[profile.uuid] })
         data[profile.uuid].append({ "key": "focus", "layer": "User", "value": focusScores[profile.uuid] })
         
-        answer["data"] = data[profile.uuid]
+        answer["value"] = data[profile.uuid]
         
         collection.save(answer)
     return data
@@ -249,17 +249,17 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
         latlongs = [(location["mlatitude"], location["mlongitude"]) for location in locations]
         clustering = cluster.HierarchicalClustering(latlongs, distanceBetweenLatLongs)
         clusters = clustering.getlevel(100)
-        
+   
         if (len(clusters) > 0):
             workLocations = max(clusters, key= lambda cluster: len(cluster))
             workLats = [loc[0] for loc in workLocations]
             workLongs = [loc[1] for loc in workLocations]
             answerlistCollection = connection[dbName]["answerlist"]
             answer = answerlistCollection.find({ "key" : "RecentPlaces" })
-            answer = answer[0] if answer.count() > 0 else {"key": "RecentPlaces", "data":[]}
-            data[profile.uuid] = [datum for datum in answer["data"] if datum["key"] != recentPlaceKey]
+            answer = answer[0] if answer.count() > 0 else {"key": "RecentPlaces", "value":[]}
+            data[profile.uuid] = [datum for datum in answer["value"] if datum["key"] != recentPlaceKey]
             data[profile.uuid].append({ "key": recentPlaceKey, "bounds": [min(workLats), min(workLongs), max(workLats), max(workLongs)] })
-            answer["data"] = data[profile.uuid]
+            answer["value"] = data[profile.uuid]
             answerlistCollection.save(answer)
             
     return data
@@ -268,7 +268,7 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
 def findRecentPlaces():
     currentTime = time.time()
     today = date.fromtimestamp(currentTime)
-    startTime = time.mktime((today - timedelta(days=6)).timetuple())
+    startTime = time.mktime((today - timedelta(days=2)).timetuple())
         
     nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
            

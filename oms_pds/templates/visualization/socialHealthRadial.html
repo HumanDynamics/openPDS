@@ -14,13 +14,14 @@
     ANSWERLIST_KEY = "socialhealth";
 </script>
 
-<script src="{{ STATIC_URL}}js/answerList.js"></script>
+<script src="{{ STATIC_URL }}js/answerList.js"></script>
 <script src="{{ STATIC_URL }}js/socialHealthRadial.js"></script>
+<script src="{{ STATIC_URL }}js/answerRating.js"></script>
 
 <script>
 $(function () {
 	window.radialApp = new SocialHealthRadialView();
-	window.answerRating = new AnswerRatingTextView({ el: "#answer_rating", key: "socialHealthAnswerRating" })l;
+	window.answerRating = new AnswerRatingTextView({ el: "#answer_rating", key: "SocialHealthAnswerRating" });
 	$(window).bind("resize", function () { radialApp.render(); });
 });
 </script>
