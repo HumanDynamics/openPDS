@@ -1,4 +1,3 @@
-$(function () {
 
 window.handleTabChange = function (dimension, tabNum) {
 	if (typeof android !== "undefined" && android.handleTabChange) {
@@ -157,5 +156,4 @@ window.SocialHealthRadialView = Backbone.View.extend({
 				});
 	
 	}
-});
 });

@@ -1,94 +1,92 @@
-$(function () {
-    window.AnswerListMap = Backbone.View.extend({
-        el: "#answerListMapContainer",
+window.AnswerListMap = Backbone.View.extend({
+    el: "#answerListMapContainer",
+    
+    initialize: function () {
+        _.bindAll(this, "render");
         
-        initialize: function () {
-            _.bindAll(this, "render");
-            
-            this.answerLists = new AnswerListCollection();
-            this.answerLists.bind("reset", this.render);
-            this.answerLists.fetch();
-        },
+        this.answerLists = new AnswerListCollection();
+        this.answerLists.bind("reset", this.render);
+        this.answerLists.fetch();
+    },
+    
+    render: function () {
+        var entries = this.answerLists.at(0).get("value");
+        this.map = new OpenLayers.Map({ 
+            div: "answerListMapContainer",
+            projection: new OpenLayers.Projection("EPSG:900913"),
+            displayProjection: new OpenLayers.Projection("EPSG:4326"),
+            numZoomLevels: 18,
+            tileManager: new OpenLayers.TileManager(),
+        });
+        this.map.addControls([
+            new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}})
+        ]);
         
-        render: function () {
-            var entries = this.answerLists.at(0).get("value");
-            this.map = new OpenLayers.Map({ 
-                div: "answerListMapContainer",
-                projection: new OpenLayers.Projection("EPSG:900913"),
-                displayProjection: new OpenLayers.Projection("EPSG:4326"),
-                numZoomLevels: 18,
-                tileManager: new OpenLayers.TileManager(),
-            });
-            this.map.addControls([
-                new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}})
-            ]);
-            
-            var osm = new OpenLayers.Layer.OSM();
-            var boxes  = new OpenLayers.Layer.Vector( "Boxes" );
-            this.map.addLayers([osm]);
+        var osm = new OpenLayers.Layer.OSM();
+        var boxes  = new OpenLayers.Layer.Vector( "Boxes" );
+        this.map.addLayers([osm]);
 
-            minLat = minLong = Number.MAX_VALUE;
-            maxLat = maxLong = -Number.MAX_VALUE;
-            this.entryBounds = [];
-            for (i in entries) {
-                entry = entries[i];
-                ext = entry["bounds"];
+        minLat = minLong = Number.MAX_VALUE;
+        maxLat = maxLong = -Number.MAX_VALUE;
+        this.entryBounds = [];
+        for (i in entries) {
+            entry = entries[i];
+            ext = entry["bounds"];
 
-                minLat = Math.min(minLat, ext[0]);
-                maxLat = Math.max(maxLat, ext[2]);
-                minLong = Math.min(minLong, ext[1]);
-                maxLong = Math.max(maxLong, ext[3]);                            
+            minLat = Math.min(minLat, ext[0]);
+            maxLat = Math.max(maxLat, ext[2]);
+            minLong = Math.min(minLong, ext[1]);
+            maxLong = Math.max(maxLong, ext[3]);                            
 
-                bounds = OpenLayers.Bounds.fromArray(ext, true);
-                bounds = bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
-                box = new OpenLayers.Feature.Vector(bounds.toGeometry());
-                boxes.addFeatures([box]);
-                this.entryBounds[i] = bounds.clone();
-                var me = this;                
+            bounds = OpenLayers.Bounds.fromArray(ext, true);
+            bounds = bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
+            box = new OpenLayers.Feature.Vector(bounds.toGeometry());
+            boxes.addFeatures([box]);
+            this.entryBounds[i] = bounds.clone();
+            var me = this;                
 
-                $("#footer").append($("<input type='radio' name='place' value='"+i+"'>"+entry["key"]+"</input>").click(
-                    function () { 
-                        me.map.zoomToExtent(me.entryBounds[this.value]); 
-                    }
-                ));
-            }
-            this.map.addLayers([boxes]);
-
-            bounds = OpenLayers.Bounds.fromArray([minLong, minLat, maxLong, maxLat]);
-            bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
-            
-            this.updateSize();
-            this.map.zoomToExtent(bounds);
-
-        },
-        
-        zoomIn: function () {
-            if (this.map) {
-                this.map.zoomIn();
-            }
-        },
-        
-        zoomOut: function () {
-            if (this.map) {
-                this.map.zoomOut();
-            }
-        },
-        
-        updateSize: function () {
-            var navbar= $("div[data-role='navbar']:visible"),
-            content = $("div[data-role='content']:visible:visible"),
-            footer = $("div[data-role='footer']:visible"),
-            viewHeight = $(window).height(),
-            contentHeight = viewHeight - navbar.outerHeight() - footer.outerHeight();
-        
-            if (content.outerHeight() !== contentHeight) {
-                content.height(contentHeight);
-            }
-        
-            if (this.map && this.map instanceof OpenLayers.Map) {
-                this.map.updateSize();
-            }
+            $("#footer").append($("<input type='radio' name='place' value='"+i+"'>"+entry["key"]+"</input>").click(
+                function () { 
+                    me.map.zoomToExtent(me.entryBounds[this.value]); 
+                }
+            ));
         }
+        this.map.addLayers([boxes]);
+
+        bounds = OpenLayers.Bounds.fromArray([minLong, minLat, maxLong, maxLat]);
+        bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
         
-    });
+        this.updateSize();
+        this.map.zoomToExtent(bounds);
+
+    },
+    
+    zoomIn: function () {
+        if (this.map) {
+            this.map.zoomIn();
+        }
+    },
+    
+    zoomOut: function () {
+        if (this.map) {
+            this.map.zoomOut();
+        }
+    },
+    
+    updateSize: function () {
+        var navbar= $("div[data-role='navbar']:visible"),
+        content = $("div[data-role='content']:visible:visible"),
+        footer = $("div[data-role='footer']:visible"),
+        viewHeight = $(window).height(),
+        contentHeight = viewHeight - navbar.outerHeight() - footer.outerHeight();
+    
+        if (content.outerHeight() !== contentHeight) {
+            content.height(contentHeight);
+        }
+    
+        if (this.map && this.map instanceof OpenLayers.Map) {
+            this.map.updateSize();
+        }
+    }
+    
 });
