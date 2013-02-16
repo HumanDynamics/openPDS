@@ -23,9 +23,10 @@ window.SocialHealthRadialView = Backbone.View.extend({
 		}
 		
 		var data = this.answerLists.models[0].attributes["value"];
-
+		// Note: we're subtracting an extra 48 from height to allow for the voting stars below it
+		var viewHeight = window.innerHeight - 48;
 		var width = window.innerWidth - 5,
-		height = window.innerHeight - 5,
+		height = viewHeight - 5,
 		maxRadius = Math.min(height, width) / 2 - 10;
 		
 		var z = d3.scale.category20();
@@ -79,10 +80,12 @@ window.SocialHealthRadialView = Backbone.View.extend({
 		var heightPadding = 20;
 		var widthPadding = 2;
 		var chartCenter = [ ((width / 2) + widthPadding), ((height / 2) + heightPadding)];
+		// Adjusted height is essentially the center plus the height of the graph below the center (lines at 30 degree angles = 0.5 height)
+		var adjustedHeight = chartCenter[1] * 1.5 + heightPadding;
 
 		var chartSvg = d3.select("#radial_chart").append("svg")
 			.attr("width", width)
-			.attr("height", height);
+			.attr("height", adjustedHeight);
 		
 		this.graph = chartSvg;
 
