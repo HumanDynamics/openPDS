@@ -235,6 +235,26 @@ def distanceBetweenLatLongs(latlong1, latlong2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return earthRadius * c * 1000 # Converting to meters here... more useful for our purposes than km
 
+def boxContainsPoint(box, point):
+    return box[0] <= point[0] <= box[2] and box[1] <= point[1] <= box[3]
+
+def boundsOverlap(bounds1, bounds2):
+    points1 = [(x, y) for x in bounds1[::2] for y in bounds1[1::2]]
+    points2 = [(x, y) for x in bounds2[::2] for y in bounds2[1::2]]
+    
+    for point in points1:
+        if boxContainsPoint(bounds2, point):
+            return True
+
+    for point in points2:
+        if boxContainsPoint(bounds1, point):
+            return True
+
+    return False
+
+def mergeBoxes(bounds1, bounds2):
+    return [min(bounds1[0], bounds2[0]), min(bounds1[1], bounds2[1]), max(bounds1[2], bounds2[2]), max(bounds1[3], bounds2[3])]
+
 def findRecentPlaceBounds(recentPlaceKey, timeRanges):
     profiles = Profile.objects.all()
     data = {}
@@ -243,38 +263,61 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
         locations = []
-        
+
+        # An explanaation for why we're doing things the way we are below (there are a few obvious strategies for finding places in location data):
+        # 1) Naive approach - take all location samples in all time ranges, find clusters within them, take the one with the most points in it.
+        # 2) Faster, but more complicated - do 1) for each time range individually to get candidate regions. Loop over candidate regions, collapsing and "voting" for those that overlap. Take the one with the most votes.
+        #    Notes: This is essentially 2-levels of clustering with the simplification that overlapping regions would have been clustered together anyway (ie; bounding boxes should be similar, but not the same, as strategy 1)
+        #    Pros: Faster - each clustering is limited to 100 entries. In practice, this is more than enough. If this poses an issue, time ranges can be chosen more carefully (more / shorter time ranges)
+        #    Cons: Bounding boxes aren't the same as 1). In particular, two candidate boxes may not overlap, but should have been clustered together anyway.
+        # 3) Binning pre-process - Same as 1), but perform a binning pre-process on the location data, collapsing multiple samples into single entries, with associaated weights.
+        #    Notes: This is essentially a lower-resolution version of strategy 1. Bounding boxes should be lower-resolution versions of those from strategy 1. 
+        #    Pros: Bounding boxes should be the same as #1. Takes into account all entries when clustering. 
+        #    Cons: Less fine-grained control over the number of entries per cluster than #2. In particular, for sparse location data, this may not reduce the number of entries we must cluster.
+        # The following is an implementation of method #2:
+        potentialRegions = []
         for timeRange in timeRanges:
-            locations.extend([entry["value"]["location"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": timeRange[0], "$lt": timeRange[1]}})])
-        latlongs = [(location["mlatitude"], location["mlongitude"]) for location in locations]
-        clustering = cluster.HierarchicalClustering(latlongs, distanceBetweenLatLongs)
-        clusters = clustering.getlevel(100)
-   
-        if (len(clusters) > 0):
-            workLocations = max(clusters, key= lambda cluster: len(cluster))
-            workLats = [loc[0] for loc in workLocations]
-            workLongs = [loc[1] for loc in workLocations]
+            latlongs = [(entry["value"]["location"]["mlatitude"], entry["value"]["location"]["mlongitude"]) for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": timeRange[0], "$lt": timeRange[1]}}, limit=100)]
+            clustering = cluster.HierarchicalClustering(latlongs, distanceBetweenLatLongs)
+            clusters = clustering.getlevel(100)
+
+            if (len(clusters) > 0):
+                clusterLocations = max(clusters, key= lambda cluster: len(cluster))
+                workLats = [loc[0] for loc in clusterLocations]
+                workLongs = [loc[1] for loc in clusterLocations]
+                potentialRegions.append([min(workLats), min(workLongs), max(workLats), max(workLongs)])
+        
+        if len(potentialRegions) > 0: 
+            overlaps = [{ "region" : r1, "overlapList": [r2 for r2 in potentialRegions if r2 is not r1 and boundsOverlap(r1, r2)]} for r1 in potentialRegions]
+            mostOverlap = max(overlaps, key = lambda entry: len(entry["overlapList"]))
+            mostVoted = reduce(lambda r1, r2: mergeBoxes(r1, r2), mostOverlap["overlapList"], mostOverlap["region"])
+            
             answerlistCollection = connection[dbName]["answerlist"]
             answer = answerlistCollection.find({ "key" : "RecentPlaces" })
             answer = answer[0] if answer.count() > 0 else {"key": "RecentPlaces", "value":[]}
             data[profile.uuid] = [datum for datum in answer["value"] if datum["key"] != recentPlaceKey]
-            data[profile.uuid].append({ "key": recentPlaceKey, "bounds": [min(workLats), min(workLongs), max(workLats), max(workLongs)] })
+            data[profile.uuid].append({ "key": recentPlaceKey, "bounds": mostVoted})
             answer["value"] = data[profile.uuid]
             answerlistCollection.save(answer)
-            
     return data
 
 @task()
 def findRecentPlaces():
     currentTime = time.time()
     today = date.fromtimestamp(currentTime)
-    startTime = time.mktime((today - timedelta(days=2)).timetuple())
-        
-    nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
-           
+    startTime = time.mktime((today - timedelta(days=6)).timetuple())
+
+    # Note: we're not taking the full 9-5 sampling. Clustering is expensive, so anything we can leave out helps...
+    # Combined with the fact that "lunch" time might not be indicative of work locations, this might be more accurate anyway       
+    nineToFives = [(nine, nine + 3600*2) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
+    nineToFives.extend([(two, two + 3600*2) for two in range(int(startTime + 3600*14), int(currentTime), 3600*24)])
+
+    
+    #print "Finding work locations..."       
     data = findRecentPlaceBounds("work", nineToFives)
     midnightToSixes = [(midnight, midnight + 3600*6) for midnight in range(int(startTime), int(currentTime), 3600* 24)]
 
+    #print "Finding home locations..."
     data = findRecentPlaceBounds("home", midnightToSixes)
 
     return data
