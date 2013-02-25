@@ -170,7 +170,8 @@ class AuditEntryCountResource(ModelResource):
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
         fields = ['date', 'count']
         allowed_methods = ('get')
-        filtering = { "date" : ["gte", "lte", "gt", "lt"]}
+        filtering = {"date" : ["gte", "lte", "gt", "lt"],
+                     "datastore_owner": ALL_WITH_RELATIONS}
         ordering = ("date");
 
 class AuditEntryResource(ModelResource):

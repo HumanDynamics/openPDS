@@ -68,8 +68,8 @@ class AuditEntry(models.Model):
     The assumption is that script names and symbolic user ids
     will be under 64 characters 
     '''
-    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="auditentry_owner")
-    requester = models.ForeignKey(Profile, blank = False, null = False, related_name="auditentry_requester")
+    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="auditentry_owner", db_index=True)
+    requester = models.ForeignKey(Profile, blank = False, null = False, related_name="auditentry_requester", db_index=True)
     method = models.CharField(max_length=10)
     scopes = models.CharField(max_length=1024) # actually storing csv of valid scopes
     purpose = models.CharField(max_length=64, blank=True, null=True)
@@ -77,7 +77,7 @@ class AuditEntry(models.Model):
     token = models.CharField(max_length=64)
     system_entity_toggle = models.BooleanField()
     trustwrapper_result = models.CharField(max_length=64)
-    timestamp = models.DateTimeField(auto_now_add = True)
+    timestamp = models.DateTimeField(auto_now_add = True, db_index=True)
     
     def __unicode__(self):
         self.pk
