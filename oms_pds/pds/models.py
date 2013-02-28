@@ -91,6 +91,7 @@ class Notification(models.Model):
     content = models.CharField(max_length = 1024, blank = False, null = False)
     type = models.IntegerField(blank = False, null = False)
     timestamp = models.DateTimeField(auto_now_add = True)
+    uri = models.URLField(blank = True, null = True)
     
     def __unicode__(self):
         self.pk
