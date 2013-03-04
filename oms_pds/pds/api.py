@@ -35,7 +35,8 @@ class FunfResource(MongoDBResource):
 class FunfConfigResource(MongoDBResource):
 
     id = fields.CharField(attribute="_id")
-    key = fields.CharField(attribute="key", null=True)
+    name = fields.CharField(attribute="name", blank = False, null = False)
+    config = fields.CharField(attribute="config", blank = False, null = False)
 
     class Meta:
         resource_name = "funfconfig"
