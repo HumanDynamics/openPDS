@@ -11,7 +11,7 @@ from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.validation import Validation
 from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
-from oms_pds.pds.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope, Notification
+from oms_pds.pds.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope, Notification, Device
 from django.db import models
 
 import pdb
@@ -219,3 +219,13 @@ class NotificationResource(ModelResource):
         ordering = ("timestamp")
         limit = 20
 
+class DeviceResource(ModelResource):
+    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True)
+    
+    class Meta:
+        queryset = Device.objects.all()
+        allowed_methods = ("get", "post", "delete")
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
+        filtering = { "datastore_owner" : ALL_WITH_RELATIONS }
+        limit = 20

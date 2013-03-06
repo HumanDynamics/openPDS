@@ -95,3 +95,7 @@ class Notification(models.Model):
     
     def __unicode__(self):
         self.pk
+
+class Device(models.Model):
+    datastore_owner = models.ForeignKey(Profile, blank=False, null=False, related_name="device_owner", db_index=True)
+    gcm_reg_id = models.CharField(max_length=1024, blank=False, null=False)
