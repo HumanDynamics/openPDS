@@ -36,7 +36,7 @@ class FunfConfigResource(MongoDBResource):
 
     id = fields.CharField(attribute="_id")
     name = fields.CharField(attribute="name", blank = False, null = False)
-    config = fields.CharField(attribute="config", blank = False, null = False)
+    config = fields.DictField(attribute="config", blank = False, null = False)
 
     class Meta:
         resource_name = "funfconfig"
@@ -136,6 +136,7 @@ class AuditEntryCountResource(ModelResource):
         return bundle
     
     def build_filters(self, filters):
+        #pdb.set_trace()
         applicable_filters = super(AuditEntryCountResource, self).build_filters(filters)
         
         qset = None
@@ -153,14 +154,22 @@ class AuditEntryCountResource(ModelResource):
         if (qset):
             applicable_filters["time_filter"] = qset
         
+        datastore_owner_uuid = filters.get("datastore_owner__uuid")
+        if (datastore_owner_uuid):
+            applicable_filters["datastore_owner__uuid"] = models.Q(datastore_owner__uuid=datastore_owner_uuid)
+ 
         return applicable_filters
     
     def apply_filters(self, request, applicable_filters):
         time_filter = None
+        #pdb.set_trace()
         
         if ("time_filter" in applicable_filters):
             time_filter= applicable_filters.pop("time_filter")
         
+        if ("datastore_owner__uuid" in applicable_filters):
+            datastore_owner_filter = applicable_filters.pop("datastore_owner__uuid")
+            time_filter = time_filter & datastore_owner_filter if time_filter else datastore_owner_filter
         semi_filtered = super(AuditEntryCountResource, self).apply_filters(request, applicable_filters)
         
         return semi_filtered.filter(time_filter) if time_filter else semi_filtered

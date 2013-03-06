@@ -119,6 +119,7 @@ class MongoDBResource(Resource):
         """
         Creates mongodb document from POST data.
         """
+        #pdb.set_trace()
         object_id = self.get_collection(request).insert(bundle.data)
         bundle.obj = self.obj_get(request, pk = object_id)
         return bundle
