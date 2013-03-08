@@ -26,9 +26,14 @@ def activityForTimeRange(collection, start, end):
     for data in collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : start, "$lt":end }}):
         #pdb.set_trace()
         dataValue = data["value"]
-        totalIntervals += dataValue["total_intervals"]
-        lowActivityIntervals += dataValue["low_activity_intervals"]
-        highActivityIntervals += dataValue["high_activity_intervals"]
+        if ("total_intervals" in dataValue):
+            totalIntervals += dataValue["total_intervals"]
+            lowActivityIntervals += dataValue["low_activity_intervals"]
+            highActivityIntervals += dataValue["high_activity_intervals"]
+        else:
+            totalIntervals += 1
+            lowActivityIntervals += 1 if dataValue["activitylevel"] == "low" else 0
+            highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
     
     return { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
 
@@ -65,12 +70,21 @@ def socialForTimeRange(collection, start, end):
 #            messageCountByAddress[threadId] = len([message for message in messages if message["threadId"] if message["thread_id"] = ])
 #        #messageTimes = set([message["date"] for message in messages if message["date"] >= start*1000 and message["date"] < end*1000])
 #        smsCount = len(messageTimes)
-    
+    #print collection
+    #pdb.set_trace()
     callLogEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }, "time": {"$gte": start}})
     
     if callLogEntries.count() > 0:
-        callSets = [callEntry["value"]["calls"] for callEntry in callLogEntries]
-        calls = [call for callSet in callSets for call in callSet if call["date"] >= start*1000 and call["date"] < end*1000]
+        callSets = [callEntry["value"] for callEntry in callLogEntries]
+        #v4 = "calls" not in callSets[0]
+        callSets = [value["calls"] if "calls" in value else value for value in callSets]
+        calls = []
+        for callSet in callSets:
+	    if isinstance(callSet, list):
+                calls.extend(callSet)
+            else:
+                calls.append(callSet)
+        calls = [call for call in calls if call["date"] >= start*1000 and call["date"] < end*1000]
         
         #callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
         countsByNumber = [float(len([call for call in calls if call["number"] == numberHash])) for numberHash in [call["number"] for call in calls]]
@@ -85,6 +99,8 @@ def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
     aggregates = {}
     
     for profile in profiles:
+        #print profile.uuid
+        #pdb.set_trace()
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
         aggregates[profile.uuid] = []
@@ -264,20 +280,32 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
         collection = connection[dbName]["funf"]
         locations = []
 
-        # An explanaation for why we're doing things the way we are below (there are a few obvious strategies for finding places in location data):
-        # 1) Naive approach - take all location samples in all time ranges, find clusters within them, take the one with the most points in it.
-        # 2) Faster, but more complicated - do 1) for each time range individually to get candidate regions. Loop over candidate regions, collapsing and "voting" for those that overlap. Take the one with the most votes.
-        #    Notes: This is essentially 2-levels of clustering with the simplification that overlapping regions would have been clustered together anyway (ie; bounding boxes should be similar, but not the same, as strategy 1)
-        #    Pros: Faster - each clustering is limited to 100 entries. In practice, this is more than enough. If this poses an issue, time ranges can be chosen more carefully (more / shorter time ranges)
-        #    Cons: Bounding boxes aren't the same as 1). In particular, two candidate boxes may not overlap, but should have been clustered together anyway.
-        # 3) Binning pre-process - Same as 1), but perform a binning pre-process on the location data, collapsing multiple samples into single entries, with associaated weights.
-        #    Notes: This is essentially a lower-resolution version of strategy 1. Bounding boxes should be lower-resolution versions of those from strategy 1. 
-        #    Pros: Bounding boxes should be the same as #1. Takes into account all entries when clustering. 
-        #    Cons: Less fine-grained control over the number of entries per cluster than #2. In particular, for sparse location data, this may not reduce the number of entries we must cluster.
+        # An explanation for why we're doing things the way we are below 
+        # (there are a few obvious strategies for finding places in location data):
+        # 1)  Naive approach - take all location samples in all time ranges, find clusters within them, 
+        #     take the one with the most points in it.
+        # 2)  Faster, but more complicated - do 1) for each time range individually to get candidate regions. 
+        #     Loop over candidate regions, collapsing and "voting" for those that overlap. Take the one with the most votes.
+        #     Notes: This is essentially 2-levels of clustering with the simplification that overlapping regions would 
+        #     have been clustered together anyway (ie; bounding boxes should be similar, but not the same, as strategy 1)
+        #     Pros: Faster - each clustering is limited to 100 entries. In practice, this is more than enough. 
+        #         If this poses an issue, time ranges can be chosen more carefully (more / shorter time ranges)
+        #     Cons: Bounding boxes aren't the same as 1). In particular, two candidate boxes may not overlap, but should 
+        #         have been clustered together anyway.
+        # 3)  Binning pre-process - Same as 1), but perform a binning pre-process on the location data, collapsing multiple 
+        #     samples into single entries, with associaated weights.
+        #     Notes: This is essentially a lower-resolution version of strategy 1. Bounding boxes should be lower-resolution
+        #     versions of those from strategy 1. 
+        #     Pros: Bounding boxes should be the same as #1. Takes into account all entries when clustering. 
+        #     Cons: Less fine-grained control over the number of entries per cluster than #2. In particular, for sparse 
+        #         location data, this may not reduce the number of entries we must cluster.
         # The following is an implementation of method #2:
         potentialRegions = []
+        #pdb.set_trace()
         for timeRange in timeRanges:
-            latlongs = [(entry["value"]["location"]["mlatitude"], entry["value"]["location"]["mlongitude"]) for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": timeRange[0], "$lt": timeRange[1]}}, limit=100)]
+            values = [entry["value"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": timeRange[0], "$lt": timeRange[1]}}, limit=100)]
+            values = [value["location"] if "location" in value else value for value in values]
+            latlongs = [(value["mlatitude"], value["mlongitude"]) for value in values]
             clustering = cluster.HierarchicalClustering(latlongs, distanceBetweenLatLongs)
             clusters = clustering.getlevel(100)
 
