@@ -41,7 +41,8 @@ class FunfConfigResource(MongoDBResource):
     class Meta:
         resource_name = "funfconfig"
         list_allowed_methods = ["delete", "get", "post"]
-        authorization = Authorization()
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         object_class = Document
         collection = "funfconfig" # collection name
 
