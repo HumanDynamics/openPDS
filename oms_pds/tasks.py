@@ -1,5 +1,5 @@
 from celery import task
-from oms_pds.pds.models import Profile, Notification
+from oms_pds.pds.models import Profile, Notification, Device
 from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
@@ -9,6 +9,7 @@ import json
 import pdb
 import math
 import cluster
+from gcm import GCM
 
 from oms_pds.pds.models import Profile
 
@@ -193,17 +194,26 @@ def checkDataAndNotify():
     data = {}
     
     currentTime = time.time()
-    recentTime = currentTime - 3600 
+    recentTime = currentTime - 2 * 3600 
     
     for profile in profiles:
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["funf"]
+        newNotifications = False
        
         recentEntries = collection.find({ "time": {"$gte": recentTime }})
         
         if (recentEntries.count() == 0):
             addNotification(profile, 1, "Stale behavioral data", "Analysis may not accurately reflect your behavior.")
+            newNotifications = True
+        if (newNotifications and Device.objects.filter(datastore_owner = profile).count() > 0):
+            gcm = GCM(settings.GCM_API_KEY)
+            #addNotification(profile, 2, "Push successful", "Push notifications are working properly.")
+            for device in Device.objects.filter(datastore_owner = profile):
+                #pdb.set_trace() 
+                gcm.plaintext_request(registration_id=device.gcm_reg_id,data= { "action":"notify" })
 
+            
 @task() 
 def ensureFunfIndexes():
     profiles = Profile.objects.all()
@@ -311,9 +321,12 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
 
             if (len(clusters) > 0):
                 clusterLocations = max(clusters, key= lambda cluster: len(cluster))
-                workLats = [loc[0] for loc in clusterLocations]
-                workLongs = [loc[1] for loc in clusterLocations]
-                potentialRegions.append([min(workLats), min(workLongs), max(workLats), max(workLongs)])
+                if isinstance(clusterLocations, list):
+                    workLats = [loc[0] for loc in clusterLocations]
+                    workLongs = [loc[1] for loc in clusterLocations]
+                    potentialRegions.append([min(workLats), min(workLongs), max(workLats), max(workLongs)])
+                #else:
+                #    potentialRegions.append([loc[0], loc[1], loc[0], loc[1]])
         
         if len(potentialRegions) > 0: 
             overlaps = [{ "region" : r1, "overlapList": [r2 for r2 in potentialRegions if r2 is not r1 and boundsOverlap(r1, r2)]} for r1 in potentialRegions]
@@ -337,8 +350,8 @@ def findRecentPlaces():
 
     # Note: we're not taking the full 9-5 sampling. Clustering is expensive, so anything we can leave out helps...
     # Combined with the fact that "lunch" time might not be indicative of work locations, this might be more accurate anyway       
-    nineToFives = [(nine, nine + 3600*2) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
-    nineToFives.extend([(two, two + 3600*2) for two in range(int(startTime + 3600*14), int(currentTime), 3600*24)])
+    nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
+    #nineToFives.extend([(two, two + 3600*2) for two in range(int(startTime + 3600*14), int(currentTime), 3600*24)])
 
     
     #print "Finding work locations..."       

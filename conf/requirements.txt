@@ -11,3 +11,4 @@ requests
 django-extensions
 django-uni-form
 cluster
+python-gcm
