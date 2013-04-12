@@ -1,10 +1,10 @@
 window.AnswerListMap = Backbone.View.extend({
     el: "#answerListMapContainer",
     
-    initialize: function () {
+    initialize: function (answerKey) {
         _.bindAll(this, "render");
         
-        this.answerLists = new AnswerListCollection();
+        this.answerLists = new AnswerListCollection([],{ "key": answerKey });
         this.answerLists.bind("reset", this.render);
         this.answerLists.fetch();
     },
@@ -24,6 +24,7 @@ window.AnswerListMap = Backbone.View.extend({
         
         var osm = new OpenLayers.Layer.OSM();
         var boxes  = new OpenLayers.Layer.Vector( "Boxes" );
+        var pointsLayer = new OpenLayers.Layer.Vector("Points");
         this.map.addLayers([osm]);
 
         minLat = minLong = Number.MAX_VALUE;
@@ -32,26 +33,44 @@ window.AnswerListMap = Backbone.View.extend({
         for (i in entries) {
             entry = entries[i];
             ext = entry["bounds"];
+            if (ext) {
+                minLat = Math.min(minLat, ext[0]);
+                maxLat = Math.max(maxLat, ext[2]);
+                minLong = Math.min(minLong, ext[1]);
+                maxLong = Math.max(maxLong, ext[3]);                            
 
-            minLat = Math.min(minLat, ext[0]);
-            maxLat = Math.max(maxLat, ext[2]);
-            minLong = Math.min(minLong, ext[1]);
-            maxLong = Math.max(maxLong, ext[3]);                            
+                bounds = OpenLayers.Bounds.fromArray(ext, true);
+                bounds = bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
+                box = new OpenLayers.Feature.Vector(bounds.toGeometry());
+                boxes.addFeatures([box]);
+                this.entryBounds[i] = bounds.clone();
+                var me = this;                
+    
+                $("#footer").append($("<input type='radio' name='place' value='"+i+"'>"+entry["key"]+"</input>").click(
+                    function () { 
+                        me.map.zoomToExtent(me.entryBounds[this.value]); 
+                    }
+                ));
+            }
+            points = entry["points"];
 
-            bounds = OpenLayers.Bounds.fromArray(ext, true);
-            bounds = bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
-            box = new OpenLayers.Feature.Vector(bounds.toGeometry());
-            boxes.addFeatures([box]);
-            this.entryBounds[i] = bounds.clone();
-            var me = this;                
+            if (points) {
+                for (pointIndex in points) {
+                    var point = points[pointIndex];
 
-            $("#footer").append($("<input type='radio' name='place' value='"+i+"'>"+entry["key"]+"</input>").click(
-                function () { 
-                    me.map.zoomToExtent(me.entryBounds[this.value]); 
+                    minLat = Math.min(minLat, point[0]);
+                    maxLat = Math.max(maxLat, point[0]);
+                    minLong = Math.min(minLong, point[1]);
+                    maxLong = Math.max(maxLong, point[1]);
+
+                    pointGeometry = OpenLayers.Geometry.Point(point[0], point[1]);
+                    pointGeometry = pointGeometry.transform(this.map.displayProjection, this.map.getProjectionObject());
+                    pointVector = new OpenLayers.Feature.Vector(pointGeometry);
+                    pointsLayer.addFeatures([pointVector]);
                 }
-            ));
+            }
         }
-        this.map.addLayers([boxes]);
+        this.map.addLayers([boxes,pointsLayer]);
 
         bounds = OpenLayers.Bounds.fromArray([minLong, minLat, maxLong, maxLat]);
         bounds.transform(this.map.displayProjection, this.map.getProjectionObject());

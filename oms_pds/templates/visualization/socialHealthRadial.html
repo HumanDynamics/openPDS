@@ -16,15 +16,16 @@
 
 <script src="{{ STATIC_URL }}js/answerList.js"></script>
 <script src="{{ STATIC_URL }}js/socialHealthRadial.js"></script>
+<!--
 <script src="{{ STATIC_URL }}js/answerRating.js"></script>
-
+-->
 <script>
 $(function () {
 	window.radialApp = new SocialHealthRadialView();
-	window.answerRating = new AnswerRatingStarView({ el: "#answer_rating", key: "SocialHealthAnswerRating" });
-        window.activityRating = new AnswerRatingStarView({ el: "#activity_rating", key: "SelfReportedActivityRating" });
-        window.socialRating = new AnswerRatingStarView({ el: "#social_rating", key: "SelfReportedSocialRating" });
-        window.focusRating = new AnswerRatingStarView({ el: "#focus_rating", key: "SelfReportedFocusRating" });
+//	window.answerRating = new AnswerRatingStarView({ el: "#answer_rating", key: "SocialHealthAnswerRating" });
+//    window.activityRating = new AnswerRatingStarView({ el: "#activity_rating", key: "SelfReportedActivityRating" });
+//    window.socialRating = new AnswerRatingStarView({ el: "#social_rating", key: "SelfReportedSocialRating" });
+//    window.focusRating = new AnswerRatingStarView({ el: "#focus_rating", key: "SelfReportedFocusRating" });
 	$(window).bind("resize", function () { radialApp.render(); });
 });
 </script>
@@ -34,8 +35,10 @@ $(function () {
 {% block content %}
 
 <div id="radial_chart"></div>
+<!--
 <div class="answer-rating"><h2>How accurate is this?</h2><div id="answer_rating"></div></div>
 <div class="answer-rating"><h2>How active are you?</h2><div id="activity_rating"></div></div>
 <div class="answer-rating"><h2>How social are you?</h2><div id="social_rating"></div></div>
 <div class="answer-rating"><h2>How focused are you?</h2><div id="focus_rating"></div></div>
+-->
 {% endblock %}

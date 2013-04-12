@@ -81,7 +81,7 @@ def socialForTimeRange(collection, start, end):
         callSets = [value["calls"] if "calls" in value else value for value in callSets]
         calls = []
         for callSet in callSets:
-	    if isinstance(callSet, list):
+            if isinstance(callSet, list):
                 calls.extend(callSet)
             else:
                 calls.append(callSet)
@@ -154,8 +154,9 @@ def recentActivityScore():
     score = {}
     
     for uuid, activityList in data.iteritems():
-        recentTotals = [item["low"] + item["high"] for item in activityList]
-        score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / 50.0, 2) - 1, 10)
+        if len(activityList) > 0:
+            recentTotals = [0.5 * item["low"] + item["high"] for item in activityList]
+            score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / len(recentTotals), 2) - 1, 10)
     
     return score
 
@@ -165,8 +166,9 @@ def recentFocusScore():
     score = {}
 
     for uuid, focusList in data.iteritems():
-        recentTotals = [item["focus"] for item in focusList]
-        score[uuid] = min(math.log(1 + sum(recentTotals), 2), 10)
+        if len(focusList) > 0:
+            recentTotals = [item["focus"] for item in focusList]
+            score[uuid] = min(math.log(1 + sum(recentTotals), 2), 10)
 
     return score
 
@@ -176,16 +178,18 @@ def recentSocialScore():
     score = {}
     
     for uuid, socialList in data.iteritems():
-        recentTotals = [item["social"] for item in socialList]
-        score[uuid] = float(sum(recentTotals)) / len(recentTotals)
+        if len(socialList) > 0:
+            recentTotals = [item["social"] for item in socialList]
+            score[uuid] = min(math.log(1 + sum(recentTotals), 2), 10)
         
     return score
 
-def addNotification(profile, notificationType, title, content):    
+def addNotification(profile, notificationType, title, content, uri):    
     notification, created = Notification.objects.get_or_create(datastore_owner=profile, type=notificationType)
     notification.title = title
     notification.content = content
     notification.datastore_owner = profile
+    notification.uri = uri
     notification.save()    
 
 @task() 
@@ -204,8 +208,10 @@ def checkDataAndNotify():
         recentEntries = collection.find({ "time": {"$gte": recentTime }})
         
         if (recentEntries.count() == 0):
-            addNotification(profile, 1, "Stale behavioral data", "Analysis may not accurately reflect your behavior.")
+            addNotification(profile, 1, "Stale behavioral data", "Analysis may not accurately reflect your behavior.", None)
             newNotifications = True
+        #addNotification(profile, 2, "Survey", "Take this survey", "/survey/?survey=1");
+        #newNotifications = True
         if (newNotifications and Device.objects.filter(datastore_owner = profile).count() > 0):
             gcm = GCM(settings.GCM_API_KEY)
             #addNotification(profile, 2, "Push successful", "Push notifications are working properly.")
@@ -231,19 +237,52 @@ def recentSocialHealthScores():
     activityScores = recentActivityScore()
     socialScores = recentSocialScore()
     focusScores = recentFocusScore()
+
+    nonzeroActivityScores = [d for d in activityScores.values() if d > 0.0]
+    nonzeroSocialScores = [d for d in socialScores.values() if d > 0.0]
+    nonzeroFocusScores = [d for d in focusScores.values() if d > 0.0]
     
-    for profile in profiles:
+    print nonzeroActivityScores
+
+
+    activityAverage = sum(nonzeroActivityScores) / len(nonzeroActivityScores)
+    socialAverage = sum(nonzeroSocialScores) / len(nonzeroSocialScores)
+    focusAverage = sum(nonzeroFocusScores) / len(nonzeroSocialScores)
+
+    print activityAverage
+
+    activityVariances = map(lambda x: (x - activityAverage) * (x - activityAverage), nonzeroActivityScores)
+    socialVariances = map(lambda x: (x - socialAverage) * (x - socialAverage), nonzeroSocialScores)
+    focusVariances = map(lambda x: (x - focusAverage) * (x - focusAverage), nonzeroFocusScores)
+
+    print activityVariances
+
+    activityStdDev = math.sqrt(sum(activityVariances) / len(nonzeroActivityScores))
+    socialStdDev = math.sqrt(sum(socialVariances) / len(nonzeroSocialScores))
+    focusStdDev = math.sqrt(sum(focusVariances) / len(nonzeroFocusScores))
+
+    print activityStdDev
+
+    for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["answerlist"]
         
         answer = collection.find({ "key" : "socialhealth" })
         answer = answer[0] if answer.count() > 0 else {"key": "socialhealth", "value":[]} 
         
-        data[profile.uuid] = [datum for datum in answer["value"] if datum["layer"] != "User"]
+        #data[profile.uuid] = [datum for datum in answer["value"] if datum["layer"] != "User"]
+        data[profile.uuid] = []
+        #pdb.set_trace()
         data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores[profile.uuid] })
         data[profile.uuid].append({ "key": "social", "layer": "User", "value": socialScores[profile.uuid] })
         data[profile.uuid].append({ "key": "focus", "layer": "User", "value": focusScores[profile.uuid] })
-        
+        data[profile.uuid].append({ "key": "activity", "layer": "averageLow", "value": max(0, activityAverage - activityStdDev)})
+        data[profile.uuid].append({ "key": "social", "layer": "averageLow", "value": max(0, socialAverage - socialStdDev) })
+        data[profile.uuid].append({ "key": "focus", "layer": "averageLow", "value": max(0, focusAverage - focusStdDev) })
+        data[profile.uuid].append({ "key": "activity", "layer": "averageHigh", "value": min(activityAverage + activityStdDev, 10) })
+        data[profile.uuid].append({ "key": "social", "layer": "averageHigh", "value": min(socialAverage + socialStdDev, 10) })
+        data[profile.uuid].append({ "key": "focus", "layer": "averageHigh", "value": min(focusAverage + focusStdDev, 10) })
+
         answer["value"] = data[profile.uuid]
         
         collection.save(answer)

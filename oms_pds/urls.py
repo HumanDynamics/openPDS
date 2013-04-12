@@ -48,6 +48,7 @@ urlpatterns = patterns('oms_pds.views',
     (r'^admin/roles', direct_to_template, { 'template' : 'roles.html' }),
     (r'^admin/', include(admin.site.urls)),
     (r'visualization/', include('oms_pds.visualization.urls')),
+    (r'^survey/', direct_to_template, { 'template' : 'survey.html' }),
     # Examples:
     # url(r'^$', 'OMS_PDS.views.home', name='home'),
     # url(r'^OMS_PDS/', include('OMS_PDS.foo.urls')),

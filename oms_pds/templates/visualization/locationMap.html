@@ -10,7 +10,7 @@ Recent Places
 
 <script>
     ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
-    ANSWERLIST_KEY = "RecentPlaces";
+//    ANSWERLIST_KEY = "RecentPlaces";
 </script>
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>
@@ -18,7 +18,7 @@ Recent Places
 
 <script>
 $(function () {
-    window.answerListMap = new AnswerListMap();
+    window.answerListMap = new AnswerListMap("RecentPlaces");
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
     $("#plus").live('click', answerListMap.zoomIn);
 

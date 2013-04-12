@@ -59,7 +59,8 @@ window.SocialHealthRadialView = Backbone.View.extend({
 		// Now that we got the stacking out of the way, we know the inner and outer radius for the average layer
 		// To simplify things (and optimize a bit), let's throw out the averageLow and replace it with the user data
 		layers[0] = {key: "User", values: userData };
-		
+		//layers = layers.splice(1,1);
+
 		// Since all layers have the same dimensions, using the first one to pull the dimension names is fine
 		var dimensions = _.pluck(layers[0].values, "key");
 		var angle = d3.scale.ordinal().domain(dimensions).range([0,120,240])
@@ -67,8 +68,8 @@ window.SocialHealthRadialView = Backbone.View.extend({
 		
 		var line = d3.svg.line.radial()
 			.interpolate("cardinal-closed")
-			.angle(function(d,i) { return angle(i); })
-			.radius(function(d) { return radius(replaceY0 + d.y); });
+			.angle(function(d,i) { return angle(d.key) * (Math.PI / 180.0); })
+			.radius(function(d) { return radius(d.value); });
 
 		// Setting up the radial area graph used by both the user and group values
 		var area = d3.svg.area.radial()
@@ -135,7 +136,7 @@ window.SocialHealthRadialView = Backbone.View.extend({
 			.attr("class", "layer")
 			.attr("d", function(d) { return area(d.values); })
 			.style("fill",
-				function(d, i) { return (d.key == "User")? pink:lightblue; })
+		        function(d, i) { return (d.key == "User")? pink:lightblue; })
 			.style("opacity", 0.6);
 			
 		// create Axis		

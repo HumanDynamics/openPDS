@@ -7,7 +7,7 @@ TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='working-title.media.mit.edu:8003'
+SERVER_OMS_REGISTRY='18.85.28.203:8003' #'working-title.media.mit.edu:8003'
 AUDIT_COLLECTION = 'auditentry'
 #SERVER_OMS_REGISTRY='localhost:8001'
 USE_MULTIPDS = True
@@ -145,10 +145,10 @@ from celery.schedules import crontab
 CELERY_IMPORTS = ('oms_pds.tasks',)
 BROKER_URL = "mongodb://celery:celery@localhost:27017/celery_broker"
 CELERYBEAT_SCHEDULE = {
-    "check-data-and-notify": {
-        "task": "oms_pds.tasks.checkDataAndNotify", 
-        "schedule": crontab(hour="*", minute="0")
-    },
+#    "check-data-and-notify": {
+#        "task": "oms_pds.tasks.checkDataAndNotify", 
+#        "schedule": crontab(hour="*", minute="0")
+#    },
     "compute-social-health-scores": {
         "task": "oms_pds.tasks.recentSocialHealthScores",
         "schedule": crontab(hour="*", minute="*/30")
@@ -198,3 +198,5 @@ LOGGING = {
         },
     }
 }
+
+GCM_API_KEY = "AIzaSyBTGmBjzM9_CETLxU3YEbtWIS_OUGWHr0s"
