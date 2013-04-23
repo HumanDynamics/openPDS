@@ -1,20 +1,30 @@
-from tastypie.authorization import Authorization
-from tastypie.resources import ModelResource, fields, ALL_WITH_RELATIONS
-from oms_pds.authentication import OAuth2Authentication
-from oms_pds.authorization import PDSAuthorization
-#from oms_pds.trust.models import SharingLevel, Role, Purpose
-from oms_pds import settings
-import datetime
-import json, ast
-
+import json, ast, pdb, datetime
 from tastypie import fields
 from tastypie.authorization import Authorization
+from tastypie.resources import ModelResource, fields, ALL_WITH_RELATIONS
+from tastypie.authorization import Authorization
 from tastypie.validation import Validation
+from oms_pds import settings
+#from oms_pds.trust.models import SharingLevel, Role, Purpose
 from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
+from oms_pds.authentication import OAuth2Authentication
+from oms_pds.authorization import PDSAuthorization
 from oms_pds.pds.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope
 from django.db import models
 
-import pdb
+class Resource(MongoDBResource):
+
+    id = fields.CharField(attribute="_id")
+    value = fields.CharField(attribute="value", null=True, help_text='A json blob of data.')
+
+    class Meta:
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
+        resource_name = "generic"
+        list_allowed_methods = ["delete", "get", "post"]
+        object_class = Document
+        collection = "generic" # collection name
+        filtering = { "key" : ["exact"]}
 
 class FunfResource(MongoDBResource):
 
