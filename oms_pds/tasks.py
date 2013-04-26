@@ -21,6 +21,18 @@ connection = Connection(
     port=getattr(settings, "MONGODB_PORT", None)
 )
 
+def computeActivityScore(activityList):
+    recentActiveTotals = [item["low"] + item["high"] for item in activityList]
+    return  min(math.log(2 + sum(recentActiveTotals) / 50.0, 2) - 1, 10)
+
+def computeFocusScore(focusList):
+    recentTotals = [item["focus"] for item in focusList]
+    return min(math.log(1 + sum(recentTotals), 2), 10)   
+
+def computeSocialScore(socialList):
+    recentTotals = [item["social"] for item in socialList]
+    return min(math.log(1 + sum(recentTotals), 2), 10)
+
 def activityForTimeRange(collection, start, end):
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
     
@@ -88,14 +100,14 @@ def socialForTimeRange(collection, start, end):
         calls = [call for call in calls if call["date"] >= start*1000 and call["date"] < end*1000]
         
         #callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
-        countsByNumber = [float(len([call for call in calls if call["number"] == numberHash])) for numberHash in [call["number"] for call in calls]]
+        countsByNumber = [float(len([call for call in calls if call["number"] == numberHash])) for numberHash in set([call["number"] for call in calls])]
         totalCalls = sum(countsByNumber)
         frequencies = [count / totalCalls for count in countsByNumber]
         score =sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
     
     return { "start": start, "end": end, "social": score}
 
-def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
+def aggregateForAllUsers(answerKey, timeRanges, aggregator):
     profiles = Profile.objects.all()
     aggregates = {}
     
@@ -106,82 +118,78 @@ def aggregateForAllUsers(answerKey, startTime, endTime, aggregator):
         collection = connection[dbName]["funf"]
         aggregates[profile.uuid] = []
         
-        for offsetFromStart in range(int(startTime), int(endTime), 3600):
-            aggregates[profile.uuid].append(aggregator(collection, offsetFromStart, offsetFromStart + 3600))
+        for (start, end) in timeRanges:
+            aggregates[profile.uuid].append(aggregator(collection, start, end))
         
-        answer = connection[dbName]["answerlist"].find({ "key" : answerKey })
+        if answerKey is not None:
+            answer = connection[dbName]["answerlist"].find({ "key" : answerKey })
         
-        if answer.count() == 0:
-            answer = { "key": answerKey }
-        else:
-            answer = answer[0]
+            if answer.count() == 0:
+                answer = { "key": answerKey }
+            else:
+                answer = answer[0]
+                
+            answer["value"] = aggregates[profile.uuid]
             
-        answer["value"] = aggregates[profile.uuid]
-        
-        connection[dbName]["answerlist"].save(answer)
+            connection[dbName]["answerlist"].save(answer)
     return aggregates
 
-@task()
-def recentActivityLevels():
+def getStartTime(daysAgo, startAtMidnight):
     currentTime = time.time()
-    today = date.fromtimestamp(currentTime)
-    answerKey = "RecentActivityByHour"
-    startTime = time.mktime((today - timedelta(days=6)).timetuple())
-        
-    return aggregateForAllUsers(answerKey, startTime, currentTime, activityForTimeRange)
+    return time.mktime((date.fromtimestamp(currentTime) - timedelta(days=daysAgo)).timetuple()) if startAtMidnight else currentTime - daysAgo * 24 * 3600
 
-@task()
+def recentActivityLevels(startTime = getStartTime(6, True), endTime = time.time(), interval = 3600*4):
+    answerKey = "RecentActivityByHour"
+    timeRanges = [(start, start + interval) for start in range(int(startTime), int(endTime), interval)]
+
+    return aggregateForAllUsers(answerKey, timeRanges, activityForTimeRange)
+
 def recentFocusLevels():
     currentTime = time.time()
     answerKey = "RecentFocusByHour"
     today = date.fromtimestamp(currentTime)
     startTime = time.mktime((today - timedelta(days=6)).timetuple())
-    
-    return aggregateForAllUsers(answerKey, startTime, currentTime, focusForTimeRange)
+    timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
+   
+    return aggregateForAllUsers(answerKey, timeRanges, focusForTimeRange)
 
-@task()
 def recentSocialLevels():
     currentTime = time.time()
     answerKey = "RecentSocialByHour"
     today = date.fromtimestamp(currentTime)
     startTime = time.mktime((today - timedelta(days=6)).timetuple())
-    
-    return aggregateForAllUsers(answerKey, startTime, currentTime, socialForTimeRange)
+    timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
+   
+    return aggregateForAllUsers(answerKey, timeRanges, socialForTimeRange)
 
-@task() 
 def recentActivityScore():
     data = recentActivityLevels()
     score = {}
     
     for uuid, activityList in data.iteritems():
         if len(activityList) > 0:
-            recentTotals = [0.5 * item["low"] + item["high"] for item in activityList]
-            score[uuid] = min(1.75*math.log(2 + sum(recentTotals) / len(recentTotals), 2) - 1, 10)
+            score[uuid] = computeActivityScore(activityList)
     
     return score
 
-@task()
 def recentFocusScore():
     data = recentFocusLevels()
     score = {}
 
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
-            recentTotals = [item["focus"] for item in focusList]
-            score[uuid] = min(math.log(1 + sum(recentTotals), 2), 10)
-
+            score[uuid] = computeFocusScore(focusList)
+    
     return score
 
-@task()
 def recentSocialScore():
     data = recentSocialLevels()
     score = {}
     
     for uuid, socialList in data.iteritems():
         if len(socialList) > 0:
-            recentTotals = [item["social"] for item in socialList]
-            score[uuid] = min(math.log(1 + sum(recentTotals), 2), 10)
-        
+            score[uuid] = computeSocialScore(socialList)
+    
     return score
 
 def addNotification(profile, notificationType, title, content, uri):    
@@ -189,8 +197,21 @@ def addNotification(profile, notificationType, title, content, uri):
     notification.title = title
     notification.content = content
     notification.datastore_owner = profile
-    notification.uri = uri
+    if uri is not None:
+        notification.uri = uri
     notification.save()    
+
+def addNotificationAndNotify(profile, notificationType, title, content, uri):
+    addNotification(profile, notificationType, title, content, uri)
+    if Device.objects.filter(datastore_owner = profile).count() > 0:
+        gcm = GCM(settings.GCM_API_KEY)
+
+        for device in Device.objects.filter(datastore_owner = profile):
+            gcm.plaintext_request(registration_id=device.gcm_reg_id, data= {"action":"notify"})
+
+def broadcastNotification(notificationType, title, content, uri):
+    for profile in Profile.objects.all():
+        addNotificationAndNotify(profile, notificationType, title, content, uri)
 
 @task() 
 def checkDataAndNotify():
@@ -198,7 +219,7 @@ def checkDataAndNotify():
     data = {}
     
     currentTime = time.time()
-    recentTime = currentTime - 2 * 3600 
+    recentTime = currentTime - 24 * 3600  
     
     for profile in profiles:
         dbName = "User_" + str(profile.id)
@@ -219,6 +240,7 @@ def checkDataAndNotify():
                 #pdb.set_trace() 
                 gcm.plaintext_request(registration_id=device.gcm_reg_id,data= { "action":"notify" })
 
+
             
 @task() 
 def ensureFunfIndexes():
@@ -238,31 +260,16 @@ def recentSocialHealthScores():
     socialScores = recentSocialScore()
     focusScores = recentFocusScore()
 
-    nonzeroActivityScores = [d for d in activityScores.values() if d > 0.0]
-    nonzeroSocialScores = [d for d in socialScores.values() if d > 0.0]
-    nonzeroFocusScores = [d for d in focusScores.values() if d > 0.0]
-    
-    print nonzeroActivityScores
+    scoresList = [activityScores.values(), socialScores.values(), focusScores.values()]
+    scoresList = [[d for d in scoreList if d > 0.0] for scoreList in scoresList]
+    averages = [sum(scoresList[i]) / len(scoresList[i]) for i in range(0, len(scoresList))]
+    variances = [map(lambda x: (x - averages[i]) * (x - averages[i]), scoresList[i]) for i in range(0, len(scoresList))]
+    stdDevs = [math.sqrt(sum(variances[i]) / len(scoresList[i])) for i in range(0, len(scoresList))]
 
-
-    activityAverage = sum(nonzeroActivityScores) / len(nonzeroActivityScores)
-    socialAverage = sum(nonzeroSocialScores) / len(nonzeroSocialScores)
-    focusAverage = sum(nonzeroFocusScores) / len(nonzeroSocialScores)
-
-    print activityAverage
-
-    activityVariances = map(lambda x: (x - activityAverage) * (x - activityAverage), nonzeroActivityScores)
-    socialVariances = map(lambda x: (x - socialAverage) * (x - socialAverage), nonzeroSocialScores)
-    focusVariances = map(lambda x: (x - focusAverage) * (x - focusAverage), nonzeroFocusScores)
-
-    print activityVariances
-
-    activityStdDev = math.sqrt(sum(activityVariances) / len(nonzeroActivityScores))
-    socialStdDev = math.sqrt(sum(socialVariances) / len(nonzeroSocialScores))
-    focusStdDev = math.sqrt(sum(focusVariances) / len(nonzeroFocusScores))
-
-    print activityStdDev
-
+    activityStdDev = stdDevs[0]
+    socialStdDev = stdDevs[1]
+    focusStdDev = stdDevs[2]
+   
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         dbName = "User_" + str(profile.id)
         collection = connection[dbName]["answerlist"]
@@ -276,12 +283,12 @@ def recentSocialHealthScores():
         data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores[profile.uuid] })
         data[profile.uuid].append({ "key": "social", "layer": "User", "value": socialScores[profile.uuid] })
         data[profile.uuid].append({ "key": "focus", "layer": "User", "value": focusScores[profile.uuid] })
-        data[profile.uuid].append({ "key": "activity", "layer": "averageLow", "value": max(0, activityAverage - activityStdDev)})
-        data[profile.uuid].append({ "key": "social", "layer": "averageLow", "value": max(0, socialAverage - socialStdDev) })
-        data[profile.uuid].append({ "key": "focus", "layer": "averageLow", "value": max(0, focusAverage - focusStdDev) })
-        data[profile.uuid].append({ "key": "activity", "layer": "averageHigh", "value": min(activityAverage + activityStdDev, 10) })
-        data[profile.uuid].append({ "key": "social", "layer": "averageHigh", "value": min(socialAverage + socialStdDev, 10) })
-        data[profile.uuid].append({ "key": "focus", "layer": "averageHigh", "value": min(focusAverage + focusStdDev, 10) })
+        data[profile.uuid].append({ "key": "activity", "layer": "averageLow", "value": max(0, averages[0] - stdDevs[0])})
+        data[profile.uuid].append({ "key": "social", "layer": "averageLow", "value": max(0, averages[1] - stdDevs[1]) })
+        data[profile.uuid].append({ "key": "focus", "layer": "averageLow", "value": max(0, averages[2] - stdDevs[2]) })
+        data[profile.uuid].append({ "key": "activity", "layer": "averageHigh", "value": min(averages[0] + stdDevs[0], 10) })
+        data[profile.uuid].append({ "key": "social", "layer": "averageHigh", "value": min(averages[1] + stdDevs[1], 10) })
+        data[profile.uuid].append({ "key": "focus", "layer": "averageHigh", "value": min(averages[2] + stdDevs[2], 10) })
 
         answer["value"] = data[profile.uuid]
         
@@ -380,6 +387,87 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
             answer["value"] = data[profile.uuid]
             answerlistCollection.save(answer)
     return data
+
+def findRecentLocations():
+    currentTime = time.time()
+    today = date.fromtimestamp(currentTime)
+    startTime = time.mktime((today - timedelta(days=3)).timetuple())
+    sampleTimes = range(int(startTime),int(currentTime), 3600)
+
+    data = {}
+
+    profiles = Profile.objects.all()
+
+    for profile in profiles:
+        dbName = "User_" + str(profile.id)
+        collection = connection[dbName]["funf"]
+        answerlistCollection = connection[dbName]["answerlist"]
+        answerlistCollection.remove({"key":"RecentLocations"})
+        answer = answerlistCollection.find({ "key": "RecentLocations" })
+        answer = answer[0] if answer.count() > 0 else { "key": "RecentLocations", "value":[]}
+        data[profile.uuid] = []
+
+        for sampleTime in sampleTimes:
+            sampleNumber = int(sampleTime - startTime) / 3600
+            locationKey = str(sampleNumber) + "-" + str(sampleNumber + 1)
+            print locationKey
+            values = [entry["value"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": sampleTime, "$lt": sampleTime + 3600}}, limit = 100)]
+            print values
+            values = [value["location"] if "location" in value else value for value in values]
+
+            latlongs = [[value["mlatitude"], value["mlongitude"]] for value in values]
+    
+            if len(latlongs) > 0:
+                data[profile.uuid].append({ "key": locationKey, "points": latlongs})
+        
+        answer["value"] = data[profile.uuid]
+        answerlistCollection.save(answer)
+    
+    return data
+
+@task()
+def createUserRecord():
+    currentTime = time.time()
+    today = date.fromtimestamp(currentTime)
+    startTime = time.mktime((today - timedelta(days=1)).timetuple())
+
+    socialHealthScores = recentSocialHealthScores()
+    data = {}
+
+    for guid, scores in socialHealthScores.iteritems():
+        profile = Profile.objects.get(uuid = guid)
+        dbName = "User_" + str(profile.id)
+        data[guid] = {}
+        collection = connection[dbName]["funf"]
+        answerCollection = connection[dbName]["answer"]
+        answerCollection.remove()#{"key":"UserRecord"})
+        averageLows = {score["key"] : score["value"] for score in scores if score["layer"] == "averageLow"}
+        averageHighs = {score["key"] : score["value"] for score in scores if score["layer"] == "averageHigh"}
+        userScores = {score["key"] : score["value"] for score in scores if score["layer"] == "User"}
+        print averageLows
+        print averageHighs
+        print userScores
+        color = "none"
+        color_fill = "#9ACD32"
+        for metric, value in userScores.iteritems():
+            if value < averageLows[metric] or value > averageHighs[metric]:
+                color_fill = "#FF0000"
+                color = "red"
+        locations = [entry["value"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": startTime, "$lt": currentTime}}, limit = 200)]
+        locations = [value["location"] if "location" in value else value for value in locations]
+        
+        timestampedlatlongs = [{ "timestamp":int(value["timestamp"]), "lat":value["mlatitude"], "lng":value["mlongitude"]} for value in locations]
+        data[guid]["user"] = "Name"
+        data[guid]["color"] = color
+        data[guid]["color-fill"] = color_fill
+        data[guid]["locations"] = timestampedlatlongs
+        data[guid]["issharing"] = False
+        data[guid]["photo"] = "/static/img/bbc_demo/locked.png"
+        answer = { "key":"UserRecord"}
+        answer["value"] = data[guid]
+        answerCollection.save(answer)
+    return data
+
 
 @task()
 def findRecentPlaces():
