@@ -36,28 +36,33 @@ def computeSocialScore(socialList):
 def activityForTimeRange(collection, start, end):
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
     
-    for data in collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : start, "$lt":end }}):
-        #pdb.set_trace()
-        dataValue = data["value"]
-        if ("total_intervals" in dataValue):
-            totalIntervals += dataValue["total_intervals"]
-            lowActivityIntervals += dataValue["low_activity_intervals"]
-            highActivityIntervals += dataValue["high_activity_intervals"]
-        else:
-            totalIntervals += 1
-            lowActivityIntervals += 1 if dataValue["activitylevel"] == "low" else 0
-            highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
-    
-    return { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+    activityEntries = collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : start, "$lt":end }})
+    if activityEntries.count() > 0:
+        for data in activityEntries:
+            #pdb.set_trace()
+            dataValue = data["value"]
+            if ("total_intervals" in dataValue):
+                totalIntervals += dataValue["total_intervals"]
+                lowActivityIntervals += dataValue["low_activity_intervals"]
+                highActivityIntervals += dataValue["high_activity_intervals"]
+            else:
+                totalIntervals += 1
+                lowActivityIntervals += 1 if dataValue["activitylevel"] == "low" else 0
+                highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
+        
+        return { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+    return None
 
 def focusForTimeRange(collection, start, end):
     screenOnCount = 0
     
-    for data in collection.find({ "key": { "$regex": "ScreenProbe$" }, "time": {"$gte": start, "$lt": end }}):
-        dataValue = data["value"]
-        screenOnCount += 1 if dataValue["screen_on"] else 0
-    
-    return { "start": start, "end": end, "focus": screenOnCount }
+    screenOnEntries = collection.find({ "key": { "$regex": "ScreenProbe$" }, "time": {"$gte": start, "$lt": end }})
+    if screenOnEntries.count() > 0:
+        for data in screenOnEntries:
+            dataValue = data["value"]
+            screenOnCount += 1 if dataValue["screen_on"] else 0    
+        return { "start": start, "end": end, "focus": screenOnCount }
+    return None
 
 def socialForTimeRange(collection, start, end):
     score = 0
@@ -105,33 +110,45 @@ def socialForTimeRange(collection, start, end):
         frequencies = [count / totalCalls for count in countsByNumber]
         score =sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
     
-    return { "start": start, "end": end, "social": score}
+       	return { "start": start, "end": end, "social": score}
+    return None
 
 def aggregateForAllUsers(answerKey, timeRanges, aggregator):
     profiles = Profile.objects.all()
     aggregates = {}
-    
+
     for profile in profiles:
-        #print profile.uuid
-        #pdb.set_trace()
-        dbName = "User_" + str(profile.id)
-        collection = connection[dbName]["funf"]
-        aggregates[profile.uuid] = []
-        
-        for (start, end) in timeRanges:
-            aggregates[profile.uuid].append(aggregator(collection, start, end))
-        
-        if answerKey is not None:
-            answer = connection[dbName]["answerlist"].find({ "key" : answerKey })
-        
-            if answer.count() == 0:
-                answer = { "key": answerKey }
-            else:
-                answer = answer[0]
-                
-            answer["value"] = aggregates[profile.uuid]
+        data = aggregateForUser(profile, answerKey, timeRanges, aggregator)
+        if data is not None and len(data) > 0:
+            aggregates[profile.uuid] = data
+
+    return aggregates
+
+def aggregateForUser(profile, answerKey, timeRanges, aggregator):
+    aggregates = []
+    
+    #print profile.uuid
+    #pdb.set_trace()
+    dbName = "User_" + str(profile.id)
+    collection = connection[dbName]["funf"]
+    
+    for (start, end) in timeRanges:
+        data = aggregator(collection, start, end)
+        if data is not None:
+            aggregates.append(aggregator(collection, start, end))
+    
+    if answerKey is not None:
+        answer = connection[dbName]["answerlist"].find({ "key" : answerKey })
+    
+        if answer.count() == 0:
+            answer = { "key": answerKey }
+        else:
+            answer = answer[0]
             
-            connection[dbName]["answerlist"].save(answer)
+        answer["value"] = aggregates
+        
+        connection[dbName]["answerlist"].save(answer)
+
     return aggregates
 
 def getStartTime(daysAgo, startAtMidnight):
@@ -261,10 +278,10 @@ def recentSocialHealthScores():
     focusScores = recentFocusScore()
 
     scoresList = [activityScores.values(), socialScores.values(), focusScores.values()]
-    scoresList = [[d for d in scoreList if d > 0.0] for scoreList in scoresList]
-    averages = [sum(scoresList[i]) / len(scoresList[i]) for i in range(0, len(scoresList))]
-    variances = [map(lambda x: (x - averages[i]) * (x - averages[i]), scoresList[i]) for i in range(0, len(scoresList))]
-    stdDevs = [math.sqrt(sum(variances[i]) / len(scoresList[i])) for i in range(0, len(scoresList))]
+#    scoresList = [[d for d in scoreList if d > 0.0] for scoreList in scoresList]
+    averages = [sum(scores) / len(scores) if len(scores) > 0 else 0 for scores in scoresList]
+    variances = [map(lambda x: (x - averages[i]) * (x - averages[i]), scoresList[i]) for i in range(len(scoresList))]
+    stdDevs = [math.sqrt(sum(variances[i]) / len(scoresList[i])) for i in range(len(scoresList))]
 
     activityStdDev = stdDevs[0]
     socialStdDev = stdDevs[1]
