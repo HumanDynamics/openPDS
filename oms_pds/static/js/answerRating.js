@@ -24,7 +24,7 @@ window.AnswerRatingTextView = Backbone.View.extend({
 });
 
 window.AnswerRatingStarView = AnswerRatingTextView.extend({
-    tagName: "div",
+    el: "<div>",
     selectedRating: 0,
 
     bindAll: function () {
@@ -32,14 +32,15 @@ window.AnswerRatingStarView = AnswerRatingTextView.extend({
     },
     
     render: function () {
-        $(this.el).empty();
+        var el = $(this.el);
+        el.empty();
         var entriesModel = this.ratingListCollection.at(0);
         entriesModel || (entriesModel = new AnswerList({ key: this.options.key, value: [] }));
         var me = this;
         var len = entriesModel.get("value").length;
         this.averageRating = (len > 0)? entriesModel.get("value").reduce(function (sum, num) { return sum + num.value; }, 0) / len : 0;
-	this.averageRating = Math.max(0, Math.min(5, this.averageRating));        
-        var yellow = (this.selectedRating > 0)? this.selectedRating : this.averageRating;        
+	    this.averageRating = Math.max(0, Math.min(5, this.averageRating));        
+        var yellow = (this.selectedRating > 0)? this.selectedRating : 0; 
  
         for (i = 1; i <= yellow; i++) {
             this.appendStar(entriesModel, i, "/static/img/star_3.png");
@@ -47,7 +48,9 @@ window.AnswerRatingStarView = AnswerRatingTextView.extend({
         
         for (i = Math.floor(yellow + 1); i <= 5; i++) {
             this.appendStar(entriesModel, i, "/static/img/star_1.png");
-        }       
+        }
+
+        return el;
     },
     
     appendStar: function (entriesModel, value, imgSrc) {

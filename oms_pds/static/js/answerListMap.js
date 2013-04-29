@@ -63,7 +63,7 @@ window.AnswerListMap = Backbone.View.extend({
                     minLong = Math.min(minLong, point[1]);
                     maxLong = Math.max(maxLong, point[1]);
 
-                    pointGeometry = OpenLayers.Geometry.Point(point[0], point[1]);
+                    pointGeometry = new OpenLayers.Geometry.Point(point[1], point[0]);
                     pointGeometry = pointGeometry.transform(this.map.displayProjection, this.map.getProjectionObject());
                     pointVector = new OpenLayers.Feature.Vector(pointGeometry);
                     pointsLayer.addFeatures([pointVector]);
@@ -71,12 +71,13 @@ window.AnswerListMap = Backbone.View.extend({
             }
         }
         this.map.addLayers([boxes,pointsLayer]);
-
-        bounds = OpenLayers.Bounds.fromArray([minLong, minLat, maxLong, maxLat]);
-        bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
         
         this.updateSize();
-        this.map.zoomToExtent(bounds);
+        if (minLong < Number.MAX_VALUE && maxLong > -Number.MAX_VALUE) {
+            bounds = OpenLayers.Bounds.fromArray([minLong, minLat, maxLong, maxLat]);
+            bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
+            this.map.zoomToExtent(bounds);
+        }
 
     },
     

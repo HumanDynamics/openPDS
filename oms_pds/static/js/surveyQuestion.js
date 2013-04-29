@@ -25,11 +25,16 @@ window.SurveyQuestionCollection = Backbone.Collection.extend({
 
 window.SurveyQuestionDropDownView = Backbone.View.extend({
     el: "<div data-role='fieldcontain'>",
+    
+    bindAll: function () {  
+         _.bindAll(this, "render", "saveAnswer", "selectedValue");
+    },
 
     initialize: function (surveyQuestion) {
-        _.bindAll(this, "render", "saveAnswer");
+        this.bindAll();
 
         this.surveyQuestion = surveyQuestion;
+        this.questionText = surveyQuestion[0].attributes.survey_question.question;
         this.answerKey = surveyQuestion[0].attributes.survey_question.answer_key;
         this.answerListCollection = new AnswerListCollection([], { key: this.answerKey });
         this.answerListCollection.fetch();
@@ -42,10 +47,10 @@ window.SurveyQuestionDropDownView = Backbone.View.extend({
     render: function () {
         var me = this;
         var el = $(this.el);
-        var question = this.surveyQuestion[0].attributes.survey_question.question;
-        el.append("<label for='" + this.answerKey + "'>" + question + "</label>");
+        el.append("<label for='" + this.answerKey + "'>" + this.questionText + "</label>");
 
         var answers = $("<select id='" + this.answerKey + "'>");
+        answers.append($("<option value='' data-placeholder='true'>Choose one...</option>"));
         $.each(this.surveyQuestion, function () { answers.append($("<option value='" + this.attributes.survey_answer.value + "'>" + this.attributes.survey_answer.description + "</option>")); });
        
         el.append(answers);
@@ -60,9 +65,7 @@ window.SurveyQuestionDropDownView = Backbone.View.extend({
         answerModel || (answerModel = new AnswerList({ key: this.answerKey, value: [] }));
         var mostRecentAnswerTime = (answerModel.get("value").length > 0)? answerModel.get("value")[0].time : 0;
         var now = (new Date).getTime() / 1000;
-        var answer = $("#" + this.answerKey).val();
-
-        this.selectedAnswer = answer;
+        var answer = this.selectedValue();
 
         if (now > mostRecentAnswerTime + 3600) {
             answerModel.get("value").unshift({ time: now, value: answer });
@@ -76,7 +79,58 @@ window.SurveyQuestionDropDownView = Backbone.View.extend({
             android.markQuestionAsAnswered(this.answerKey);
         }
     },
+
+    selectedValue: function () {
+        return $("#" + this.answerKey).val();
+    }
 });
+
+window.SurveyQuestionStarView = SurveyQuestionDropDownView.extend({
+    el: "<div class='answer-rating'>",
+    selectedRating: 0,
+
+    bindAll: function () {
+        _.bindAll(this, "render", "appendStar", "selectedValue");
+    },
+
+    render: function () {
+        var el = $(this.el);
+        el.empty();
+        el.append("<h2>" + this.questionText + "</h2>");
+        var yellow = this.selectedRating;
+
+        for (i = 1; i <= yellow; i++) {
+            this.appendStar(i, "/static/img/star_3.png");
+        }
+        for (i = Math.floor(yellow + 1); i <= 5; i++) {
+            this.appendStar(i, "/static/img/star_1.png");
+        }
+
+        return el;
+    },
+
+    appendStar: function (value, imgSrc) {
+        var me = this;
+        $(this.el).append($("<img src='"+imgSrc+"' />").click(function () { me.selectedRating = value; me.saveAnswer(); me.render() }));
+    },
+
+    selectedValue: function () {
+        return this.selectedRating;
+    }
+});
+
+window.SurveyQuestionView = function (surveyQuestion) {
+    switch (surveyQuestion[0].attributes.survey_question.answer_type) {
+        case 1:
+            surveyQuestionView = new SurveyQuestionStarView(surveyQuestions[question]);
+            break;
+        default:
+            surveyQuestionView = new SurveyQuestionDropDownView(surveyQuestions[question]);
+            break;
+    }
+
+    return surveyQuestionView;
+}
 
 window.SurveyView = Backbone.View.extend({
     el: "<div>",
@@ -94,7 +148,7 @@ window.SurveyView = Backbone.View.extend({
         surveyQuestions = this.surveyQuestionCollection.groupBy(function (q) { return q.attributes.survey_question.id; });
         var el = (this.$el)? this.$el : $(this.el);
         for (question in surveyQuestions) {
-            var questionView = new SurveyQuestionDropDownView(surveyQuestions[question]);
+            var questionView = new SurveyQuestionView(surveyQuestions[question]);
             el.append(questionView.render());
         }
 
