@@ -297,9 +297,9 @@ def recentSocialHealthScores():
         #data[profile.uuid] = [datum for datum in answer["value"] if datum["layer"] != "User"]
         data[profile.uuid] = []
         #pdb.set_trace()
-        data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores[profile.uuid] })
-        data[profile.uuid].append({ "key": "social", "layer": "User", "value": socialScores[profile.uuid] })
-        data[profile.uuid].append({ "key": "focus", "layer": "User", "value": focusScores[profile.uuid] })
+        data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores.get(profile.uuid, 0) })
+        data[profile.uuid].append({ "key": "social", "layer": "User", "value": socialScores.get(profile.uuid, 0) })
+        data[profile.uuid].append({ "key": "focus", "layer": "User", "value": focusScores.get(profile.uuid, 0)  })
         data[profile.uuid].append({ "key": "activity", "layer": "averageLow", "value": max(0, averages[0] - stdDevs[0])})
         data[profile.uuid].append({ "key": "social", "layer": "averageLow", "value": max(0, averages[1] - stdDevs[1]) })
         data[profile.uuid].append({ "key": "focus", "layer": "averageLow", "value": max(0, averages[2] - stdDevs[2]) })
