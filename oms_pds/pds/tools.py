@@ -1,6 +1,6 @@
 #from tastytools.api import Api
 from tastypie.api import Api
-from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource, PurposeResource, AnswerResource, AnswerListResource, AuditEntryResource, AuditEntryCountResource, ScopeResource, SharingLevelResource, NotificationResource, DeviceResource
+from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource, PurposeResource, AnswerResource, AnswerListResource, AuditEntryResource, AuditEntryCountResource, ScopeResource, SharingLevelResource, NotificationResource, DeviceResource,IncidentResource 
 
 v1_api = Api(api_name='personal_data')
 v1_api.register(FunfResource())
@@ -15,4 +15,4 @@ v1_api.register(AuditEntryResource())
 v1_api.register(AuditEntryCountResource())
 v1_api.register(NotificationResource())
 v1_api.register(DeviceResource())
-
+v1_api.register(IncidentResource())

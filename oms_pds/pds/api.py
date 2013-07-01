@@ -16,6 +16,24 @@ from django.db import models
 
 import pdb
 
+class IncidentResource(MongoDBResource):
+    id = fields.CharField(attribute="_id")
+    type = fields.CharField(attribute="type", null=False)
+    date = fields.DateTimeField(attribute="data", null=False)
+    description = fields.CharField(attribute="description", null=False)
+    location = fields.CharField(attribute="location", null=False)
+    user_reported = fields.BooleanField(attribute="user_reported", null=False)
+    source = fields.CharField(attribute="source", null=False)
+
+    class Meta:
+        authentication = OAuth2Authentication("crowdsos_write")
+        authorization = PDSAuthorization(scope = "crowdsos_write", audit_enabled = False)
+        resource_name= "incident"
+        list_allowed_methods = ["delete", "get", "post"]
+        object_class = Document
+        collection = "incident"
+        filtering = { "type": ["exact"] }
+
 class FunfResource(MongoDBResource):
 
     id = fields.CharField(attribute="_id")

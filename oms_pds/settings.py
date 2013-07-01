@@ -2,12 +2,12 @@
 
 import os
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='18.85.28.203:8003' #'working-title.media.mit.edu:8003'
+SERVER_OMS_REGISTRY='crowdsos.net' #'working-title.media.mit.edu:8003'
 AUDIT_COLLECTION = 'auditentry'
 #SERVER_OMS_REGISTRY='localhost:8001'
 USE_MULTIPDS = True
@@ -21,7 +21,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/trustframework/pdsEnv/OMS-PDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
+        'NAME': '/var/www/trustframework/crowdsosPDS/openPDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
         #'NAME': 'test.db',
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
