@@ -7,7 +7,7 @@ from oms_pds import settings
 import datetime
 import json, ast
 
-from tastypie import fields
+from tastypie import fields, utils
 from tastypie.authorization import Authorization
 from tastypie.validation import Validation
 from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
@@ -19,9 +19,9 @@ import pdb
 class IncidentResource(MongoDBResource):
     id = fields.CharField(attribute="_id")
     type = fields.CharField(attribute="type", null=False)
-    date = fields.DateTimeField(attribute="data", null=False)
+    date = fields.DateTimeField(attribute="date", null=False)
     description = fields.CharField(attribute="description", null=False)
-    location = fields.CharField(attribute="location", null=False)
+    location = fields.DictField(attribute="location", null=False)
     user_reported = fields.BooleanField(attribute="user_reported", null=False)
     source = fields.CharField(attribute="source", null=False)
 
@@ -249,6 +249,15 @@ class NotificationResource(ModelResource):
 
 class DeviceResource(ModelResource):
     datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True)
+    
+    def obj_create(self, bundle, request = None, **kwargs):
+        #pdb.set_trace()
+        profile = Profile.objects.get(uuid = bundle.data["datastore_owner"]["uuid"])
+        devices = Device.objects.filter(datastore_owner=profile)
+        if devices.count() > 0:
+            # Note: we're trying to keep only the most recent... not the best way to do it, but it works
+            devices.delete()
+        return super(DeviceResource, self).obj_create(bundle,request, **kwargs)
     
     class Meta:
         queryset = Device.objects.all()

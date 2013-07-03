@@ -2,7 +2,7 @@
 
 import os
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
@@ -142,24 +142,24 @@ INSTALLED_APPS = (
 
 from celery.schedules import crontab
 
-CELERY_IMPORTS = ('oms_pds.tasks',)
+CELERY_IMPORTS = ('oms_pds.tasks',"oms_pds.crowdsos_tasks")
 BROKER_URL = "mongodb://celery:celery@localhost:27017/celery_broker"
 CELERYBEAT_SCHEDULE = {
 #    "check-data-and-notify": {
 #        "task": "oms_pds.tasks.checkDataAndNotify", 
 #        "schedule": crontab(hour="*", minute="0")
 #    },
-    "compute-social-health-scores": {
-        "task": "oms_pds.tasks.recentSocialHealthScores",
-        "schedule": crontab(hour="*", minute="*/30")
-     },
-    "ensure-funf-indexes": {
-        "task": "oms_pds.tasks.ensureFunfIndexes",
+    "ensure-incident-indexes": {
+        "task": "oms_pds.crowdsos_tasks.ensureIncidentIndexes",
         "schedule": crontab(hour="*/2", minute="15")
     },
-    "find-recent-places": {
-        "task": "oms_pds.tasks.findRecentPlaces", 
-        "schedule": crontab(hour="*/2", minute="0")
+    "find-recent-incidents": {
+        "task": "oms_pds.crowdsos_tasks.findRecentIncidents", 
+        "schedule": crontab(hour="*", minute="*")
+    },
+    "ensure-funf-indexes": {
+        "task": "oms_pds.tasks.ensureFunfIndexes",
+        "schedule": crontab(hour="*/2", minute="45")
     }
 }
 
@@ -199,4 +199,4 @@ LOGGING = {
     }
 }
 
-GCM_API_KEY = "AIzaSyBTGmBjzM9_CETLxU3YEbtWIS_OUGWHr0s"
+GCM_API_KEY = "AIzaSyBXObh94NTVzSvG-1gtEgYJBFPyGrVaBPI"

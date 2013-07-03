@@ -4,7 +4,7 @@ from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
 import time
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import json
 import pdb
 import math
@@ -506,3 +506,4 @@ def findRecentPlaces():
     data = findRecentPlaceBounds("home", midnightToSixes)
 
     return data
+
