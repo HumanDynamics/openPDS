@@ -12,3 +12,6 @@ django-extensions
 django-uni-form
 cluster
 python-gcm
+SparqlWrapper
+django-4store
+pycrypto
