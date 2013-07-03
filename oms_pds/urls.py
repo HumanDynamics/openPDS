@@ -4,6 +4,7 @@ from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 from django.contrib import admin
 from oms_pds.pds.models import Role, Profile, Purpose, Scope, SharingLevel
+from oms_pds.views import federated_sparql_proxy
 admin.autodiscover()
 admin.site.register(Role)
 admin.site.register(Profile)
@@ -48,7 +49,9 @@ urlpatterns = patterns('oms_pds.views',
     (r'^admin/roles', direct_to_template, { 'template' : 'roles.html' }),
     (r'^admin/', include(admin.site.urls)),
     (r'visualization/', include('oms_pds.visualization.urls')),
-    (r'^survey/', direct_to_template, { 'template' : 'survey.html' }),
+    (r'^(?P<owner_uuid>\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b)$', "personalProfileRdf"),
+    (r"^(?P<owner_uuid>\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b)/sparql$", federated_sparql_proxy),
+    (r'^funf_connector/', include('oms_pds.funf_connector.urls')),
     # Examples:
     # url(r'^$', 'OMS_PDS.views.home', name='home'),
     # url(r'^OMS_PDS/', include('OMS_PDS.foo.urls')),

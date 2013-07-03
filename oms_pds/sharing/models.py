@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 from oms_pds.trust.models import Role, SharingLevel
-
+from oms_pds.pds.models import Profile
 
 class Tokens(models.Model):
     token_id = models.CharField(max_length=120)
@@ -14,6 +14,11 @@ class ProbeGroupSetting(models.Model):
     name = models.CharField(max_length=120)
     issharing = models.BooleanField(default=False)
 #    probes = ListField(ReferenceField(FunfResource))
+
+class AnswerSharing(models.Model):
+    datastore_owner = models.ForeignKey(Profile, related_name="AnswerSharing_Owner")
+    name = models.CharField(max_length=120, blank=False, null=False)
+    is_sharing = models.BooleanField(default=True)
 
 #class Sharing(models.Model):
 #    overallsharinglevel = models.ForeignKey(SharingLevel)

@@ -27,6 +27,9 @@ $(function () {
 //    window.socialRating = new AnswerRatingStarView({ el: "#social_rating", key: "SelfReportedSocialRating" });
 //    window.focusRating = new AnswerRatingStarView({ el: "#focus_rating", key: "SelfReportedFocusRating" });
 	$(window).bind("resize", function () { radialApp.render(); });
+    if (typeof android !== "undefined" && android.updateSharedPreference) {
+        return android.updateSharedPreference("pds_location", "http://pds.linkedpersonaldata.org");
+    }
 });
 </script>
 

@@ -15,6 +15,7 @@ class ResourceKey(models.Model):
     ''' A way of controlling sharing within a collection.  Maps to any key within a collection.  For example, funf probes and individual answers to questions'''
     key = models.CharField(max_length=120)
     issharing = models.BooleanField(default=True)
+    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name = "resourcekey_owner")
 
 class ProbeGroupSetting(models.Model):
     ''' A way of grouping resource keys for sharing.'''

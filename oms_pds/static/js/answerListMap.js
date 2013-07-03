@@ -1,12 +1,13 @@
 window.AnswerListMap = Backbone.View.extend({
     el: "#answerListMapContainer",
     
-    initialize: function (answerKey) {
+    initialize: function (answerKey, center) {
         _.bindAll(this, "render");
         
         this.answerLists = new AnswerListCollection([],{ "key": answerKey });
         this.answerLists.bind("reset", this.render);
         this.answerLists.fetch();
+        this.center = center;
     },
     
     render: function () {
@@ -17,11 +18,56 @@ window.AnswerListMap = Backbone.View.extend({
             displayProjection: new OpenLayers.Projection("EPSG:4326"),
             numZoomLevels: 18,
             tileManager: new OpenLayers.TileManager(),
+//            fractionalZoom: true
         });
+        this.geolocate = new OpenLayers.Control.Geolocate({
+                bind:false,
+                geolocationOptions: {
+                    enableHighAccuracy: false,
+                    maximumAge: 0,
+                    timeout: 7000
+                }
+            });
+
         this.map.addControls([
-            new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}})
+            new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}}),
+            this.geolocate
         ]);
-        
+  /*      
+geolocate.events.register("locationupdated",geolocate,function(e) {
+    vector.removeAllFeatures();
+    var circle = new OpenLayers.Feature.Vector(
+        OpenLayers.Geometry.Polygon.createRegularPolygon(
+            new OpenLayers.Geometry.Point(e.point.x, e.point.y),
+            e.position.coords.accuracy/2,
+            40,
+            0
+        ),
+        {},
+        style
+    );
+    vector.addFeatures([
+        new OpenLayers.Feature.Vector(
+            e.point,
+            {},
+            {
+                graphicName: 'cross',
+                strokeColor: '#f00',
+                strokeWidth: 2,
+                fillOpacity: 0,
+                pointRadius: 10
+            }
+        ),
+        circle
+    ]);
+    if (firstGeolocation) {
+        map.zoomToExtent(vector.getDataExtent());
+        pulsate(circle);
+        firstGeolocation = false;
+        this.bind = true;
+    }
+});
+*/
         var osm = new OpenLayers.Layer.OSM();
         var boxes  = new OpenLayers.Layer.Vector( "Boxes" );
         var pointsLayer = new OpenLayers.Layer.Vector("Points");
@@ -45,12 +91,13 @@ window.AnswerListMap = Backbone.View.extend({
                 boxes.addFeatures([box]);
                 this.entryBounds[i] = bounds.clone();
                 var me = this;                
-    
-                $("#footer").append($("<input type='radio' name='place' value='"+i+"'>"+entry["key"]+"</input>").click(
+                var radioButton = $("<input type='radio' name='place' value='"+i+"' id='place"+i+"' />");
+                $("#footer").append(radioButton.click(
                     function () { 
                         me.map.zoomToExtent(me.entryBounds[this.value]); 
                     }
                 ));
+                $("#footer").append($("<label for='place"+i+"'>"+entry["key"]+"</label>"));
             }
             points = entry["points"];
 
@@ -73,10 +120,22 @@ window.AnswerListMap = Backbone.View.extend({
         this.map.addLayers([boxes,pointsLayer]);
         
         this.updateSize();
-        if (minLong < Number.MAX_VALUE && maxLong > -Number.MAX_VALUE) {
+        //if (this.center) {
+        //    minLong = this.center[1] - 0.001;
+        //    maxLong = this.center[1] + 0.001;
+        //    minLat = this.center[0] - 0.001;
+        //    maxLat = this.center[0] + 0.001;
+        //}
+        if (minLong < Number.MAX_VALUE && maxLong > -Number.MAX_VALUE && !this.center) {
             bounds = OpenLayers.Bounds.fromArray([minLong, minLat, maxLong, maxLat]);
             bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
             this.map.zoomToExtent(bounds);
+        } else if (this.center) {
+            //center = new OpenLayers.Geometry.Point(this.center[1], this.center[0]);
+            center = new OpenLayers.LonLat(this.center[1], this.center[0]);
+            center.transform(this.map.displayProjection, this.map.getProjectionObject());
+            this.map.setCenter(center, 18);
+            //this.map.setCenter(new OpenLayers.LonLat(this.center[1], this.center[0]), 10);
         }
 
     },

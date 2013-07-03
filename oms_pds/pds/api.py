@@ -7,14 +7,15 @@ from oms_pds import settings
 import datetime
 import json, ast
 
-from tastypie import fields, utils
+from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.validation import Validation
 from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
-from oms_pds.pds.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope, Notification, Device
+from oms_pds.pds.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope, Notification, Device, ResourceKey
 from django.db import models
 
 import pdb
+from gcm import GCM
 
 class IncidentResource(MongoDBResource):
     id = fields.CharField(attribute="_id")
@@ -99,6 +100,13 @@ class ProfileResource(ModelResource):
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "uuid": ["contains", "exact"]}
+
+class ResourceKeyResource(ModelResource):
+    class Meta:
+        queryset = ResourceKey.objects.all()
+        authentication = OAuth2Authentication("funf_write")
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
+        filtering = { "datastore_owner": ALL_WITH_RELATIONS }
 
 class SharingLevelResource(ModelResource):
     datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
@@ -238,6 +246,20 @@ class AuditEntryResource(ModelResource):
 class NotificationResource(ModelResource):
     datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full = True)
     
+    def obj_create(self, bundle, request=None, **kwargs):
+        bundle = super(NotificationResource, self).obj_create(bundle, request, **kwargs)
+        profile = Profile.objects.get(uuid = bundle.data["datastore_owner"]["uuid"])
+        devices = Device.objects.filter(datastore_owner = profile)
+        if devices.count() > 0:
+            gcm = GCM(settings.ASSISTANT_GCM_API_KEY)
+            for device in devices:
+                try:
+                    gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})
+                except Exception as e:
+                    print e
+        return bundle
+
+ 
     class Meta:
         queryset = Notification.objects.all()
         allowed_methods = ("get", "post", "delete")
@@ -249,7 +271,7 @@ class NotificationResource(ModelResource):
 
 class DeviceResource(ModelResource):
     datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True)
-    
+
     def obj_create(self, bundle, request = None, **kwargs):
         #pdb.set_trace()
         profile = Profile.objects.get(uuid = bundle.data["datastore_owner"]["uuid"])
@@ -258,7 +280,7 @@ class DeviceResource(ModelResource):
             # Note: we're trying to keep only the most recent... not the best way to do it, but it works
             devices.delete()
         return super(DeviceResource, self).obj_create(bundle,request, **kwargs)
-    
+
     class Meta:
         queryset = Device.objects.all()
         allowed_methods = ("get", "post", "delete")
@@ -266,3 +288,4 @@ class DeviceResource(ModelResource):
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "datastore_owner" : ALL_WITH_RELATIONS }
         limit = 20
+

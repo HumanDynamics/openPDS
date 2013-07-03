@@ -15,14 +15,17 @@ Recent Places
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>
 <script src="{{ STATIC_URL }}js/answerListMap.js"></script>
+<script src="{{ STATIC_URL }}js/urlEncode.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
 
 <script>
 $(function () {
-    window.answerListMap = new AnswerListMap("RecentLocations");
+    
+    window.answerListMap = new AnswerListMap("RecentPlaces"{% if lat %},[{{ lat }}, {{ long }}]{% endif %});
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
     $("#plus").live('click', answerListMap.zoomIn);
-
     $("#minus").live('click', answerListMap.zoomOut);
+    
 });
 </script>
 
