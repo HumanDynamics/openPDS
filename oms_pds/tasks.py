@@ -22,6 +22,9 @@ connection = Connection(
     port=getattr(settings, "MONGODB_PORT", None)
 )
 
+def getDBName(profile):
+    return "User_" + str(profile.uuid).replace("-", "_")
+
 def LNPDF(x, loc, scale):
     return math.exp(-(math.log(x)-loc)**2/(2*(scale**2))) / (x*math.sqrt(2*math.pi)*scale)
 
@@ -188,7 +191,7 @@ def aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks =
     
     #print profile.uuid
     #pdb.set_trace()
-    dbName = "User_" + str(profile.id)
+    dbName = getDBName(profile)
     collection = connection[dbName]["funf"]
     
     for (start, end) in timeRanges:
@@ -202,7 +205,7 @@ def aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks =
     return aggregates
 
 def saveAnswer(profile, answerKey, data):
-    dbName = "User_" + str(profile.id)
+    dbName = getDBName(profile)
     collection = connection[dbName]["answerlist"]
 
     answer = collection.find({ "key": answerKey })
@@ -297,13 +300,6 @@ def recentSocialScore():
     #data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 7, currentTime)], socialForTimeRange, False)
     score = {}
 
-    totals = [sum([s["social"] for s in socialList]) for socialList in data.values()]
-    mean = float(sum(totals)) / len(totals)
-    variances = [(t - mean)**2 for t in totals]
-    stdDev = math.sqrt(float(sum(variances)) / len(variances))
-    
-    print "Social mean, dev: %s, %s" % (mean, stdDev)
-
     for uuid, socialList in data.iteritems():
         if len(socialList) > 0:
             score[uuid] = computeSocialScore(socialList)
@@ -357,7 +353,7 @@ def checkDataAndNotify():
     recentTime = currentTime - 24 * 3600  
     
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         collection = connection[dbName]["funf"]
         newNotifications = False
        
@@ -382,7 +378,7 @@ def ensureFunfIndexes():
     profiles = Profile.objects.all()
 
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         collection = connection[dbName]["funf"]
         collection.ensure_index([("time", -1), ("key", 1)], cache_for=7200, background=True, unique=True, dropDups=True)
 
@@ -396,6 +392,7 @@ def recentSocialHealthScores():
     focusScores = recentFocusScore()
 
     scoresList = [activityScores.values(), socialScores.values(), focusScores.values()]
+    print scoresList
 #    scoresList = [[d for d in scoreList if d > 0.0] for scoreList in scoresList]
     averages = [sum(scores) / len(scores) if len(scores) > 0 else 0 for scores in scoresList]
     variances = [map(lambda x: (x - averages[i]) * (x - averages[i]), scoresList[i]) for i in range(len(scoresList))]
@@ -410,7 +407,7 @@ def recentSocialHealthScores():
 
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         print "storing %s" % profile.uuid
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile) 
         collection = connection[dbName]["answerlist"]
         
         answer = collection.find({ "key" : "socialhealth" })
@@ -484,7 +481,7 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
     data = {}
     
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         collection = connection[dbName]["funf"]
         locations = []
 
@@ -555,7 +552,7 @@ def findRecentLocations():
     profiles = Profile.objects.all()
 
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile) 
         collection = connection[dbName]["funf"]
         answerlistCollection = connection[dbName]["answerlist"]
         answerlistCollection.remove({"key":"RecentLocations"})
@@ -592,7 +589,7 @@ def createUserRecord():
 
     for guid, scores in socialHealthScores.iteritems():
         profile = Profile.objects.get(uuid = guid)
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         data[guid] = {}
         collection = connection[dbName]["funf"]
         answerCollection = connection[dbName]["answer"]
@@ -654,7 +651,7 @@ def estimateTimes():
     startTime = time.mktime((today - timedelta(days=7)).timetuple())
     
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile) 
         answerListCollection = connection[dbName]["answerlist"]
         funf = connection[dbName]["funf"]
         recentPlaces = answerListCollection.find({ "key": "RecentPlaces" })
@@ -707,7 +704,7 @@ def findSuggestedPlaces():
     query = "Prefix lgdo: <http://linkedgeodata.org/ontology/> Select distinct ?placeUri From <http://linkedgeodata.org> { ?placeUri ?p ?o . ?placeUri rdfs:label ?l . ?placeUri geo:geometry ?g .Filter(bif:st_intersects (?g, bif:st_point (%s, %s), 0.5)) . }"
 
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         answerListCollection = connection[dbName]["answerlist"]
         recentPlaceList = answerListCollection.find({ "key": "RecentPlaces" })
         suggestions = []
@@ -743,7 +740,7 @@ def findMusicGenres():
     albumQuery = "PREFIX dbpedia-owl: <http://dbpedia.org/ontology/> PREFIX dbpprop: <http://dbpedia.org/property/> select ?album ?genre from  <http://dbpedia.org> where { ?album a dbpedia-owl:Album . ?album dbpprop:name '%s'@en . ?album dbpprop:genre ?genre }"
 
     for profile in profiles:
-        dbName = "User_" + str(profile.id) 
+        dbName = getDBName(profile) 
         answerListCollection = connection[dbName]["answerlist"]
         collection = connection[dbName]["funf"]
         
