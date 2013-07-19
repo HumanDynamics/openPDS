@@ -251,7 +251,7 @@ class NotificationResource(ModelResource):
         profile = Profile.objects.get(uuid = bundle.data["datastore_owner"]["uuid"])
         devices = Device.objects.filter(datastore_owner = profile)
         if devices.count() > 0:
-            gcm = GCM(settings.ASSISTANT_GCM_API_KEY)
+            gcm = GCM(settings.GCM_API_KEY)
             for device in devices:
                 try:
                     gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})

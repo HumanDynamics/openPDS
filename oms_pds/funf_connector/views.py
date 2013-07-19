@@ -90,7 +90,7 @@ def data(request):
     token = request.GET['bearer_token']
     datastore_owner_uuid = request.GET["datastore_owner__uuid"]
     datastore_owner, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
-    collection = connection["User_" + str(datastore_owner.id)]["funf"]
+    collection = connection["User_" + str(datastore_owner.uuid).replace("-", "_")]["funf"]
     funf_password = "changeme"
     key = decrypt.key_from_password(str(funf_password))
     print "PDS: set_funf_data on uuid: %s" % datastore_owner_uuid

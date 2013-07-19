@@ -11,6 +11,7 @@ SERVER_OMS_REGISTRY='crowdsos.net' #'working-title.media.mit.edu:8003'
 AUDIT_COLLECTION = 'auditentry'
 #SERVER_OMS_REGISTRY='localhost:8001'
 USE_MULTIPDS = True
+SERVER_UPLOAD_DIR="/var/www/trustframework/crowdsosPDS/"
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
