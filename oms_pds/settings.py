@@ -2,15 +2,16 @@
 
 import os
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='realyzer.media.mit.edu:8003'
+SERVER_OMS_REGISTRY='your.registry.server.here'
 AUDIT_COLLECTION = 'auditentry'
-#SERVER_OMS_REGISTRY='localhost:8001'
 USE_MULTIPDS = True
+
+SERVER_UPLOAD_DIR="/var/www/pdsEnv/"
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
