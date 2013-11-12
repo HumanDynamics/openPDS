@@ -25,7 +25,7 @@ class FunfResource(MongoDBResource):
 
     class Meta:
         authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
         resource_name = "funf"
         list_allowed_methods = ["delete", "get", "post"]
         object_class = Document
@@ -231,6 +231,15 @@ class NotificationResource(ModelResource):
 
 class DeviceResource(ModelResource):
     datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True)
+
+    def obj_create(self, bundle, request = None, **kwargs):
+        #pdb.set_trace()
+        profile = Profile.objects.get(uuid = bundle.data["datastore_owner"]["uuid"])
+        devices = Device.objects.filter(datastore_owner=profile)
+        if devices.count() > 0:
+            # Note: we're trying to keep only the most recent... not the best way to do it, but it works
+            devices.delete()
+        return super(DeviceResource, self).obj_create(bundle,request, **kwargs)
     
     class Meta:
         queryset = Device.objects.all()
