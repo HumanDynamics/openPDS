@@ -18,7 +18,7 @@ Recent Places
 
 <script>
 $(function () {
-    window.answerListMap = new AnswerListMap("RecentLocations");
+    window.answerListMap = new AnswerListMap("RecentPlaces");
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
     $("#plus").live('click', answerListMap.zoomIn);
 

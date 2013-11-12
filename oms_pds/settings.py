@@ -7,7 +7,7 @@ TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='18.85.28.203:8003' #'working-title.media.mit.edu:8003'
+SERVER_OMS_REGISTRY='working-title.media.mit.edu:8003'
 AUDIT_COLLECTION = 'auditentry'
 #SERVER_OMS_REGISTRY='localhost:8001'
 USE_MULTIPDS = True
@@ -142,7 +142,7 @@ INSTALLED_APPS = (
 
 from celery.schedules import crontab
 
-CELERY_IMPORTS = ('oms_pds.tasks',)
+CELERY_IMPORTS = ('oms_pds.tasks','oms_pds.tasks2')
 BROKER_URL = "mongodb://celery:celery@localhost:27017/celery_broker"
 CELERYBEAT_SCHEDULE = {
 #    "check-data-and-notify": {
@@ -150,16 +150,24 @@ CELERYBEAT_SCHEDULE = {
 #        "schedule": crontab(hour="*", minute="0")
 #    },
     "compute-social-health-scores": {
-        "task": "oms_pds.tasks.recentSocialHealthScores",
+        "task": "oms_pds.tasks2.recentSocialHealthScores",
         "schedule": crontab(hour="*", minute="*/30")
      },
     "ensure-funf-indexes": {
-        "task": "oms_pds.tasks.ensureFunfIndexes",
+        "task": "oms_pds.tasks2.ensureFunfIndexes",
         "schedule": crontab(hour="*/2", minute="15")
     },
     "find-recent-places": {
-        "task": "oms_pds.tasks.findRecentPlaces", 
+        "task": "oms_pds.tasks2.findRecentPlaces", 
         "schedule": crontab(hour="*/2", minute="0")
+    },
+    "send-verification-survey": {
+        "task": "oms_pds.tasks.sendVerificationSurvey", 
+        "schedule": crontab(day_of_week="2,5", hour="18", minute="0")
+    },
+    "send-past3days-survey": {
+        "task": "oms_pds.tasks.sendPast3DaysSurvey",
+        "schedule": crontab(day_of_week="1,4", hour="10", minute="0")
     }
 }
 

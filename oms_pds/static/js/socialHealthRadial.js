@@ -58,8 +58,8 @@ window.SocialHealthRadialView = Backbone.View.extend({
 		
 		// Now that we got the stacking out of the way, we know the inner and outer radius for the average layer
 		// To simplify things (and optimize a bit), let's throw out the averageLow and replace it with the user data
-		layers[0] = {key: "User", values: userData };
-		//layers = layers.splice(1,1);
+		layers[0] = layers[1];//{key: "User", values: userData };
+		layers.splice(1,1, {key: "User", values: userData });
 
 		// Since all layers have the same dimensions, using the first one to pull the dimension names is fine
 		var dimensions = _.pluck(layers[0].values, "key");
@@ -130,14 +130,14 @@ window.SocialHealthRadialView = Backbone.View.extend({
 			.attr("transform", "translate("+chartCenter[0]+","+chartCenter[1]+")");
 	
 		// Draw the layers
+        // Note: styles (color / fill / stroke) are handled by the style on the class, not in js
 		chartSvg.selectAll(".layer")
 			.data(layers)
 			.enter().append("path")
-			.attr("class", "layer")
-			.attr("d", function(d) { return area(d.values); })
-			.style("fill",
-		        function(d, i) { return (d.key == "User")? pink:lightblue; })
-			.style("opacity", 0.6);
+			.attr("class", function (d) { 
+                return (d.key == "User")? "user-layer":"layer"; })
+			.attr("d", function(d) { 
+                return (d.key == "User")? line(d.values):area(d.values); });
 			
 		// create Axis		
 		chartSvg.selectAll(".axis")
