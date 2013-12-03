@@ -13,6 +13,11 @@ div.answer-rating {
     opacity: 0.6;
 }
 
-.axis {
-    stroke-width: 1px;
+.axis line {
+    stroke: black;
+}
+
+.axis path {
+    fill:none;
+    stroke: black;
 }

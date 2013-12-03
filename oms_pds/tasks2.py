@@ -145,11 +145,8 @@ def focusForTimeRange(collection, start, end, includeBlanks = False, answerlistC
         focus =  { "start": start, "end": end, "focus": normalized }
 
         if answerlistCollection is not None:
-            #print "focus answerlistCollection not None"
             selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Focus")
-            #print "%s" % selfAssessed
             focus["selfAssessed"] = selfAssessed["value"]
-            print "%s" % focus
         return focus
     return None
 
@@ -292,25 +289,17 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
  
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
-            #print focusList
-            #maxValue = max([float(focus["focus"]) for focus in focusList])
-            #normalize = 10.0 / max(maxValue, 10.0)
             data[uuid] = []
             if means is not None and devs is not None and uuid in means and uuid in devs:
                 mean = means[uuid] if means[uuid] > 0 else 1
                 dev = devs[uuid] if devs[uuid] > 0 else 1
-                #factor = 5.0 * dev / mean
-                print "Using mean, dev: %s, %s" %(mean,dev)
-                #data[uuid] = [{ "start": f["start"], "end": f["end"], "focus": max(0,min(10,5.0*(1.0 - (float(f["focus"]-mean)/dev)))) } for f in focusList]
                 for f in focusList:
                     f["focus"] = 10.0*(1.0 - CDF(f["focus"], mean, dev))
-                    data[uuid].append(f)
-                #data[uuid] = [{ "start": f["start"], "end": f["end"], "focus": 10.0*(1.0 - CDF(f["focus"], mean, dev)) } for f in focusList]
+                    data[uuid].append(f)                
             else:
                 for f in focusList:
                     f["focus"] = int(f["focus"])
-                    data[uuid].append(f)
-                #data[uuid] = [{ "start": focus["start"], "end": focus["end"], "focus": int(focus["focus"])} for focus in focusList]
+                    data[uuid].append(f)               
             profile = Profile.objects.get(uuid = uuid)
             saveAnswer(profile, answerKey, data[uuid]) 
     return data
@@ -835,7 +824,7 @@ def dumpFunfData():
     c = outputConnection.cursor()
     c.execute("DROP TABLE IF EXISTS funf;") 
     c.execute("CREATE TABLE funf (user_id integer, key text, time real, value text);")
-    
+    c.execute("CREATE INDEX funf_key_time_idx on funf(key, time)") 
     for profile in profiles:
         dbName = getDBName(profile)
         funf = connection[dbName]["funf"]
@@ -864,12 +853,14 @@ def dumpSurveyData():
         user = int(profile.id)
         for datum in answerlist.find({ "key": { "$regex": "Past3Days$"}}):
             for answer in datum["value"]:
-                print type(user), type(datum["key"]), type(answer)#, type(datum["value"])
+                #print type(user), type(datum["key"]), type(answer)#, type(datum["value"])
                 c.execute("INSERT INTO survey VALUES (?,?,?,?);", (user,datum["key"],answer["time"],"%s"%answer["value"]))
         for datum in answerlist.find({ "key": { "$regex": "Verification"}}):
             for answer in datum["value"]:
                 c.execute("INSERT INTO survey VALUES (?,?,?,?);", (user,datum["key"],answer["time"],"%s"%answer["value"]))
-
+        for datum in answerlist.find({ "key": { "$regex": "Last15Minutes"}}):
+            for answer in datum["value"]:
+                c.execute("INSERT INTO survey VALUES (?,?,?,?);", (user,datum["key"],answer["time"],"%s"%answer["value"]))
     outputConnection.commit()
     outputConnection.close()
 

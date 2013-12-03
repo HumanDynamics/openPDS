@@ -151,24 +151,35 @@ CELERYBEAT_SCHEDULE = {
 #    },
     "compute-social-health-scores": {
         "task": "oms_pds.tasks2.recentSocialHealthScores",
-        "schedule": crontab(hour="*", minute="*/30")
+        "schedule": crontab(hour="1-23", minute="*/30")
      },
     "ensure-funf-indexes": {
         "task": "oms_pds.tasks2.ensureFunfIndexes",
-        "schedule": crontab(hour="*/2", minute="15")
+        "schedule": crontab(hour="1-23/2", minute="15")
     },
     "find-recent-places": {
         "task": "oms_pds.tasks2.findRecentPlaces", 
-        "schedule": crontab(hour="*/2", minute="0")
+        "schedule": crontab(hour="1-23/2", minute="0")
     },
-    "send-verification-survey": {
-        "task": "oms_pds.tasks.sendVerificationSurvey", 
-        "schedule": crontab(day_of_week="2,5", hour="18", minute="0")
+    "schedule-experience-surveys": {
+        "task": "oms_pds.tasks.scheduleExperienceSamplesForToday",
+        "schedule": crontab(hour="9", minute="0")
     },
-    "send-past3days-survey": {
-        "task": "oms_pds.tasks.sendPast3DaysSurvey",
-        "schedule": crontab(day_of_week="1,4", hour="10", minute="0")
-    }
+    "dump-survey-data": {
+        "task": "oms_pds.tasks2.dumpSurveyData", 
+        "schedule": crontab(hour="0", minute="0")
+    },
+    "dump-funf-data": {
+        "task": "oms_pds.tasks2.dumpFunfData", 
+        "schedule": crontab(hour="0", minute="1")
+    },
+#        "task": "oms_pds.tasks.sendVerificationSurvey", 
+#        "schedule": crontab(day_of_week="2,5", hour="18", minute="0")
+#    },
+#    "send-past3days-survey": {
+#        "task": "oms_pds.tasks.sendPast3DaysSurvey",
+#        "schedule": crontab(day_of_week="1,4", hour="10", minute="0")
+#    }
 }
 
 

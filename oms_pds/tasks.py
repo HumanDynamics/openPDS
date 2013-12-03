@@ -9,6 +9,7 @@ import json
 import pdb
 import math
 import cluster
+import random
 from gcm import GCM
 
 from oms_pds.pds.models import Profile
@@ -365,6 +366,34 @@ def sendVerificationSurvey():
 @task()
 def sendPast3DaysSurvey():
     broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=5")
+
+@task() 
+def sendExperienceSampleSurvey():
+    broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=9")
+
+@task()
+def scheduleTest():
+    print "sending..."
+
+def minDiff(elements, item):
+    return min([abs(el - item) for el in elements])
+
+@task()
+def scheduleExperienceSamplesForToday():
+    # We're scheduling 4 surveys / day, starting in the morning, with at least an hour of time in between each
+    # assuming we send the first within 2 hours of running this, and need to get all surveys done within 8 hours,
+    # we can build the list of delays via simple rejection  
+    maxDelay = 3600 * 8 
+    delays = [random.randint(0,maxDelay)]
+    while len(delays) < 4:
+        nextDelay = random.randint(0, maxDelay)
+        if minDiff(delays, nextDelay) >= 3600:            
+            delays.append(nextDelay)
+    print delays
+    print [time.strftime("%H:%M", time.localtime(1385042444 + d)) for d in delays]
+    for t in delays:
+        print "sending survey with %s second delay..." % str(t)
+        sendExperienceSampleSurvey.apply_async(countdown = t)
             
 @task() 
 def ensureFunfIndexes():
