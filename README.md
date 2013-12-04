@@ -19,7 +19,7 @@ Please note: openPDS requires a separate registry server for account management 
 
     >virtualenv pdsEnv
     
-    >cd pdsvirtenv
+    >cd pdsEnv
     
     >git clone git@github.com:HumanDynamics/OMS-PDS.git
     
