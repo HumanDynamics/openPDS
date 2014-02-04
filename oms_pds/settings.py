@@ -10,8 +10,8 @@ MONGODB_DATABASE = 'pds'
 SERVER_OMS_REGISTRY='your.registry.server.here'
 AUDIT_COLLECTION = 'auditentry'
 USE_MULTIPDS = True
-
 SERVER_UPLOAD_DIR="/var/www/pdsEnv/"
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -22,7 +22,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/pdsEnv/openPDS/oms_pds/main.db',                      # Or path to database file if using sqlite3.
+        'NAME': os.path.join(PROJECT_ROOT, 'main.db'),   # Or path to database file if using sqlite3.
         #'NAME': 'test.db',
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
@@ -78,7 +78,7 @@ STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(os.path.dirname(__file__), 'static'),
+    os.path.join(PROJECT_ROOT, 'static'),
 )
 
 # List of finder classes that know how to find static files in
@@ -116,7 +116,7 @@ ROOT_URLCONF = 'oms_pds.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'oms_pds.wsgi.application'
 
-TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
+TEMPLATE_DIRS = (os.path.join(PROJECT_ROOT, 'templates'),)
 
 INSTALLED_APPS = (
     'django.contrib.auth',
