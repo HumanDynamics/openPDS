@@ -19,7 +19,9 @@ Recent Activity
 <script>
 $(function () {
     window.activityGraph = new AnswerByHourGraph();
+//    window.selfAssessedActivityGraph = new AnswerByHourGraph("SelfAssessedRecentActivityByHour", function (a) { return a.start * 1000; }, function (a) { return a.activity; });
     $(window).bind("resize", function () { activityGraph.render(); });
+//    $(window).bind("resize", function () { selfAssessedActivityGraph.render(); });
 });
 </script>
 {% endblock %}

@@ -9,11 +9,11 @@ import json
 import pdb
 import math
 import cluster
-import random
 from gcm import GCM
 from oms_pds.pds.models import Profile
-from SPARQLWrapper import SPARQLWrapper, JSON
+#from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
+import sqlite3
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 
@@ -22,6 +22,9 @@ connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
     port=getattr(settings, "MONGODB_PORT", None)
 )
+
+def getDBName(profile):
+    return "User_" + str(profile.id) #str(profile.uuid).replace("-", "_")
 
 def LNPDF(x, loc, scale):
     return math.exp(-(math.log(x)-loc)**2/(2*(scale**2))) / (x*math.sqrt(2*math.pi)*scale)
@@ -51,8 +54,8 @@ def computeActivityScore(activityList):
 #    return  min(2.538 * (math.log(2 + factor * float(sum(recentActiveTotals)) / 8.89, 2) - 1), 10)
 #    return min(5 * (1 + math.erf((activeTotal - 44.5) / 44.5)), 10)
     #NOTE: mean=54, stdDev=13. Dev changed to make graphs nicer
-    print 10 * CDF(41, 54, 39)
-    print 10 * CDF(67, 54, 39)
+    #print 10 * CDF(41, 54, 39)
+    #print 10 * CDF(67, 54, 39)
     return min(10.0 * CDF(activeTotal, 54, 39), 10)
 
 def computeFocusScore(focusList):
@@ -71,7 +74,40 @@ def computeSocialScore(socialList):
     # 68.8, 33.8
     return min(10.0 * CDF(float(sum(recentTotals)), 68.8, 68.8), 10)
 
-def activityForTimeRange(collection, start, end, includeBlanks = False):
+
+def intervalsOverlap(i1, i2):
+    return i2[0] <= i1[0] <= i2[1] or i2[0] <= i1[1] <= i2[1] or i1[0] <= i2[0] <= i1[1] or i1[0] <= i2[1] <= i1[1]
+
+
+def selfAssessedScoreForTimeRange(collection, start, end, metric):
+    verificationEntries = collection.find({ "key": metric + "Verification"})
+    past3DaysEntries = collection.find({ "key": metric + "Past3Days" })
+    oneDay = 24 * 3600
+
+    v = []
+
+    if verificationEntries.count() > 0:
+        for answerList in verificationEntries:
+            v.extend([value for value in answerList["value"]])
+
+    p = []
+    if past3DaysEntries.count() > 0:
+        for answerList in past3DaysEntries:
+            p.extend([value for value in answerList["value"]])
+
+    v = [value for value in v if intervalsOverlap([value["time"] - oneDay, value["time"]], [start, end])]
+    p = [value for value in p if intervalsOverlap([value["time"] - 3*oneDay, value["time"]], [start, end])]
+    #pdb.set_trace()
+    v.extend(p)
+
+    allScores = [int(value["value"]) for value in v]
+
+    average = sum(allScores) / len(allScores) if len(allScores) > 0 else 0
+
+    return {"start": start, "end": end, "value": average * 2.0 }
+
+
+def activityForTimeRange(collection, start, end, includeBlanks = False, answerlistCollection=None):
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
 
     activityEntries = collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : start, "$lt":end }})
@@ -88,10 +124,14 @@ def activityForTimeRange(collection, start, end, includeBlanks = False):
                 lowActivityIntervals += 1 if dataValue["activitylevel"] == "low" else 0
                 highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
 
-        return { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+        activity = { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+        if answerlistCollection is not None:
+            selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Activity")
+            activity["selfAssessed"] = selfAssessed["value"]
+        return activity
     return None
 
-def focusForTimeRange(collection, start, end, includeBlanks = False):
+def focusForTimeRange(collection, start, end, includeBlanks = False, answerlistCollection=None):
     screenOnCount = 0
     hours = float((end - start)) / 3600.0
 
@@ -101,10 +141,16 @@ def focusForTimeRange(collection, start, end, includeBlanks = False):
             dataValue = data["value"]
             screenOnCount += 1 if dataValue["screen_on"] else 0
         normalized = float(screenOnCount) / hours
-        return { "start": start, "end": end, "focus": normalized }
+
+        focus =  { "start": start, "end": end, "focus": normalized }
+
+        if answerlistCollection is not None:
+            selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Focus")
+            focus["selfAssessed"] = selfAssessed["value"]
+        return focus
     return None
 
-def socialForTimeRange(collection, start, end, includeBlanks = False):
+def socialForTimeRange(collection, start, end, includeBlanks = False, answerlistCollection=None):
     score = 0
     
     # Get bluetooth entries for mobile phones only (middle byte == 02)
@@ -112,7 +158,7 @@ def socialForTimeRange(collection, start, end, includeBlanks = False):
     # The rationale for the signal strength filtering is that we want to try and keep this to face-to-face interactions
     bluetoothEntries = collection.find({ "key": { "$regex": "BluetoothProbe$" }, "time": { "$gte": start, "$lt": end }})
     if includeBlanks or bluetoothEntries.count() > 0:
-        bluetoothEntries = [bt["value"] for bt in bluetoothEntries if bt["value"]["android-bluetooth-device-extra-class"]["mclass"] & 0x00FF00 == 512]
+        bluetoothEntries = [bt["value"] for bt in bluetoothEntries if "android-bluetooth-device-extra-class" in bt["value"] and bt["value"]["android-bluetooth-device-extra-class"]["mclass"] & 0x00FF00 == 512]
 #        bluetoothEntries = [bt for bt in bluetoothEntries if bt["android-bluetooth-device-extra-rssi"] > -75]
         macKey = "android-bluetooth-device-extra-device"
         macs = set([bt[macKey]["maddress"] for bt in bluetoothEntries])
@@ -166,7 +212,11 @@ def socialForTimeRange(collection, start, end, includeBlanks = False):
         score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
 
         score = min(score, 10)
-        return { "start": start, "end": end, "social": score}
+        social = { "start": start, "end": end, "social": score}
+        if answerlistCollection is not None:
+            selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Social")
+            social["selfAssessed"] = selfAssessed["value"]
+        return social
     return None
 
 
@@ -189,13 +239,14 @@ def aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks =
     
     #print profile.uuid
     #pdb.set_trace()
-    dbName = "User_" + str(profile.id)
+    dbName = getDBName(profile)
     collection = connection[dbName]["funf"]
+    answerlistCollection = connection[dbName]["answerlist"]
     
     for (start, end) in timeRanges:
         data = aggregator(collection, start, end)
         if data is not None:
-            aggregates.append(aggregator(collection, start, end, includeBlanks))
+            aggregates.append(aggregator(collection, start, end, includeBlanks, answerlistCollection))
     
     if answerKey is not None:
         saveAnswer(profile, answerKey, aggregates)
@@ -203,7 +254,7 @@ def aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks =
     return aggregates
 
 def saveAnswer(profile, answerKey, data):
-    dbName = "User_" + str(profile.id)
+    dbName = getDBName(profile)
     collection = connection[dbName]["answerlist"]
 
     answer = collection.find({ "key": answerKey })
@@ -218,14 +269,6 @@ def saveAnswer(profile, answerKey, data):
 def getStartTime(daysAgo, startAtMidnight):
     currentTime = time.time()
     return time.mktime((date.fromtimestamp(currentTime) - timedelta(days=daysAgo)).timetuple()) if startAtMidnight else currentTime - daysAgo * 24 * 3600
-def recentSelfAssessedActivityLevels():
-    startTime = getStartTime(6, True)
-    endTime = time.time()
-    interval = 3600 * 4
-    answerKey = "SelfAssessedRecentActivityByHour"
-    timeRanges = [(start, start + interval) for start in range(int(startTime), int(endTime), interval)]
-
-    return aggregateForAllUsers(answerKey, timeRanges, selfAssessedActivityForTimeRange, "answerlist")
 
 def recentActivityLevels(includeBlanks = False):
     startTime = getStartTime(6, True)
@@ -233,7 +276,7 @@ def recentActivityLevels(includeBlanks = False):
     interval = 3600*2
     answerKey = "RecentActivityByHour"
     timeRanges = [(start, start + interval) for start in range(int(startTime), int(endTime), interval)]
-
+    #pdb.set_trace()
     return aggregateForAllUsers(answerKey, timeRanges, activityForTimeRange, includeBlanks)
 
 def recentFocusLevels(includeBlanks = False, means = None, devs = None):
@@ -246,18 +289,17 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
  
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
-            #print focusList
-            #maxValue = max([float(focus["focus"]) for focus in focusList])
-            #normalize = 10.0 / max(maxValue, 10.0)
+            data[uuid] = []
             if means is not None and devs is not None and uuid in means and uuid in devs:
-                mean = means[uuid]
-                dev = devs[uuid]
-                #factor = 5.0 * dev / mean
-                print "Using mean, dev: %s, %s" %(mean,dev)
-                #data[uuid] = [{ "start": f["start"], "end": f["end"], "focus": max(0,min(10,5.0*(1.0 - (float(f["focus"]-mean)/dev)))) } for f in focusList]
-                data[uuid] = [{ "start": f["start"], "end": f["end"], "focus": 10.0*(1.0 - CDF(f["focus"], mean, dev)) } for f in focusList]
+                mean = means[uuid] if means[uuid] > 0 else 1
+                dev = devs[uuid] if devs[uuid] > 0 else 1
+                for f in focusList:
+                    f["focus"] = 10.0*(1.0 - CDF(f["focus"], mean, dev))
+                    data[uuid].append(f)                
             else:
-                data[uuid] = [{ "start": focus["start"], "end": focus["end"], "focus": int(focus["focus"])} for focus in focusList]
+                for f in focusList:
+                    f["focus"] = int(f["focus"])
+                    data[uuid].append(f)               
             profile = Profile.objects.get(uuid = uuid)
             saveAnswer(profile, answerKey, data[uuid]) 
     return data
@@ -294,16 +336,6 @@ def recentFocusScore():
     screenOnStdDevs = { uuid: math.sqrt(sum([(f["focus"] - screenOnAverages[uuid])**2 for f in focusList]) / len(focusList)) for uuid, focusList in data.iteritems()}
     data = recentFocusLevels(True, screenOnAverages, screenOnStdDevs)
     
-def recentFocusScore():
-    data = recentFocusLevels(True)
-    #currentTime = time.time()
-    #data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 7, currentTime)], focusForTimeRange, False)
-    score = {}
-
-    screenOnAverages = { uuid: float(sum([f["focus"] for f in focusList])) / len(focusList)  for uuid, focusList in data.iteritems()}
-    screenOnStdDevs = { uuid: math.sqrt(sum([(f["focus"] - screenOnAverages[uuid])**2 for f in focusList]) / len(focusList)) for uuid, focusList in data.iteritems()}
-    data = recentFocusLevels(True, screenOnAverages, screenOnStdDevs)
-    
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
             score[uuid] = computeFocusScore(focusList)
@@ -315,13 +347,6 @@ def recentSocialScore():
     #currentTime = time.time()
     #data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 7, currentTime)], socialForTimeRange, False)
     score = {}
-
-    totals = [sum([s["social"] for s in socialList]) for socialList in data.values()]
-    mean = float(sum(totals)) / len(totals)
-    variances = [(t - mean)**2 for t in totals]
-    stdDev = math.sqrt(float(sum(variances)) / len(variances))
-    
-    print "Social mean, dev: %s, %s" % (mean, stdDev)
 
     for uuid, socialList in data.iteritems():
         if len(socialList) > 0:
@@ -376,7 +401,7 @@ def checkDataAndNotify():
     recentTime = currentTime - 24 * 3600  
     
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         collection = connection[dbName]["funf"]
         newNotifications = False
        
@@ -394,48 +419,14 @@ def checkDataAndNotify():
                 #pdb.set_trace() 
                 gcm.plaintext_request(registration_id=device.gcm_reg_id,data= { "action":"notify" })
 
-@task()
-def sendVerificationSurvey():
-    broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=8")
 
-@task()
-def sendPast3DaysSurvey():
-    broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=5")
-
-@task() 
-def sendExperienceSampleSurvey():
-    broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=9")
-
-@task()
-def scheduleTest():
-    print "sending..."
-
-def minDiff(elements, item):
-    return min([abs(el - item) for el in elements])
-
-@task()
-def scheduleExperienceSamplesForToday():
-    # We're scheduling 4 surveys / day, starting in the morning, with at least an hour of time in between each
-    # assuming we send the first within 2 hours of running this, and need to get all surveys done within 8 hours,
-    # we can build the list of delays via simple rejection  
-    maxDelay = 3600 * 8 
-    delays = [random.randint(0,maxDelay)]
-    while len(delays) < 4:
-        nextDelay = random.randint(0, maxDelay)
-        if minDiff(delays, nextDelay) >= 3600:            
-            delays.append(nextDelay)
-    print delays
-    print [time.strftime("%H:%M", time.localtime(1385042444 + d)) for d in delays]
-    for t in delays:
-        print "sending survey with %s second delay..." % str(t)
-        sendExperienceSampleSurvey.apply_async(countdown = t)
             
 @task() 
 def ensureFunfIndexes():
     profiles = Profile.objects.all()
 
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         collection = connection[dbName]["funf"]
         collection.ensure_index([("time", -1), ("key", 1)], cache_for=7200, background=True, unique=True, dropDups=True)
 
@@ -449,6 +440,7 @@ def recentSocialHealthScores():
     focusScores = recentFocusScore()
 
     scoresList = [activityScores.values(), socialScores.values(), focusScores.values()]
+    print scoresList
 #    scoresList = [[d for d in scoreList if d > 0.0] for scoreList in scoresList]
     averages = [sum(scores) / len(scores) if len(scores) > 0 else 0 for scores in scoresList]
     variances = [map(lambda x: (x - averages[i]) * (x - averages[i]), scoresList[i]) for i in range(len(scoresList))]
@@ -463,7 +455,7 @@ def recentSocialHealthScores():
 
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         print "storing %s" % profile.uuid
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile) 
         collection = connection[dbName]["answerlist"]
         
         answer = collection.find({ "key" : "socialhealth" })
@@ -537,7 +529,7 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
     data = {}
     
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         collection = connection[dbName]["funf"]
         locations = []
 
@@ -608,7 +600,7 @@ def findRecentLocations():
     profiles = Profile.objects.all()
 
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile) 
         collection = connection[dbName]["funf"]
         answerlistCollection = connection[dbName]["answerlist"]
         answerlistCollection.remove({"key":"RecentLocations"})
@@ -645,7 +637,7 @@ def createUserRecord():
 
     for guid, scores in socialHealthScores.iteritems():
         profile = Profile.objects.get(uuid = guid)
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         data[guid] = {}
         collection = connection[dbName]["funf"]
         answerCollection = connection[dbName]["answer"]
@@ -686,61 +678,31 @@ def findRecentPlaces():
 
     # Note: we're not taking the full 9-5 sampling. Clustering is expensive, so anything we can leave out helps...
     # Combined with the fact that "lunch" time might not be indicative of work locations, this might be more accurate anyway       
-    nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24) if date.fromtimestamp(nine).weekday() < 5]
+    nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
     #nineToFives.extend([(two, two + 3600*2) for two in range(int(startTime + 3600*14), int(currentTime), 3600*24)])
 
     
     #print "Finding work locations..."       
     data = findRecentPlaceBounds("work", nineToFives)
-    midnightToSixes = [(midnight, midnight + 3600*6) for midnight in range(int(startTime), int(currentTime), 3600* 24) if date.fromtimestamp(midnight).weekday() < 5]
+    midnightToSixes = [(midnight, midnight + 3600*6) for midnight in range(int(startTime), int(currentTime), 3600* 24)]
 
     #print "Finding home locations..."
     data = findRecentPlaceBounds("home", midnightToSixes)
 
     return data
 
-<<<<<<< HEAD
-=======
-def getTimeInterval(funf, place, startTime, endTime, workHours = None):
-    startTimes = []
-    endTimes = []
-    for intervalStart in [t for t in range(int(startTime), int(endTime), 3600 * 24) if date.fromtimestamp(t).weekday() < 5]:
-        placeLocations = [(entry["time"], entry["value"]) for entry in funf.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": intervalStart, "$lt": intervalStart + 24*3600 }}, limit = 1000)]
-        if len(placeLocations) > 0:
-            placeLocations = [(value[0], value[1]["location"]) if "location" in value[1] else value for value in placeLocations]
-            placeLocations = [(value[0], (value[1]["mlatitude"], value[1]["mlongitude"])) for value in placeLocations]
-            placeTimes = [value[0] - intervalStart for value in placeLocations if boxContainsPoint(place["bounds"], value[1])]
-            if workHours is None and len(placeTimes) > 0:
-                startTimes.append(min(placeTimes))
-                endTimes.append(max(placeTimes))
-            elif workHours is not None and len([t for t in placeTimes if t < workHours[0]]) > 0  and len([t for t in placeTimes if t > workHours[1]]) > 0:
-                endTimes.append(max([t for t in placeTimes if t < workHours[0]]))
-                startTimes.append(min([t for t in placeTimes if t > workHours[1]]))
-    if len(startTimes) > 0 and len(endTimes) > 0:
-        averageStartTime = sum(startTimes) / len(startTimes)
-        averageEndTime = sum(endTimes) / len(endTimes)
-        return (averageStartTime,  averageEndTime )
-    return None
-
->>>>>>> fieldtrial
 @task()
 def estimateTimes():
     profiles = Profile.objects.all()
     currentTime = time.time()
     today = date.fromtimestamp(currentTime)
-<<<<<<< HEAD
     startTime = time.mktime((today - timedelta(days=7)).timetuple())
     
-=======
-    startTime = time.mktime((today - timedelta(days=30)).timetuple())
-
->>>>>>> fieldtrial
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile) 
         answerListCollection = connection[dbName]["answerlist"]
         funf = connection[dbName]["funf"]
         recentPlaces = answerListCollection.find({ "key": "RecentPlaces" })
-<<<<<<< HEAD
         startTimes = { }
         endTimes = { }
         if recentPlaces.count() > 0:
@@ -790,7 +752,7 @@ def findSuggestedPlaces():
     query = "Prefix lgdo: <http://linkedgeodata.org/ontology/> Select distinct ?placeUri From <http://linkedgeodata.org> { ?placeUri ?p ?o . ?placeUri rdfs:label ?l . ?placeUri geo:geometry ?g .Filter(bif:st_intersects (?g, bif:st_point (%s, %s), 0.5)) . }"
 
     for profile in profiles:
-        dbName = "User_" + str(profile.id)
+        dbName = getDBName(profile)
         answerListCollection = connection[dbName]["answerlist"]
         recentPlaceList = answerListCollection.find({ "key": "RecentPlaces" })
         suggestions = []
@@ -826,7 +788,7 @@ def findMusicGenres():
     albumQuery = "PREFIX dbpedia-owl: <http://dbpedia.org/ontology/> PREFIX dbpprop: <http://dbpedia.org/property/> select ?album ?genre from  <http://dbpedia.org> where { ?album a dbpedia-owl:Album . ?album dbpprop:name '%s'@en . ?album dbpprop:genre ?genre }"
 
     for profile in profiles:
-        dbName = "User_" + str(profile.id) 
+        dbName = getDBName(profile) 
         answerListCollection = connection[dbName]["answerlist"]
         collection = connection[dbName]["funf"]
         
@@ -853,27 +815,52 @@ def findMusicGenres():
             musicGenres["value"] = [count[0] for count in counts]
             answerListCollection.save(musicGenres)
 
-=======
-        if recentPlaces.count() > 0:
-            recentPlaces = recentPlaces[0]
-            work = [p for p in recentPlaces["value"] if p["key"] == "work"]
-            if len(work) > 0:
-                work = work[0]
-                workInterval = getTimeInterval(funf, work, startTime, currentTime)
-                if workInterval is not None:
-                    recentPlaces["value"].remove(work)
-                    work["start"] = workInterval[0] / 3600
-                    work["end"] = workInterval[1] / 3600
-                    recentPlaces["value"].append(work)
-                    answerListCollection.save(recentPlaces)
-            home = [p for p in recentPlaces["value"] if p["key"] == "home"]
-            if len(home) > 0 and workInterval is not None:
-                home = home[0]
-                homeInterval = getTimeInterval(funf, home, startTime, currentTime, workInterval)
-                if homeInterval is not None:
-                    recentPlaces["value"].remove(home)
-                    home["start"] = homeInterval[0] / 3600
-                    home["end"] = homeInterval[1] / 3600
-                    recentPlaces["value"].append(home)
-                    answerListCollection.save(recentPlaces)
->>>>>>> fieldtrial
+
+
+@task()
+def dumpFunfData():
+    profiles = Profile.objects.all()
+    outputConnection = sqlite3.connect("oms_pds/static/dump.db")
+    c = outputConnection.cursor()
+    c.execute("DROP TABLE IF EXISTS funf;") 
+    c.execute("CREATE TABLE funf (user_id integer, key text, time real, value text);")
+    c.execute("CREATE INDEX funf_key_time_idx on funf(key, time)") 
+    for profile in profiles:
+        dbName = getDBName(profile)
+        funf = connection[dbName]["funf"]
+        user = int(profile.id)     
+        for datum in funf.find():
+            #print type(user), type(datum["key"]), type(datum["time"]), type(datum["value"])
+            key = datum["key"]
+            if key is not None:
+                key = key[key.rfind(".") + 1:]
+                c.execute("INSERT INTO funf VALUES (?,?,?,?);", (user,key,datum["time"],"%s"%datum["value"]))
+    
+    outputConnection.commit()
+    outputConnection.close()
+
+@task()
+def dumpSurveyData():
+    profiles = Profile.objects.all()
+    outputConnection = sqlite3.connect("oms_pds/static/dump.db")
+    c = outputConnection.cursor()
+    c.execute("DROP TABLE IF EXISTS survey;")
+    c.execute("CREATE TABLE survey (user_id integer, key text, time real, value text);")
+
+    for profile in profiles:
+        dbName = getDBName(profile)
+        answerlist = connection[dbName]["answerlist"]
+        user = int(profile.id)
+        for datum in answerlist.find({ "key": { "$regex": "Past3Days$"}}):
+            for answer in datum["value"]:
+                #print type(user), type(datum["key"]), type(answer)#, type(datum["value"])
+                c.execute("INSERT INTO survey VALUES (?,?,?,?);", (user,datum["key"],answer["time"],"%s"%answer["value"]))
+        for datum in answerlist.find({ "key": { "$regex": "Verification"}}):
+            for answer in datum["value"]:
+                c.execute("INSERT INTO survey VALUES (?,?,?,?);", (user,datum["key"],answer["time"],"%s"%answer["value"]))
+        for datum in answerlist.find({ "key": { "$regex": "Last15Minutes"}}):
+            for answer in datum["value"]:
+                c.execute("INSERT INTO survey VALUES (?,?,?,?);", (user,datum["key"],answer["time"],"%s"%answer["value"]))
+    outputConnection.commit()
+    outputConnection.close()
+

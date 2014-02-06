@@ -73,11 +73,23 @@ window.SurveyQuestionDropDownView = Backbone.View.extend({
             answerModel.get("value")[0].value = answer;
         }
         
-        answerModel.save();
+        var me = this;
 
-        if (typeof(android) !== "undefined" && android.markQuestionAsAnswered) {
-            android.markQuestionAsAnswered(this.answerKey);
-        }
+        // NOTE: we want to mark the question as answered regardless of if the save succeeds
+        // We've disabled the back button in the android app, so we need to give control back to the user
+        // even if their connection (or our server) is having issues.
+        answerModel.save({}, { 
+            success: function () {
+                if (typeof(android) !== "undefined" && android.markQuestionAsAnswered) {
+                    android.markQuestionAsAnswered(me.answerKey);
+                }
+            },
+            error: function () {
+                if (typeof(android) !== "undefined" && android.markQuestionAsAnswered) {
+                    android.markQuestionAsAnswered(me.answerKey);
+                }
+            }
+        });
     },
 
     selectedValue: function () {
