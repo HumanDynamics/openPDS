@@ -36,7 +36,7 @@ def findRecentIncidents():
 
     print "Storing %i incidents into %i profiles..." % (len(answer["value"]), profiles.count())
     for profile in profiles:
-        dbName = "User_" + str(profile.uuid).replace("-", "_")
+        dbName = profile.getDBName()
         answerlistCollection = connection[dbName]["answerlist"]
         answerlistCollection.remove({ "key": "RecentIncidents" })
         answerlistCollection.save(answer)
