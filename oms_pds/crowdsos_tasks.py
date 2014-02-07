@@ -29,7 +29,7 @@ def findRecentIncidents():
     answer = { "key": "RecentIncidents", "value": [] }
     print "Aggregating incidents over the last day..."
     for profile in profiles:
-        dbName = "User_" + str(profile.uuid).replace("-", "_")
+        dbName = profile.getDBName()
         collection = connection[dbName]["incident"]
         for incident in collection.find({ "date": { "$gte": startTime } }, limit=50):
             answer["value"].append(incident)
@@ -47,7 +47,7 @@ def ensureIncidentIndexes():
     profiles = Profile.objects.all()
 
     for profile in profiles:
-        dbName = "User_" + str(profile.uuid).replace("-", "_")
+        dbName = "User_" + profile.getDBName()
         collection = connection[dbName]["incident"]
         collection.ensure_index([("date", -1), ("type", 1)], cache_for=7200, background=True)
 

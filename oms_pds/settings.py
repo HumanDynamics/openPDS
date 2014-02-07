@@ -8,8 +8,6 @@ MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
 SERVER_OMS_REGISTRY='your.registry.server.here'
-AUDIT_COLLECTION = 'auditentry'
-USE_MULTIPDS = True
 
 SERVER_UPLOAD_DIR="/var/www/pdsEnv/"
 
@@ -22,7 +20,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/pdsEnv/openPDS/oms_pds/main.db',                      # Or path to database file if using sqlite3.
+        'NAME': '/var/www/pdsEnv/openPDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
         #'NAME': 'test.db',
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
@@ -138,32 +136,11 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
 )
+import celery_settings
 
-#django celery configuration
-
-from celery.schedules import crontab
-
-CELERY_IMPORTS = ('oms_pds.tasks',"oms_pds.crowdsos_tasks")
-BROKER_URL = "mongodb://celery:celery@localhost:27017/celery_broker"
-CELERYBEAT_SCHEDULE = {
-#    "check-data-and-notify": {
-#        "task": "oms_pds.tasks.checkDataAndNotify", 
-#        "schedule": crontab(hour="*", minute="0")
-#    },
-    "ensure-incident-indexes": {
-        "task": "oms_pds.crowdsos_tasks.ensureIncidentIndexes",
-        "schedule": crontab(hour="*/2", minute="15")
-    },
-    "find-recent-incidents": {
-        "task": "oms_pds.crowdsos_tasks.findRecentIncidents", 
-        "schedule": crontab(hour="*", minute="*")
-    },
-    "ensure-funf-indexes": {
-        "task": "oms_pds.tasks.ensureFunfIndexes",
-        "schedule": crontab(hour="*/2", minute="45")
-    }
-}
-
+CELERY_IMPORTS = celery_settings.CELERY_IMPORTS
+BROKER_URL = celery_settings.BROKER_URL
+CELERYBEAT_SCHEDULE = celery_settings.CELERYBEAT_SCHEDULE
 
 import djcelery
 
