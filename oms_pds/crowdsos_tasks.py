@@ -47,7 +47,7 @@ def ensureIncidentIndexes():
     profiles = Profile.objects.all()
 
     for profile in profiles:
-        dbName = "User_" + profile.getDBName()
+        dbName = profile.getDBName()
         collection = connection[dbName]["incident"]
         collection.ensure_index([("date", -1), ("type", 1)], cache_for=7200, background=True)
 
