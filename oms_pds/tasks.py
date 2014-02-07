@@ -28,7 +28,7 @@ def ensureFunfIndexes():
     profiles = Profile.objects.all()
 
     for profile in profiles:
-        dbName = getDBName(profile)
+        dbName = profile.getDBName()
         collection = connection[dbName]["funf"]
         collection.ensure_index([("time", -1), ("key", 1)], cache_for=7200, background=True, unique=True, dropDups=True)
 
