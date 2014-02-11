@@ -61,4 +61,7 @@ urlpatterns = patterns('oms_pds.views',
 
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
+	
+    (r'^funfSetting/', 'funfSetting'),
+    (r'^checkboxes/', direct_to_template, { 'template' : 'multiplecheckboxes.html' }),
 )

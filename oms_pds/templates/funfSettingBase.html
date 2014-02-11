@@ -41,17 +41,9 @@
   <!-- Page starts here -->
     <div data-role="page" data-theme="c" id="settingsPage" data-add-back-btn="true">
 
-      <!--
-      <div data-role="navbar" id="navbar">
-      <ul>
-        <li><a href="/home/?datastore_owner={{ datastore_owner }}" data-icon="" data-transition="fade" class="ui-btn-active ui-state-persist">Home</a></li>
-        <li><a href="/trust/add/?datastore_owner={{ datastore_owner }}" rel="external" data-icon="" data-transition="fade">Trust Settings</a></li>
-        <li><a href="/sharing/edit/?datastore_owner={{ datastore_owner }}" rel="external" data-icon="" data-transition="fade">Sharing Settings</a></li>
-        <li><a href="/discovery/members?datastore_owner={{ datastore_owner }}" rel="external" data-icon="" data-transition="fade">Trust Network</a></li>
-        <li><a href="/home/?datastore_owner={{ datastore_owner }}" rel="external" data-icon="" data-transition="fade">Apps</a></li>
-      </ul>
-      </div>
-      -->
+
+   	<h3>{{ output_message }}</h3>       
+
     <script>
     if (typeof android !== "undefined" && android.hideWebNavBar && android.hideWebNavBar()) {
     	$("#navbar").hide();
@@ -63,7 +55,6 @@
         {% block content %}
         {% endblock %}
 	</div>
-    </div>
     </div>
 </body>
 

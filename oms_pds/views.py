@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 import json
 from django.template import RequestContext
 from django.shortcuts import render_to_response
@@ -12,6 +12,10 @@ from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel, Profile, Reso
 from pymongo import Connection
 import pdb
 from fourstore.views import sparql_proxy
+from oms_pds.accesscontrol.forms import FunfProbeSettingForm
+from oms_pds.accesscontrol.models import FunfProbeModel
+import logging
+logger = logging.getLogger(__name__)
 
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
@@ -146,3 +150,35 @@ def get_datastore_owner(template, request):
     template['datastore_owner']=request.GET.get('datastore_owner')
     return template
 
+def funfSetting(request):
+    data = {}
+    outputMessage = ''
+    if request.method=="POST":
+        submittedForm = FunfProbeSettingForm(request.POST)
+        if submittedForm.is_valid():
+	    cleanedData = submittedForm.cleaned_data
+	    data = {'activityProbe' : cleanedData['activityProbe'],
+            	'smsProbe' : cleanedData['smsProbe'],
+            	'callLogProbe' : cleanedData['callLogProbe'],
+            	'bluetoothProbe' : cleanedData['bluetoothProbe'],
+            	'wifiProbe' : cleanedData['wifiProbe'],
+           	'simpleLocationProbe' : cleanedData['simpleLocationProbe'],
+            	'screenProbe' : cleanedData['screenProbe'],
+            	'runningApplicationsProbe' : cleanedData['runningApplicationsProbe'],}
+    	    outputMessage = 'The setting has been updated!'
+	    submittedForm.save()
+    else:
+    	funfProbe = FunfProbeModel.objects.get(funfPK='funfPK')
+    	data = {'activityProbe' : funfProbe.activityProbe,
+	    'smsProbe' : funfProbe.smsProbe,
+	    'callLogProbe' : funfProbe.callLogProbe,
+	    'bluetoothProbe' : funfProbe.bluetoothProbe,
+	    'wifiProbe' : funfProbe.wifiProbe,
+	    'simpleLocationProbe' : funfProbe.simpleLocationProbe,
+	    'screenProbe' : funfProbe.screenProbe,
+	    'runningApplicationsProbe' : funfProbe.runningApplicationsProbe}
+    	outputMessage = 'Select probes to grant access.'
+
+    form = FunfProbeSettingForm(initial=data, label_suffix="")
+
+    return render_to_response('funfSetting.html', {'form':form, 'output_message':outputMessage })
