@@ -1,0 +1,12 @@
+.profileExpanded {
+    width: 350px;
+    clear: both;
+}
+
+.profileExpanded input {
+    float: right;
+}
+
+.profileExpanded div {
+    clear:both;
+}

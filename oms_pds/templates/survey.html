@@ -1,0 +1,32 @@
+{% extends "backboneLayout.html" %}
+
+{% load straight_include %}
+
+{% block title %}
+Survey
+{% endblock %}
+
+
+{% block more_scripts %}
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+    SURVEY_QUESTION_API_URL = "http://working-title.media.mit.edu:8003/questions/api/surveyapi/survey_question_answer_link/";
+    $(window).load(function () { 
+        window.surveyView = new SurveyView(GET("survey"), $(".container"));
+    });
+</script>
+
+<script src="{{ STATIC_URL }}js/answerList.js"></script>
+<script src="{{ STATIC_URL }}js/surveyQuestion.js"></script>
+
+<style>
+select {
+    display: block;
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}

@@ -1,0 +1,60 @@
+{% load straight_include %}
+{% load verbatim %}
+
+<html>
+<head>
+        <title>
+        {% block title %}
+        OMS Base
+        {% endblock %}
+        </title>
+        
+	<!-- jQuery/jQuery Mobile -->
+	<script src="http://code.jquery.com/jquery-1.7.1.js"></script>
+	
+	
+	<script src="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.js"></script>
+	
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.1/jquery.mobile-1.1.1.min.css" />
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/style.css" />
+
+	{% block scripts %}
+	{% endblock %}
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<!--[if lt IE 9]>
+	      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js">
+	      </script>
+	<![endif]-->
+	<!-- Le fav and touch icons -->
+	<link rel="shortcut icon" href="/static/ico/favicon.ico">
+	<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/static/ico/apple-touch-icon-144-precomposed.png">
+	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="/static/ico/apple-touch-icon-114-precomposed.png">
+	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="/static/ico/apple-touch-icon-72-precomposed.png">
+	<link rel="apple-touch-icon-precomposed" href="/static/ico/apple-touch-icon-57-precomposed.png">
+</head>
+<body>
+  <!-- Page starts here -->
+    <div data-role="page" data-theme="c" id="settingsPage" data-add-back-btn="true">
+
+
+   	<h3>{{ output_message }}</h3>       
+
+    <script>
+    if (typeof android !== "undefined" && android.hideWebNavBar && android.hideWebNavBar()) {
+    	$("#navbar").hide();
+    }
+    </script>
+
+    <div id="content">
+	<div class="container">
+        {% block content %}
+        {% endblock %}
+	</div>
+    </div>
+</body>
+

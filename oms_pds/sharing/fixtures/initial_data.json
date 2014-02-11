@@ -1,0 +1,30 @@
+[
+  {
+    "model": "sharing.overallsharinglevel",
+    "pk": 1,
+    "fields": {
+      "level": 0
+    }
+  },
+  {
+    "model": "sharing.probegroupsetting",
+    "pk": 1,
+    "fields": {
+      "name": "Activity"
+    }
+  },
+  {
+    "model": "sharing.probegroupsetting",
+    "pk": 2,
+    "fields": {
+      "name": "Focus"
+    }
+  },
+  {
+    "model": "sharing.probegroupsetting",
+    "pk": 3,
+    "fields": {
+      "name": "Social"
+    }
+  }
+]

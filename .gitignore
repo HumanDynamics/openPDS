@@ -1,6 +1,3 @@
 *.out
 *.pyc
-*.swp
-*.swo
-deploy.*
-*.db
+oms_pds/settings.py

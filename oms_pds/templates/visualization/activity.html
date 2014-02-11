@@ -1,0 +1,36 @@
+{% extends "backboneLayout.html" %}
+
+{% block title %}
+Recent Activity
+{% endblock %}
+
+{% block more_scripts %}
+<script src="http://d3js.org/d3.v2.js"></script>
+
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+    ANSWERLIST_KEY = "RecentActivityByHour";
+    ANSWERLIST_VALUE_SELECTOR = function (a) { return (a.total > 0)? 10 * ((a.low + a.high) / a.total) : 0; };
+</script>
+
+<script src="{{ STATIC_URL}}js/answerList.js"></script>
+<script src="{{ STATIC_URL }}js/answerListTimeGraph.js"></script>
+
+<script>
+$(function () {
+    window.activityGraph = new AnswerByHourGraph();
+    $(window).bind("resize", function () { activityGraph.render(); });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="answerContent">
+	<div id="answerByHourGraphContainer">
+	<h2>Recent Activity Levels</h2>
+	</div>
+	<div>
+	Activity level uses the motion sensors on your phone to approximate how active you are during the day. This information is then used to generate your activity score on the social health triangle.
+	</div>
+</div>
+{% endblock %}

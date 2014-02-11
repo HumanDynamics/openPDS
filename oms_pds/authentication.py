@@ -2,13 +2,13 @@ from tastypie.authentication import Authentication
 import httplib
 import settings
 import json
-
+import pdb
 
 class OAuth2Authentication(Authentication):
 
-
-    def __get_userinfo_from_token(self, token, scope):
+    def get_userinfo_from_token(self, token, scope):
         # upon success, will return a json {'key':'value'}
+        #print "get_userinfo_from_token"
         userinfo = {}
         try:
             conn = httplib.HTTPConnection(settings.SERVER_OMS_REGISTRY, timeout=100)
@@ -17,12 +17,12 @@ class OAuth2Authentication(Authentication):
             r1 = conn.getresponse()
             response_text = r1.read()
             result = json.loads(response_text)
-            print result
             if 'error' in result:
                 raise Exception(result['error'])
             key = result['key']
             conn.close()
         except Exception as ex:
+            print ex
             return False
         return key
 
@@ -30,11 +30,10 @@ class OAuth2Authentication(Authentication):
         self.scope = scope
 
     def is_authenticated(self, request, **kwargs):
-        key = self.__get_userinfo_from_token(request.GET['token'], self.scope)
-	
-        return True
+        token = request.GET['bearer_token'];
+        return self.get_userinfo_from_token(token, self.scope) is not False
 
     def get_identifier(self, request):
-        return "jschmitz"
+        return request.GET.get('datastore_owner')
 
 

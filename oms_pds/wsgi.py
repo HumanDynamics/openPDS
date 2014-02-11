@@ -14,8 +14,15 @@ framework.
 
 """
 import os
+import site
+import sys
+import django.conf
+import djcelery
+djcelery.setup_loader()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "OMS_PDS.settings")
+django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
+
+os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "oms_pds.settings")
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION

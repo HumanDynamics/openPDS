@@ -1,0 +1,33 @@
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:foaf="http://xmlns.com/foaf/0.1/"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:con="http://www.w3.org/2000/10/swap/pim/contact#"
+    xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+    xmlns:lpd="http://linkedpersonaldata.org/ontology#" 
+    xmlns:like="http://ontologi.es/like#"
+    xmlns:spatial="http://geovocab.org/spatial#">
+    <foaf:Person rdf:ID="me">
+        {% if recentActivityLevel %}<lpd:recentActivityLevel rdf:resource="{{ recentActivityLevel|default:"lpd:none" }}" />{% endif %}
+        {% if recentSocialLevel %}<lpd:recentSocialLevel rdf:resource="{{ recentSocialLevel|default:"lpd:none" }}" />{% endif %}
+        {% if recentFocusLevel %}<lpd:recentFocusLevel rdf:resource="{{ recentFocusLevel|default:"lpd:none" }}" />{% endif %}
+        {% for place in suggestedPlaces %}<lpd:hasSuggestion>
+            <lpd:SuggestedPlace>
+                 <spatial:Feature rdf:resource="{{ place.uri }}" />
+                 <lpd:reason rdf:resource="{{ place.reason }}" />
+            </lpd:SuggestedPlace>
+        </lpd:hasSuggestion>
+        {% endfor %}
+        {% for friend in friends %}<foaf:knows rdf:resource="{{ friend }}" />
+        {% endfor %}
+        {% for genre in musicGenres %}<like:likes rdf:resource="{{ genre }}" />
+        {% endfor %}
+    </foaf:Person>
+    <foaf:PersonalProfileDocument rdf:about="">
+        <foaf:maker rdf:resource="#me" />
+        <foaf:primaryTopic rdf:resource="#me" />
+    </foaf:PersonalProfileDocument>
+ </rdf:RDF>

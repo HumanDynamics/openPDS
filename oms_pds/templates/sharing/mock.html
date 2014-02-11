@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Your Data</h1>
+<p>This raw data about you is used to feed your personal metrics, and is acessible only to you.</p>
+<h2>Location</h2>
+<div>Collected by LPD Assistant</div>
+<a href = "#">3780 entries</a>
+<div data-role="controlgroup" data-type="horizontal">
+<a href="#" data-role="button">Download</a><a href="#" data-role="button">Delete</a>
+</div>
+<h2>Activity</h2>
+<div>Collected by Social Health Tracker</div>
+<a href = "#">8003 entries</a>
+<div data-role="controlgroup" data-type="horizontal">
+<a href="#" data-role="button">Download</a><a href="#" data-role="button">Delete</a>
+</div>
+
+<h2>Music</h2>
+<div>Collected by LPD Assistant</div>
+<a href = "#">264 entries</a>
+<div data-role="controlgroup" data-type="horizontal">
+<a href="#" data-role="button">Download</a><a href="#" data-role="button">Delete</a>
+</div>
+
+<h2>Calls</h2>
+<div>Collected by Social Health Tracker</div>
+<a href = "#">36 entries</a>
+<div data-role="controlgroup" data-type="horizontal">
+<a href="#" data-role="button">Download</a><a href="#" data-role="button">Delete</a>
+</div>
+
+<h2>Bluetooh Proximity</h2>
+<div>Collected by Social Health Tracker</div>
+<a href = "#">157 entries</a>
+<div data-role="controlgroup" data-type="horizontal">
+<a href="#" data-role="button">Download</a><a href="#" data-role="button">Delete</a>
+</div>
+
+<h1>Sharing</h1>
+<p>The following personal data is computed from your raw data above. You can choose whether or not to share this data publicly.</p>
+<h2>Location</h2>
+<div data-role="fieldcontain">
+    <fieldset data-role="controlgroup">
+        <input type="checkbox" class="custom" id="box1" />
+        <label for="box1">Share places LinkedPersonalData.org has suggested for me</label>
+        <input type="checkbox" class="custom" id="box2" />
+        <label for="box2">Share my estimated work and home locations (not recommended)</label>
+    </fieldset>
+</div>
+
+<h2>Music</h2>
+<div data-role="fieldcontain">
+    <fieldset data-role="controlgroup">
+        <input type="checkbox" class="custom" id="box3" />
+        <label for="box3">Share my favorite music genres</label>
+        <input type="checkbox" class="custom" id="box4" />
+        <label for="box4">Share my favorite artists</label>
+    </fieldset>
+</div>
+
+
+<h2>Social Health Metrics</h2>
+<div data-role="fieldcontain">
+    <fieldset data-role="controlgroup">
+        <input type="checkbox" class="custom" id="box5" />
+        <label for="box5">Share my recent social health scores (activity, focus, and social)</label>
+        <input type="checkbox" class="custom" id="box6" />
+        <label for="box6">Share my hourly social health activity over the last week (not recommended)</label>
+    </fieldset>
+</div>
+
+{% endblock %}

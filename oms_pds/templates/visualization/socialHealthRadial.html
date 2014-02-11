@@ -1,0 +1,47 @@
+{% extends "backboneLayout.html" %}
+
+
+{% block more_scripts %}
+
+  <script src="{{ STATIC_URL }}js/jQuery.ui.datepicker.js"></script>
+     <link rel="stylesheet" href="{{ STATIC_URL}}css/jquery.ui.datepicker.mobile.css" /> 
+  <script src="{{ STATIC_URL }}js/jquery.ui.datepicker.mobile.js"></script>
+      
+<script src="http://d3js.org/d3.v2.js"></script>
+
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+    ANSWERLIST_KEY = "socialhealth";
+</script>
+
+<script src="{{ STATIC_URL }}js/answerList.js"></script>
+<script src="{{ STATIC_URL }}js/socialHealthRadial.js"></script>
+<!--
+<script src="{{ STATIC_URL }}js/answerRating.js"></script>
+-->
+<script>
+$(function () {
+	window.radialApp = new SocialHealthRadialView();
+//	window.answerRating = new AnswerRatingStarView({ el: "#answer_rating", key: "SocialHealthAnswerRating" });
+//    window.activityRating = new AnswerRatingStarView({ el: "#activity_rating", key: "SelfReportedActivityRating" });
+//    window.socialRating = new AnswerRatingStarView({ el: "#social_rating", key: "SelfReportedSocialRating" });
+//    window.focusRating = new AnswerRatingStarView({ el: "#focus_rating", key: "SelfReportedFocusRating" });
+	$(window).bind("resize", function () { radialApp.render(); });
+    if (typeof android !== "undefined" && android.updateSharedPreference) {
+        return android.updateSharedPreference("pds_location", "http://pds.linkedpersonaldata.org");
+    }
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+
+<div id="radial_chart"></div>
+<!--
+<div class="answer-rating"><h2>How accurate is this?</h2><div id="answer_rating"></div></div>
+<div class="answer-rating"><h2>How active are you?</h2><div id="activity_rating"></div></div>
+<div class="answer-rating"><h2>How social are you?</h2><div id="social_rating"></div></div>
+<div class="answer-rating"><h2>How focused are you?</h2><div id="focus_rating"></div></div>
+-->
+{% endblock %}

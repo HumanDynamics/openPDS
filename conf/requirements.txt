@@ -1,16 +1,17 @@
 # XXX add specific version numbers once we can confirm the latest stable versions all work
 # XXX need to confirm that the Registry and Resource Servers have the same dependencies?
-django
+django==1.4.2
 django-tastypie==0.9.11
-django-tastypie-mongoengine
 mongoengine
+django-celery-with-mongodb
 pymongo
-PyMySQL
+requests
 # XXX - re-enable once we make postgresql / mysql an developer-defined detail
 #psycopg2
 django-extensions
-django-chart-tools
 django-uni-form
-configglue
-git+https://github.com/illumin-us-r3v0lution/django-configglue#egg=django_configglue
-git+https://github.com/IDCubed/oms-deploy.git#egg=oms_deploy
+cluster
+python-gcm
+SparqlWrapper
+django-4store
+pycrypto

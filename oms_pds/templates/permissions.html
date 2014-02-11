@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+
+      <form action="/permissions/?datastore_owner={{ datastore_owner }}" method="post">{% csrf_token %}
+	{{ form.as_p }}
+	<input type="submit" value="Submit" />
+      </form>
+      <div class="span1">
+      </div>
+{% endblock %}
