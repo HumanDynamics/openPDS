@@ -17,11 +17,11 @@ import os
 import site
 import sys
 
-activate_this = os.path.expanduser("/var/www/trustframework/crowdsosPDS/bin/activate_this.py")
+activate_this = os.path.expanduser("/var/www/pdsEnv/bin/activate_this.py")
 execfile(activate_this, dict(__file__=activate_this))
 import django.conf
 django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
-sys.path.append('/var/www/trustframework/crowdsosPDS/openPDS')
+sys.path.append('/var/www/pdsEnv/openPDS')
 os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "oms_pds.settings")
 
 # This application object is used by any WSGI server configured to use this

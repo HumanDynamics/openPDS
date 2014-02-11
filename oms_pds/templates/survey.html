@@ -10,7 +10,11 @@ Survey
 {% block more_scripts %}
 <script>
     ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
-    SURVEY_QUESTION_API_URL = "http://working-title.media.mit.edu:8003/questions/api/surveyapi/survey_question_answer_link/";
+    if (typeof(android) !== "undefined" && android.getSurveyQuestionUrl) {
+        SURVEY_QUESTION_API_URL = android.getSurveyQuestionUrl();
+    } else {
+        SURVEY_QUESTION_API_URL = "http://working-title.media.mit.edu:8003/questions/api/surveyapi/survey_question_answer_link/";
+    }
     $(window).load(function () { 
         window.surveyView = new SurveyView(GET("survey"), $(".container"));
     });

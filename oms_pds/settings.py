@@ -7,9 +7,9 @@ TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='linkedpersonaldata.org'
-USE_MULTIPDS = True
-SERVER_UPLOAD_DIR="/var/www/trustframework/pdsEnv/"
+SERVER_OMS_REGISTRY='your.registry.server.here'
+
+SERVER_UPLOAD_DIR="/var/www/pdsEnv/"
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -20,7 +20,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/trustframework/pdsEnv/OMS-PDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
+        'NAME': '/var/www/pdsEnv/openPDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
         #'NAME': 'test.db',
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
@@ -112,7 +112,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'oms_pds.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'oms_pds.apache.django.application'
+WSGI_APPLICATION = 'oms_pds.wsgi.application'
 
 TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
 
@@ -130,39 +130,17 @@ INSTALLED_APPS = (
     'djcelery',
     #'oms_pds.ra_celery',
     'kombu.transport.django',
-    'oms_pds.visualization',
+    #'oms_pds.visualization',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'oms_pds.accesscontrol',
 )
+import celery_settings
 
-#django celery configuration
-
-from celery.schedules import crontab
-
-CELERY_IMPORTS = ('oms_pds.tasks','oms_pds.socialhealth_tasks')
-BROKER_URL = "mongodb://celery:celery@localhost:27017/lpd_celery_broker"
-CELERYBEAT_SCHEDULE = {
-#    "check-data-and-notify": {
-#        "task": "oms_pds.tasks.checkDataAndNotify", 
-#        "schedule": crontab(hour="*", minute="0")
-#    },
-    "compute-social-health-scores": {
-        "task": "oms_pds.socialhealth_tasks.recentSocialHealthScores",
-        "schedule": crontab(hour="*", minute="*/30")
-     },
-    "ensure-funf-indexes": {
-        "task": "oms_pds.tasks.ensureFunfIndexes",
-        "schedule": crontab(hour="*/2", minute="15")
-    },
-    "find-recent-places": {
-        "task": "oms_pds.tasks.findRecentPlaces", 
-        "schedule": crontab(hour="*/2", minute="0")
-    }
-}
-
+CELERY_IMPORTS = celery_settings.CELERY_IMPORTS
+BROKER_URL = celery_settings.BROKER_URL
+CELERYBEAT_SCHEDULE = celery_settings.CELERYBEAT_SCHEDULE
 
 import djcelery
 
@@ -178,15 +156,6 @@ djcelery.setup_loader()
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format' : "[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s",
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
-        },
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-    },
     'filters': {
         'require_debug_false': {
             '()': 'django.utils.log.RequireDebugFalse'
@@ -197,12 +166,7 @@ LOGGING = {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        },
-	'logfile': {
-            'class': 'logging.handlers.WatchedFileHandler',
-            'filename': '/var/www/trustframework/pdsEnv/OMS-PDS/log/error.log',
-	    'formatter': 'verbose'
-        },
+        }
     },
     'loggers': {
         'django.request': {
@@ -210,17 +174,7 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
-	'django': {
-            'handlers':['logfile'],
-            'propagate': True,
-            'level':'DEBUG',
-        },
-        'oms_pds': {
-            'handlers':['logfile'],
-            'propagate': True,
-            'level':'DEBUG',
-        },
     }
 }
 
-GCM_API_KEY = "AIzaSyBUTRwrWhHeV8qU-ySAHTG11YyrqcThSLI"
+GCM_API_KEY = "AIzaSyBXObh94NTVzSvG-1gtEgYJBFPyGrVaBPI"

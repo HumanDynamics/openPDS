@@ -23,15 +23,6 @@ connection = Connection(
     port=getattr(settings, "MONGODB_PORT", None)
 )
 
-@task()
-def ensureFunfIndexes():
-    profiles = Profile.objects.all()
-
-    for profile in profiles:
-        dbName = profile.getDBName()
-        collection = connection[dbName]["funf"]
-        collection.ensure_index([("time", -1), ("key", 1)], cache_for=7200, background=True, unique=True, dropDups=True)
-
 def addNotification(profile, notificationType, title, content, uri):
     notification, created = Notification.objects.get_or_create(datastore_owner=profile, type=notificationType)
     notification.title = title

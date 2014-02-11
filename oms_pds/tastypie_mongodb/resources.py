@@ -41,7 +41,7 @@ class MongoDBResource(Resource):
             database = settings.MONGODB_DATABASE
             if (request and "datastore_owner__uuid" in request.GET):
                 profile, created = Profile.objects.get_or_create(uuid = request.GET["datastore_owner__uuid"])
-                database = "User_" + str(profile.uuid).replace("-", "_")
+                database = profile.getDBName()
             return db[database][self._meta.collection]
         except AttributeError:
             raise ImproperlyConfigured("Define a collection in your resource.")

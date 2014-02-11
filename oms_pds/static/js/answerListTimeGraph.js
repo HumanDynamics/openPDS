@@ -1,10 +1,14 @@
 window.AnswerByHourGraph = Backbone.View.extend({
 	el: "#answerByHourGraphContainer",
 	
-	initialize: function () {
+	initialize: function (answerKey, timeSelector, valueSelector) {
 		_.bindAll(this, "render");
 		
-		this.activityByHourList = new AnswerListCollection();
+        this.answerKey = answerKey || ANSWERLIST_KEY;
+        this.timeSelector = timeSelector || function (a) { return a.start * 1000; };
+        this.valueSelector = valueSelector || ANSWERLIST_VALUE_SELECTOR;
+
+		this.activityByHourList = new AnswerListCollection([], { "key": this.answerKey });
 		this.activityByHourList.bind("reset", this.render);
 		this.activityByHourList.fetch();
 	},
@@ -19,11 +23,14 @@ window.AnswerByHourGraph = Backbone.View.extend({
 		var w = $(this.el).width() - 50, h = 150;
 		var pink = d3.rgb(238,98,226);
 		var lightblue = d3.rgb(122,205,247);
-		
+        var yellow = d3.rgb(200,200, 50);
+		var me = this;
+
 		// For now, activity in an hour is calculated as the percentage of intervals that have some activity in them during that hour
 		// We then multiply by 10 to get scores consistent with our social health radial scores
-		var entries = this.activityByHourList.at(0).get("value").map(ANSWERLIST_VALUE_SELECTOR);
-		var timestamps = this.activityByHourList.at(0).get("value").map(function (a) { return a.start * 1000; });
+		var entries = this.activityByHourList.at(0).get("value").map(this.valueSelector);
+        var selfEntries = this.activityByHourList.at(0).get("value").map(function (a) { return (a.selfAssessed !== undefined)? a.selfAssessed : 0; })
+		var timestamps = this.activityByHourList.at(0).get("value").map(this.timeSelector);
 		// We're performing some simple smoothing on the data here to avoid the drastic peaks and valleys typical of activity data
 		//entries = entries.map(function (a, i) { return 0.5 * a + (0.25 * entries[Math.max(0, i - 1)]) + (0.25 * entries[Math.min(entries.length - 1, i + 1)]); });
 
@@ -31,6 +38,8 @@ window.AnswerByHourGraph = Backbone.View.extend({
 		// This closes up the data in case we want to do an area graph
 		entries.push(0);
 		entries.unshift(0);
+        selfEntries.push(0);
+        selfEntries.unshift(0);
 		timestamps.push(timestamps[timestamps.length-1]);
 		timestamps.unshift(timestamps[0]);
 
@@ -47,7 +56,7 @@ window.AnswerByHourGraph = Backbone.View.extend({
 		this.y = d3.scale.linear().range([0,h]);
 		// In the event of all-zero data, use 1 as the max activity to avoid an incorrect graph
 		// (a domain of [0,0] mapping to a range of [0, h], for instance, results in obvious problems)
-		var maxActivity = Math.max(d3.max(entries), 1);
+		var maxActivity = Math.max(d3.max(entries), Math.max(d3.max(selfEntries), 1));
 		
 		this.y.domain([maxActivity, 0]);
 		
@@ -55,9 +64,8 @@ window.AnswerByHourGraph = Backbone.View.extend({
 		//var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(entries.length);
 
 		var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(d3.time.hours, 12);//.tickFormat(d3.time.format.utc("%b %e"));
-		var yAxis = d3.svg.axis().scale(this.y).orient("left").ticks(10);			
+		var yAxis = d3.svg.axis().scale(this.y).orient("left").ticks(10);
 
-		var me = this;
 		var line = d3.svg.line()
 			.x(function (d, i) { 
 				var thisDate = new Date();
@@ -77,6 +85,7 @@ window.AnswerByHourGraph = Backbone.View.extend({
 		// Append the y axis
 		this.graph.append("g").attr("class", "axis").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").call(yAxis);
 
-		this.graph.append("svg:path").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").attr("d", line(entries)).attr("fill", pink);
+		this.graph.append("svg:path").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").attr("d", line(entries)).attr("fill", pink).style("opacity", 0.6);
+        this.graph.append("svg:path").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").attr("d", line(selfEntries)).attr("fill", yellow).style("opacity", 0.4);
 	}
 });

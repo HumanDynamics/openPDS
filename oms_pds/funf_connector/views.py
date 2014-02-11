@@ -35,18 +35,7 @@ connection = Connection(
 )
 
 def insert_pds(collection, token, pds_json):
-#    try:
-        # get pds location and user id
-        #uuid = request.GET("datastore_owner__uuid")
-
-	#request_path= request.build_absolute_uri("/api/personal_data/funf/?format=json&bearer_token="+str(token)+"&datastore_owner__uuid="+str(uuid))
-	#payload = json.dumps(pds_json)
-	#r = requests.post(request_path, data=payload)
-	#response = r.text
     collection.save(pds_json)
-#    except Exception as ex:
-#	raise Exception(ex)
-#    return response
 
 def write_key(request):
     '''write the password used to encrypt funf database files to your PDS'''
@@ -90,21 +79,12 @@ def data(request):
     token = request.GET['bearer_token']
     datastore_owner_uuid = request.GET["datastore_owner__uuid"]
     datastore_owner, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
-    collection = connection["User_" + str(datastore_owner.uuid).replace("-", "_")]["funf"]
+    collection = connection[datastore_owner.getDBName()]["funf"]
     funf_password = "changeme"
     key = decrypt.key_from_password(str(funf_password))
     print "PDS: set_funf_data on uuid: %s" % datastore_owner_uuid
 
     for filename, file in request.FILES.items():
-    #authenticator = JSONAuthenticator(scope=scope)
-    #try:
-    #    # Validate the request.
-    #    authenticator.validate(request)
-    #except AuthenticationException as e:
-    #    # Return an error response.
-    #    print e
-    #    return authenticator.error_response(content="You didn't authenticate.")
-    #profile = authenticator.user.get_profile()
         try:
             try:
                 file_path = upload_dir + file.name
