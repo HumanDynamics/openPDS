@@ -127,7 +127,7 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
     # Get bluetooth entries for mobile phones only (middle byte == 02)
     # Also, filter out entries that were far away (looking at signal strength > -75) This number just seemed to fit the data well
     # The rationale for the signal strength filtering is that we want to try and keep this to face-to-face interactions
-    bluetoothEntries = internalDataStore.getData("BluetoothPRobe", start, end)
+    bluetoothEntries = internalDataStore.getData("BluetoothProbe", start, end)
     if includeBlanks or bluetoothEntries.count() > 0:
         bluetoothEntries = [bt["value"] for bt in bluetoothEntries if "android-bluetooth-device-extra-class" in bt["value"] and bt["value"]["android-bluetooth-device-extra-class"]["mclass"] & 0x00FF00 == 512]
 #        bluetoothEntries = [bt for bt in bluetoothEntries if bt["android-bluetooth-device-extra-rssi"] > -75]
@@ -144,21 +144,29 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
     # NOTE: we're including the start date in the queries below to simply shrink the number of entries we need to sort
     # Given that SMS and call log probes may include all messages and calls stored on the phone, we can't just look
     # at entries collected during that time frame
-
+    smsEntries = internalDataStore.getData("SmsProbe", start, None)
 #    smsEntries = collection.find({ "key": { "$regex": "SmsProbe$" }, "time": {"$gte": start}})
 #    
-#    if smsEntries.count() > 0:
-#        # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages
-#        messageSets = [smsEntry["value"]["messages"] for smsEntry in smsEntries]
-#        messages = set([message for messageSet in messageSets for message in messageSet if message["date"] >= start*1000 and message["date"] < end*1000])
-#        
-#        # We're assuming a hit on a thread is equivalent to a single phone call
-#        messageCountByThread = {}
-#        
-#        for threadId in [message["thread_id"] for message in messages]:
-#            messageCountByAddress[threadId] = len([message for message in messages if message["threadId"] if message["thread_id"] = ])
-#        #messageTimes = set([message["date"] for message in messages if message["date"] >= start*1000 and message["date"] < end*1000])
-#        smsCount = len(messageTimes)
+    if includeBlanks or smsEntries.count() > 0 or score > 0:
+        # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages        
+        messages = [smsEntry["value"] for smsEntry in smsEntries]
+        messages = [message for message in messages if message["date"] >= start*1000 and message["date"] < end*1000]
+        
+        # We're assuming a hit on a thread is equivalent to a single phone call
+        messageCountByThread = []
+        
+        for threadId in set([message["thread_id"] for message in messages]):
+            smsCount = float(len([message for message in messages if message["thread_id"] == threadId]))
+            #messageTimes = set([message["date"] for message in messages if message["date"] >= start*1000 and message["date"] < end*1000])
+            #smsCount = len(messageTimes)
+            messageCountByThread.append(smsCount)
+
+        totalSms = sum(messageCountByThread)
+        frequencies = [count / totalSms if totalSms > 0 else 1 for count in messageCountByThread]
+        print totalSms
+        print frequencies
+        score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
+
     #print collection
     #pdb.set_trace()
 
