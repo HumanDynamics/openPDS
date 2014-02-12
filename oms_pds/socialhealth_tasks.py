@@ -11,6 +11,7 @@ import math
 import cluster
 from gcm import GCM
 from oms_pds.pds.models import Profile
+from oms_pds.pds.internal import InternalDataStore
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3
@@ -27,18 +28,7 @@ def LNPDF(x, loc, scale):
     return math.exp(-(math.log(x)-loc)**2/(2*(scale**2))) / (x*math.sqrt(2*math.pi)*scale)
 
 def CDF(x, mean, dev):
-    return 0.5 * (1 + math.erf((x - mean) / (dev * math.sqrt(2))))
-
-#def focusForHours(screenOns, hours=4):
-#    #Note: threw this together so zero screen-ons = zero score (potentially sleeping?), peek focus of 10 at 12 screen-ons over 4 hours
-#    
-#    factor = 4.0 / hours
-#    x = float(screenOns) * factor
-#    #x = 0.05 * x + 0.6 
-#    #print 2.27*x*((1.087)**-x)
-#    #return 2.27*x*((1.087)**-x)
-#    return 10 if (x < 4) else 10.0 * math.exp(-0.25*x + 1)
-#    #return 11.0 * LNPDF(x, 0, 0.5)
+    return 0.5 * (1 + math.erf((x - mean) / (dev * math.sqrt(2)))) if dev <> 0 else 0
 
 def computeActivityScore(activityList):
     recentActiveTotals = [1.0 * float(item["low"]) + item["high"] for item in activityList]
@@ -46,37 +36,23 @@ def computeActivityScore(activityList):
      
     factor = 1000.0 / recentTotal if recentTotal > 0 else 1
     activeTotal = factor * float(sum(recentActiveTotals))
-    #factor = baselineTotal / recentTotal if recentTotal > 0 else 1
-#    return min(1 / (1 + math.exp(center - sum(recentActiveTotals))), 10)
-#    return  min(2.538 * (math.log(2 + factor * float(sum(recentActiveTotals)) / 8.89, 2) - 1), 10)
-#    return min(5 * (1 + math.erf((activeTotal - 44.5) / 44.5)), 10)
-    #NOTE: mean=54, stdDev=13. Dev changed to make graphs nicer
-    #print 10 * CDF(41, 54, 39)
-    #print 10 * CDF(67, 54, 39)
     return min(10.0 * CDF(activeTotal, 54, 39), 10)
 
 def computeFocusScore(focusList):
     recentTotals = [item["focus"] for item in focusList]
     x = float(sum(recentTotals))
-    
-#    return min(math.log(1 + sum(recentTotals), 2), 10) 
-    # NOTE: mean=98, stdDev = 26. Dev changed to make graphs nicer
-    # Updated focus score: 184.5, 21.7
-#    print 10 * CDF(72, 98,52)
-#    print 10 * CDF(124, 98, 52)
     return min(10.0 * CDF(float(sum(recentTotals)), 184.5, 88), 10)
 
 def computeSocialScore(socialList):
     recentTotals = [item["social"] for item in socialList]
-    # 68.8, 33.8
     return min(10.0 * CDF(float(sum(recentTotals)), 68.8, 68.8), 10)
 
 def intervalsOverlap(i1, i2):
     return i2[0] <= i1[0] <= i2[1] or i2[0] <= i1[1] <= i2[1] or i1[0] <= i2[0] <= i1[1] or i1[0] <= i2[1] <= i1[1]
 
-def selfAssessedScoreForTimeRange(collection, start, end, metric):
-    verificationEntries = collection.find({ "key": metric + "Verification"})
-    past3DaysEntries = collection.find({ "key": metric + "Past3Days" })
+def selfAssessedScoreForTimeRange(internalDataStore, start, end, metric):
+    verificationEntries = internalDataStore.getAnswerList({ "key": metric + "Verification"})
+    past3DaysEntries = internalDataStore.getAnswerList({ "key": metric + "Past3Days" })
     oneDay = 24 * 3600
 
     v = []
@@ -102,10 +78,10 @@ def selfAssessedScoreForTimeRange(collection, start, end, metric):
     return {"start": start, "end": end, "value": average * 2.0 }
 
 
-def activityForTimeRange(collection, start, end, includeBlanks = False, answerlistCollection=None):
+def activityForTimeRange(internalDataStore, start, end, includeBlanks = False, includeSelfAssessed = False):
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
 
-    activityEntries = collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : start, "$lt":end }})
+    activityEntries = internalDataStore.getData("ActivityProbe", start, end)
     if includeBlanks or activityEntries.count() > 0:
         for data in activityEntries:
             #pdb.set_trace()
@@ -120,17 +96,17 @@ def activityForTimeRange(collection, start, end, includeBlanks = False, answerli
                 highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
 
         activity = { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
-        if answerlistCollection is not None:
-            selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Activity")
+        if includeSelfAssessed:
+            selfAssessed = selfAssessedScoreForTimeRange(internalDataStore, start, end, "Activity")
             activity["selfAssessed"] = selfAssessed["value"]
         return activity
     return None
 
-def focusForTimeRange(collection, start, end, includeBlanks = False, answerlistCollection=None):
+def focusForTimeRange(internalDataStore, start, end, includeBlanks = False, includeSelfAssessed = False):
     screenOnCount = 0
     hours = float((end - start)) / 3600.0
 
-    screenOnEntries = collection.find({ "key": { "$regex": "ScreenProbe$" }, "time": {"$gte": start, "$lt": end }})
+    screenOnEntries = internalDataStore.getData("ScreenProbe", start, end)
     if includeBlanks or screenOnEntries.count() > 0:
         for data in screenOnEntries:
             dataValue = data["value"]
@@ -139,19 +115,19 @@ def focusForTimeRange(collection, start, end, includeBlanks = False, answerlistC
 
         focus =  { "start": start, "end": end, "focus": normalized }
 
-        if answerlistCollection is not None:
-            selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Focus")
+        if includeSelfAssessed:
+            selfAssessed = selfAssessedScoreForTimeRange(internalDataStore, start, end, "Focus")
             focus["selfAssessed"] = selfAssessed["value"]
         return focus
     return None
 
-def socialForTimeRange(collection, start, end, includeBlanks = False, answerlistCollection=None):
+def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, includeSelfAssessed = False):
     score = 0
     
     # Get bluetooth entries for mobile phones only (middle byte == 02)
     # Also, filter out entries that were far away (looking at signal strength > -75) This number just seemed to fit the data well
     # The rationale for the signal strength filtering is that we want to try and keep this to face-to-face interactions
-    bluetoothEntries = collection.find({ "key": { "$regex": "BluetoothProbe$" }, "time": { "$gte": start, "$lt": end }})
+    bluetoothEntries = internalDataStore.getData("BluetoothPRobe", start, end)
     if includeBlanks or bluetoothEntries.count() > 0:
         bluetoothEntries = [bt["value"] for bt in bluetoothEntries if "android-bluetooth-device-extra-class" in bt["value"] and bt["value"]["android-bluetooth-device-extra-class"]["mclass"] & 0x00FF00 == 512]
 #        bluetoothEntries = [bt for bt in bluetoothEntries if bt["android-bluetooth-device-extra-rssi"] > -75]
@@ -159,7 +135,7 @@ def socialForTimeRange(collection, start, end, includeBlanks = False, answerlist
         macs = set([bt[macKey]["maddress"] for bt in bluetoothEntries])
         btByPerson = [float(len([bt for bt in bluetoothEntries if bt[macKey]["maddress"] == mac])) for mac in macs]
         totalBt = sum(btByPerson)
-        frequencies = [count / totalBt for count in btByPerson]
+        frequencies = [count / totalBt if totalBt > 0 else 1 for count in btByPerson]
         score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
         
     # For now, we're just taking the most recent probe value and checking message / call dates within it
@@ -186,7 +162,7 @@ def socialForTimeRange(collection, start, end, includeBlanks = False, answerlist
     #print collection
     #pdb.set_trace()
 
-    callLogEntries = collection.find({ "key": { "$regex": "CallLogProbe$" }, "time": {"$gte": start}})
+    callLogEntries = internalDataStore.getData("CallLogProbe", start, end)
 
     if includeBlanks or callLogEntries.count() > 0 or score > 0:
         callSets = [callEntry["value"] for callEntry in callLogEntries]
@@ -203,13 +179,13 @@ def socialForTimeRange(collection, start, end, includeBlanks = False, answerlist
         #callTimes = set([call["date"] for call in calls if call["date"] >= start*1000 and call["date"] < end*1000])
         countsByNumber = [float(len([call for call in calls if call["number"] == numberHash])) for numberHash in set([call["number"] for call in calls])]
         totalCalls = sum(countsByNumber)
-        frequencies = [count / totalCalls for count in countsByNumber]
+        frequencies = [count / totalCalls if totalCalls > 0 else 1 for count in countsByNumber]
         score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
 
         score = min(score, 10)
         social = { "start": start, "end": end, "social": score}
-        if answerlistCollection is not None:
-            selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Social")
+        if includeSelfAssessed:
+            selfAssessed = selfAssessedScoreForTimeRange(internalDataStore, start, end, "Social")
             social["selfAssessed"] = selfAssessed["value"]
         return social
     return None
@@ -232,34 +208,21 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, includeBlanks = Fals
 def aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks = False):
     aggregates = []
     
-    #print profile.uuid
-    #pdb.set_trace()
-    dbName = profile.getDBName()
-    collection = connection[dbName]["funf"]
-    answerlistCollection = connection[dbName]["answerlist"]
+    internalDataStore = InternalDataStore(profile, "dummy-token")
     
     for (start, end) in timeRanges:
-        data = aggregator(collection, start, end)
+        data = aggregator(internalDataStore, start, end)
         if data is not None:
-            aggregates.append(aggregator(collection, start, end, includeBlanks, answerlistCollection))
+            aggregates.append(aggregator(internalDataStore, start, end, includeBlanks))
     
     if answerKey is not None:
-        saveAnswer(profile, answerKey, aggregates)
+        internalDataStore.saveAnswer(answerKey, aggregates)
 
     return aggregates
 
 def saveAnswer(profile, answerKey, data):
-    dbName = profile.getDBName()
-    collection = connection[dbName]["answerlist"]
-
-    answer = collection.find({ "key": answerKey })
-    if answer.count() == 0:
-        answer = { "key": answerKey }
-    else:
-        answer = answer[0]
-    
-    answer["value"] = data
-    collection.save(answer)
+    internalDataStore = InternalDataStore(profile, "dummy-token")
+    internalDataStore.saveAnswer(answerKey, data)
 
 def getStartTime(daysAgo, startAtMidnight):
     currentTime = time.time()
@@ -368,19 +331,16 @@ def recentSocialHealthScores():
     activityStdDev = stdDevs[0]
     socialStdDev = stdDevs[1]
     focusStdDev = stdDevs[2]
-  
+ 
+    print "Averages (activity, social, focus):" 
     print averages
+    print "Standard Deviations (activity, social, focus):"
     print stdDevs 
 
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         print "storing %s" % profile.uuid
-        dbName = profile.getDBName()
-        collection = connection[dbName]["answerlist"]
-        
-        answer = collection.find({ "key" : "socialhealth" })
-        answer = answer[0] if answer.count() > 0 else {"key": "socialhealth", "value":[]} 
-        
-        #data[profile.uuid] = [datum for datum in answer["value"] if datum["layer"] != "User"]
+        internalDataStore = InternalDataStore(profile, "dummy-token")
+
         data[profile.uuid] = []
         #pdb.set_trace()
         data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores.get(profile.uuid, 0) })
@@ -393,9 +353,7 @@ def recentSocialHealthScores():
         data[profile.uuid].append({ "key": "social", "layer": "averageHigh", "value": min(averages[1] + stdDevs[1], 10) })
         data[profile.uuid].append({ "key": "focus", "layer": "averageHigh", "value": min(averages[2] + stdDevs[2], 10) })
 
-        answer["value"] = data[profile.uuid]
-        
-        collection.save(answer)
+        internalDataStore.saveAnswer("socialhealth", data[profile.uuid])
 
     # After we're done, re-compute the time graph data to include zeros for blanks
     # not ideal to compute this twice, but it gets the job done
