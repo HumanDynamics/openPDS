@@ -43,3 +43,6 @@ class InternalDataStore:
                 timeFilter["$lt"] = endTime
             dataFilter["time"] = timeFilter
         return self.db["funf"].find(dataFilter)
+    
+    def saveData(self, data):
+        self.db["funf"].save(data)
