@@ -11,7 +11,7 @@ import math
 import cluster
 from gcm import GCM
 from oms_pds.pds.models import Profile
-from oms_pds.pds.internal import InternalDataStore
+from oms_pds.pds.internal import getInternalDataStore
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3
@@ -23,6 +23,16 @@ connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
     port=getattr(settings, "MONGODB_PORT", None)
 )
+
+def copyData(fromInternalDataStore, toInternalDataStore):
+    startTime = 1391291231
+    endTime = 1392768449
+
+    probes = ["LocationProbe", "ActivityProbe", "SmsProbe", "CallLogProbe", "BluetoothProbe", "WifiProbe", "ScreenProbe"]
+
+    for probe in probes:
+        for d in fromInternalDataStore.getData(probe, startTime, endTime):
+            toInternalDataStore.saveData(d)
 
 def LNPDF(x, loc, scale):
     return math.exp(-(math.log(x)-loc)**2/(2*(scale**2))) / (x*math.sqrt(2*math.pi)*scale)
@@ -145,8 +155,7 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
     # Given that SMS and call log probes may include all messages and calls stored on the phone, we can't just look
     # at entries collected during that time frame
     smsEntries = internalDataStore.getData("SmsProbe", start, None)
-#    smsEntries = collection.find({ "key": { "$regex": "SmsProbe$" }, "time": {"$gte": start}})
-#    
+    
     if includeBlanks or smsEntries.count() > 0 or score > 0:
         # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages        
         messages = [smsEntry["value"] for smsEntry in smsEntries]
@@ -157,14 +166,10 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
         
         for threadId in set([message["thread_id"] for message in messages]):
             smsCount = float(len([message for message in messages if message["thread_id"] == threadId]))
-            #messageTimes = set([message["date"] for message in messages if message["date"] >= start*1000 and message["date"] < end*1000])
-            #smsCount = len(messageTimes)
             messageCountByThread.append(smsCount)
 
         totalSms = sum(messageCountByThread)
         frequencies = [count / totalSms if totalSms > 0 else 1 for count in messageCountByThread]
-        print totalSms
-        print frequencies
         score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
 
     #print collection
@@ -204,8 +209,10 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, includeBlanks = Fals
     aggregates = {}
 
     for profile in profiles:
+        # NOTE: need a means of getting at a token for authorizing this task to run. For now, we're not checking anyway, so it's blank
+        internalDataStore = getInternalDataStore(profile, "")
 #        if mean is None or dev is None:
-        data = aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks)
+        data = aggregateForUser(profile, internalDataStore, answerKey, timeRanges, aggregator, includeBlanks)
 #        else:
 #            data = aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks, mean.get(profile.uuid), dev.get(profile.uuid))
         if data is not None and len(data) > 0:
@@ -213,10 +220,8 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, includeBlanks = Fals
 
     return aggregates
 
-def aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks = False):
+def aggregateForUser(profile, internalDataStore, answerKey, timeRanges, aggregator, includeBlanks = False):
     aggregates = []
-    
-    internalDataStore = InternalDataStore(profile, "dummy-token")
     
     for (start, end) in timeRanges:
         data = aggregator(internalDataStore, start, end)
@@ -227,10 +232,6 @@ def aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks =
         internalDataStore.saveAnswer(answerKey, aggregates)
 
     return aggregates
-
-def saveAnswer(profile, answerKey, data):
-    internalDataStore = InternalDataStore(profile, "dummy-token")
-    internalDataStore.saveAnswer(answerKey, data)
 
 def getStartTime(daysAgo, startAtMidnight):
     currentTime = time.time()
@@ -267,7 +268,9 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
                     f["focus"] = int(f["focus"])
                     data[uuid].append(f)               
             profile = Profile.objects.get(uuid = uuid)
-            saveAnswer(profile, answerKey, data[uuid]) 
+            # TODO: get a token here to run internal queries against...
+            ids = getInternalDataStore(profile, "")
+            ids.saveAnswer(answerKey, data[uuid]) 
     return data
 
 def recentSocialLevels(includeBlanks = False):
@@ -347,8 +350,9 @@ def recentSocialHealthScores():
 
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         print "storing %s" % profile.uuid
-        internalDataStore = InternalDataStore(profile, "dummy-token")
-
+        
+        internalDataStore = getInternalDataStore(profile, "")
+ 
         data[profile.uuid] = []
         #pdb.set_trace()
         data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores.get(profile.uuid, 0) })

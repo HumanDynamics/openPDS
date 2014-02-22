@@ -11,7 +11,7 @@ import json, ast
 from oms_pds import settings
 from oms_pds.authorization import PDSAuthorization
 from oms_pds.pds.models import Profile
-from oms_pds.pds.internal import InternalDataStore
+from oms_pds.pds.internal import getInternalDataStore, InternalDataStore
 import pdb
 
 upload_dir = settings.SERVER_UPLOAD_DIR
@@ -61,7 +61,8 @@ def data(request):
     token = request.GET['bearer_token']
     datastore_owner_uuid = request.GET["datastore_owner__uuid"]
     datastore_owner, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
-    internalDataStore = InternalDataStore(datastore_owner, token)
+    print "Creating IDS for %s" % datastore_owner_uuid
+    internalDataStore = getInternalDataStore(datastore_owner, token)
     #collection = connection[datastore_owner.getDBName()]["funf"]
     funf_password = "changeme"
     key = decrypt.key_from_password(str(funf_password))
