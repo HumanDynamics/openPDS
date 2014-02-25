@@ -151,15 +151,15 @@ CELERYBEAT_SCHEDULE = {
 #    },
     "compute-social-health-scores": {
         "task": "oms_pds.tasks2.recentSocialHealthScores",
-        "schedule": crontab(hour="1-23", minute="*/30")
+        "schedule": crontab(hour="6-23", minute="*/30")
      },
     "ensure-funf-indexes": {
         "task": "oms_pds.tasks2.ensureFunfIndexes",
-        "schedule": crontab(hour="1-23/2", minute="15")
+        "schedule": crontab(hour="5-23/2", minute="15")
     },
     "find-recent-places": {
         "task": "oms_pds.tasks2.findRecentPlaces", 
-        "schedule": crontab(hour="1-23/2", minute="0")
+        "schedule": crontab(hour="6-23/2", minute="0")
     },
     "schedule-experience-surveys": {
         "task": "oms_pds.tasks.scheduleExperienceSamplesForToday",

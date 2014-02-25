@@ -1,0 +1,42 @@
+{% extends "backboneLayout.html" %}
+
+{% block title %}
+Recent Places
+{% endblock %}
+
+{% block more_scripts %}
+
+
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?libraries=visualization&key=AIzaSyA1cBJxMfck9SSbo0N5aM0xexSgi6_JtFg&sensor=true"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+<link rel="stylesheet" type="text/css"
+href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.1/themes/base/jquery-ui.css"/>
+
+<script src="{{ STATIC_URL}}js/answerList.js"></script>
+<script src="{{ STATIC_URL }}js/answerListHeatMap.js"></script>
+
+<script>
+$(function () {
+	window.answerListHeatMap = new AnswerListHeatMap();
+    	$(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
+    // $("#plus").live('click', answerListMap.zoomIn);
+    // $("#minus").live('click', answerListMap.zoomOut);
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+<div class="buttons" id="buttons">
+</div>
+<div id="answerListHeatMapContainer" data-role="content">
+</div>
+<div id="footer" data-role="footer">
+</div>
+{% endblock %}
+

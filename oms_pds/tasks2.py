@@ -77,7 +77,33 @@ def computeSocialScore(socialList):
 
 def intervalsOverlap(i1, i2):
     return i2[0] <= i1[0] <= i2[1] or i2[0] <= i1[1] <= i2[1] or i1[0] <= i2[0] <= i1[1] or i1[0] <= i2[1] <= i1[1]
-
+    
+def centroid(points):
+    if len(points) == 0:
+        return (0,0)
+    sums = reduce(lambda x,y: (x[0] + y[0], x[1] + y[1]), points, (0,0))
+    return (sums[0] / len(points), sums[1] / len(points))
+    
+def locationForTimeRange(collection, start, end):
+    locationEntries = collection.find({ "key": { "$regex" : "SimpleLocationProbe$"}, "time": { "$gte" : start, "$lt":end }})
+    
+    points = []
+    if locationEntries.count() > 0:
+        for data in locationEntries:
+            dataValue = data["value"]
+            latitude = dataValue['mlatitude']
+            longitude = dataValue['mlongitude']
+            point = (latitude, longitude)
+            points.append(point)
+    
+    latitude = None
+    longitude = None
+    if len(points):
+        location = centroid(points)
+        latitude = location[0]
+        longitude = location[1]
+        
+    return { "latitude" : latitude, "longitude" : longitude }
 
 def selfAssessedScoreForTimeRange(collection, start, end, metric):
     verificationEntries = collection.find({ "key": metric + "Verification"})
@@ -103,14 +129,19 @@ def selfAssessedScoreForTimeRange(collection, start, end, metric):
     allScores = [int(value["value"]) for value in v]
 
     average = sum(allScores) / len(allScores) if len(allScores) > 0 else 0
-
-    return {"start": start, "end": end, "value": average * 2.0 }
+    location = locationForTimeRange(collection, start, end)
+    
+    return {"start": start, "end": end, "value": average * 2.0, "latitude" : location["latitude"], "longitude" : location["longitude"] }
 
 
 def activityForTimeRange(collection, start, end, includeBlanks = False, answerlistCollection=None):
+    print "A Check for Chazz"
+    print start
+    print end
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
 
     activityEntries = collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : start, "$lt":end }})
+    print activityEntries.count()
     if includeBlanks or activityEntries.count() > 0:
         for data in activityEntries:
             #pdb.set_trace()
@@ -123,8 +154,9 @@ def activityForTimeRange(collection, start, end, includeBlanks = False, answerli
                 totalIntervals += 1
                 lowActivityIntervals += 1 if dataValue["activitylevel"] == "low" else 0
                 highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
-
-        activity = { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+        
+        location = locationForTimeRange(collection, start, end)
+        activity = { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals, "latitude" : location["latitude"], "longitude" : location["longitude"] }
         if answerlistCollection is not None:
             selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Activity")
             activity["selfAssessed"] = selfAssessed["value"]
@@ -142,7 +174,8 @@ def focusForTimeRange(collection, start, end, includeBlanks = False, answerlistC
             screenOnCount += 1 if dataValue["screen_on"] else 0
         normalized = float(screenOnCount) / hours
 
-        focus =  { "start": start, "end": end, "focus": normalized }
+        location = locationForTimeRange(collection, start, end)
+        focus =  { "start": start, "end": end, "focus": normalized, "latitude" : location["latitude"], "longitude" : location["longitude"] }
 
         if answerlistCollection is not None:
             selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Focus")
@@ -212,7 +245,9 @@ def socialForTimeRange(collection, start, end, includeBlanks = False, answerlist
         score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
 
         score = min(score, 10)
-        social = { "start": start, "end": end, "social": score}
+        location = locationForTimeRange(collection, start, end)
+        
+        social = { "start": start, "end": end, "social": score, "latitude" : location["latitude"], "longitude" : location["longitude"] }
         if answerlistCollection is not None:
             selfAssessed = selfAssessedScoreForTimeRange(answerlistCollection, start, end, "Social")
             social["selfAssessed"] = selfAssessed["value"]
@@ -285,7 +320,7 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
     today = date.fromtimestamp(currentTime)
     startTime = time.mktime((today - timedelta(days=6)).timetuple())
     timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
-    data = aggregateForAllUsers(None, timeRanges, focusForTimeRange, includeBlanks)
+    data = aggregateForAllUsers(None, timeRanges,  focusForTimeRange, includeBlanks)
  
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
@@ -378,7 +413,7 @@ def addNotificationAndNotify(profile, notificationType, title, content, uri):
 def notifyAll():
     for profile in Profile.objects.all():
         if Device.objects.filter(datastore_owner = profile).count() > 0:
-            gcm = GCM(settings.ASSISTANT_GCM_API_KEY)
+            gcm = GCM(settings.GCM_API_KEY)
             for device in Device.objects.filter(datastore_owner = profile):
                 try:
                     gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})
@@ -517,12 +552,6 @@ def boundsOverlap(bounds1, bounds2):
 
 def mergeBoxes(bounds1, bounds2):
     return [min(bounds1[0], bounds2[0]), min(bounds1[1], bounds2[1]), max(bounds1[2], bounds2[2]), max(bounds1[3], bounds2[3])]
-
-def centroid(points):
-    if len(points) == 0:
-        return (0,0)
-    sums = reduce(lambda x,y: (x[0] + y[0], x[1] + y[1]), points, (0,0))
-    return (sums[0] / len(points), sums[1] / len(points))
 
 def findRecentPlaceBounds(recentPlaceKey, timeRanges):
     profiles = Profile.objects.all()
@@ -822,19 +851,26 @@ def dumpFunfData():
     profiles = Profile.objects.all()
     outputConnection = sqlite3.connect("oms_pds/static/dump.db")
     c = outputConnection.cursor()
-    c.execute("DROP TABLE IF EXISTS funf;") 
-    c.execute("CREATE TABLE funf (user_id integer, key text, time real, value text);")
-    c.execute("CREATE INDEX funf_key_time_idx on funf(key, time)") 
+    #c.execute("DROP TABLE IF EXISTS funf;") 
+    c.execute("CREATE TABLE IF NOT EXISTS funf (user_id integer, key text, time real, value text, PRIMARY KEY (user_id, key, time) on conflict ignore)")
+    #c.execute("CREATE UNIQUE INDEX IF NOT EXISTS funf_key_time_idx on funf(key, time)")
+    #c.execute("select max(time) from funf")
+    #startTimeRow = c.fetchone()
+    startTime = getStartTime(3, False)#max(1378008000, startTimeRow[0]) if startTimeRow is not None else 1378008000
     for profile in profiles:
+        #c.execute("select max(time) from funf where user_id=?")
+        #startTimeRow = c.fetchone()
+        #startTime = max(0, startTimeRow[0]) if startTimeRow is not None else 0
         dbName = getDBName(profile)
         funf = connection[dbName]["funf"]
-        user = int(profile.id)     
-        for datum in funf.find():
-            #print type(user), type(datum["key"]), type(datum["time"]), type(datum["value"])
-            key = datum["key"]
-            if key is not None:
-                key = key[key.rfind(".") + 1:]
-                c.execute("INSERT INTO funf VALUES (?,?,?,?);", (user,key,datum["time"],"%s"%datum["value"]))
+        user = int(profile.id)
+        c.executemany("INSERT INTO funf VALUES (?,?,?,?)", [(user,d["key"][d["key"].rfind(".")+1:],d["time"],"%s"%d["value"]) for d in funf.find({"time": {"$gte": startTime}}) if d["key"] is not None])
+#        for datum in funf.find({ "time": { "$gte": startTime}}):
+#            #print type(user), type(datum["key"]), type(datum["time"]), type(datum["value"])
+#            key = datum["key"]
+#            if key is not None:
+#                key = key[key.rfind(".") + 1:]
+#                c.execute("INSERT INTO funf VALUES (?,?,?,?);", (user,key,datum["time"],"%s"%datum["value"]))
     
     outputConnection.commit()
     outputConnection.close()
@@ -863,4 +899,234 @@ def dumpSurveyData():
                 c.execute("INSERT INTO survey VALUES (?,?,?,?);", (user,datum["key"],answer["time"],"%s"%answer["value"]))
     outputConnection.commit()
     outputConnection.close()
+    
+def getLastEntry(key, collection, start, end):
+    # print "function stuff"
+    # print key
+    # print start
+    # print end
+    # start = 1389934800
+    # end = 1389942000
+    # return collection.find({ "key": { "$regex" : "ActivityProbe$" }, "time": { "$gte" : start, "$lt":end }})
+    # return collection.find({ "key": { "$regex": "ActivityProbe$" }, "time": { "$gte": start, "$lt": end }})
+    return collection.find({ "key": key, "time": { "$gt" : start, "$lte" : end }}).sort([( "time" , -1 )]).limit(1)
+    return collection.find({ "key": key, "time": { "$gt" : start, "$lte" : end }})
+    
+def getDefaultForKey(key):
+    return 0
+    
+def nextUpdateForTimes(times):
+    #overtime you could probably start to see patterns in update frequency
+    #and then begin to predict when the next update should occur
+    #for instance whenever an update hasn't occurred in ten minutes
+    #you would then know that you should spend the next 15 updating every minute
+    return 60 * 2
+    
+def formatLocation(entry):
+    value = entry["value"]
+    latitude = value['mlatitude']
+    longitude = value['mlongitude']
+    
+    formatted = {}
+    formatted['latitude'] = latitude
+    formatted['longitude'] = longitude
+    
+    return formatted
+    
+def formatBluetooth(entries):
+    entries = collection.find({ "key": key, "time": { "$gt" : start, "$lte" : end }}).sort([( "time" , -1 )]).limit(1)
+    
+    if entries.count() > 0:
+        bluetoothEntries = [bt["value"] for bt in bluetoothEntries if "android-bluetooth-device-extra-class" in bt["value"] and bt["value"]["android-bluetooth-device-extra-class"]["mclass"] & 0x00FF00 == 512]
+#        bluetoothEntries = [bt for bt in bluetoothEntries if bt["android-bluetooth-device-extra-rssi"] > -75]
+        macKey = "android-bluetooth-device-extra-device"
+        macs = set([bt[macKey]["maddress"] for bt in bluetoothEntries])
+        btByPerson = [float(len([bt for bt in bluetoothEntries if bt[macKey]["maddress"] == mac])) for mac in macs]
+        totalBt = sum(btByPerson)
+        frequencies = [count / totalBt for count in btByPerson]
+        score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
+  
+@task()
+def doCheck(answerKey="RealTimeAll", keys={}):
+    if (not len(keys)):
+        keys = {}
+        keys['location'] = { "$regex" : "SimpleLocationProbe$"}
+        keys['bluetooth'] = { "$regex" : "BluetoothProbe$"}
+        keys['call'] = { "$regex" : "CallLogProbe$" }
+        keys['activity'] = { "$regex" : "ActivityProbe$" }
+        
+        # bluetoothEntries = collection.find({ "key": { "$regex": "BluetoothProbe$" }, "time": { "$gte": start, "$lt": end }})
+    
+    profiles = Profile.objects.all()
+    reasonableTimeRange = 60 * 40 #so I could just grab all of the updates for the last ten minutes and put them on a map
+                                  #no filter or searching
+    end = time.time()
+    start = end - reasonableTimeRange
+
+    #why does he do in activityScores.keys does that handle people that have opted out or something?
+    #nope they just might not have that value
+    #if they don't have that particular value they probably don't have the other three
+    data = []
+    times = []
+    for profile in profiles:
+        dbName = getDBName(profile)
+        collection = connection[dbName]["funf"]
+        
+        answer = {}
+        answer["uuid"] = profile.uuid
+        updated = False
+        
+        for key in keys:
+            lastEntry = getLastEntry(keys[key], collection, start, end)
+            # print "printing last entry"
+            # print lastEntry
+            # print type(lastEntry)
+            # print dir(lastEntry)
+            # print lastEntry.count()
+            for entry in lastEntry:
+                # print "Aaaaaaahhhh"
+                # print entry
+                if lastEntry != None:
+                    updated = True
+                    answer[key] = entry
+                else:
+                    answer[key] = getDefaultForKey(key)
+                
+        if updated:
+            data.append(answer)
+        # for entry in locationEntry:
+    #         # print "got the time"
+    #         # print entry
+    #         answer["location"] = entry
+    #         times.append(entry["time"])
+        
+    print data
+    print len(data)
+    print times 
+    
+def formatActivity(entries):
+    lowActivityIntervals = highActivityIntervals = totalIntervals = 0
+    if includeBlanks or activityEntries.count() > 0:
+        for data in activityEntries:
+            #pdb.set_trace()
+            dataValue = data["value"]
+            if ("total_intervals" in dataValue):
+                totalIntervals += dataValue["total_intervals"]
+                lowActivityIntervals += dataValue["low_activity_intervals"]
+                highActivityIntervals += dataValue["high_activity_intervals"]
+            else:
+                totalIntervals += 1
+                lowActivityIntervals += 1 if dataValue["activitylevel"] == "low" else 0
+                highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
+        
+        formatted = {}
+        formatted['high'] = highActivityIntervals
+        formatted['low'] = lowActivtyIntervals
+        formatted['total'] = totalIntervals
+        
+        return formatted
+        
+def entriesForTimeRange(key, collection, start, end):
+    return collection.find({ "key": key, "time": { "$gte" : start, "$lt": end }})
+    
+def callScoreForEntries(entries):
+    score = 0
+    if entries.count() > 0:
+        callSets = [callEntry["value"] for callEntry in entries]
+        callSets = [value["calls"] if "calls" in value else value for value in callSets]
+        calls = []
+        for callSet in callSets:
+            if isinstance(callSet, list):
+                calls.extend(callSet)
+            else:
+                calls.append(callSet)
+        score += len(calls)
+        # calls = [call for call in calls if call["date"] >= start*1000 and call["date"] < end*1000]
+
+        # countsByNumber = [float(len([call for call in calls if call["number"] == numberHash])) for numberHash in set([call["number"] for call in calls])]
+        # totalCalls = sum(countsByNumber)
+        # frequencies = [count / totalCalls for count in countsByNumber]
+        # score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
+    return score
+    
+def bluetoothScoreForEntries(entries):
+    score = 0
+    if entries.count() > 0:
+        entries = [bt["value"] for bt in entries if "android-bluetooth-device-extra-class" in bt["value"] and bt["value"]["android-bluetooth-device-extra-class"]["mclass"] & 0x00FF00 == 512]
+        macKey = "android-bluetooth-device-extra-device"
+        macs = set([bt[macKey]["maddress"] for bt in entries])
+        btByPerson = [float(len([bt for bt in entries if bt[macKey]["maddress"] == mac])) for mac in macs]
+        totalBt = sum(btByPerson)
+        frequencies = [count / totalBt for count in btByPerson]
+        score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
+    return score
+        
+def activityScoreForEntries(entries):
+    randomFactor = 10
+    lowActivityIntervals = highActivityIntervals = totalIntervals = 0
+    for data in entries:
+        #pdb.set_trace()
+        dataValue = data["value"]
+        if ("total_intervals" in dataValue):
+            totalIntervals += dataValue["total_intervals"]
+            lowActivityIntervals += dataValue["low_activity_intervals"]
+            highActivityIntervals += dataValue["high_activity_intervals"]
+        else:
+            totalIntervals += 1
+            lowActivityIntervals += 1 if dataValue["activitylevel"] == "low" else 0
+            highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
+            
+    return (highActivityIntervals + .5 * lowActivityIntervals) * totalIntervals * 10
+    
+
+@task()
+# def doCheckByLocation(answerKey="RealTimeAll", keys={}, locationOnly=False):
+def do(deltaMin=5,answerKey="RealTimeAll", keys={}, locationOnly=False):
+    if (not len(keys) and not locationOnly):
+        keys = {}
+        keys['bluetooth'] = { 'key' : { "$regex" : "BluetoothProbe$"}, 'func' : bluetoothScoreForEntries } 
+        keys['call'] = { 'key' : { "$regex" : "CallLogProbe$" }, 'func' : callScoreForEntries } 
+        keys['activity'] = { 'key' : { "$regex" : "ActivityProbe$" }, 'func' : activityScoreForEntries }
+
+    profiles = Profile.objects.all()
+    reasonableTimeRange = 60 * 40 
+    end = time.time()
+    start = end - reasonableTimeRange
+
+    data = []
+    times = []
+    for profile in profiles:
+        dbName = getDBName(profile)
+        collection = connection[dbName]["funf"]
+        
+        locationKey = { "$regex" : "SimpleLocationProbe$"}
+        locationEntry = getLastEntry(locationKey, collection, start, end)
+        
+        if locationEntry.count() != 0:  
+            answer = {}
+            answer["uuid"] = profile.uuid
+            moment = None
+            for entry in locationEntry:
+                answer["location"] = formatLocation(entry)
+                
+                moment = entry["time"]
+                times.append(moment)
+            
+            for key in keys:
+                delta = 60 * deltaMin
+                entries = entriesForTimeRange(keys[key]["key"], collection, moment - delta, moment + delta)
+                
+                score = keys[key]["func"](entries)
+                answer[key] = score
+                    
+            data.append(answer)
+
+    print data
+    if len(data):
+        for profile in profiles:
+            saveAnswer(profile, answerKey, data)
+            print "data saved"
+        # saveAnswer(profile, "RealTimeUpdateNext", nextUpdateForTimes(times))
+                
+
 
