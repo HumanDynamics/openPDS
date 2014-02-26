@@ -14,6 +14,7 @@ from oms_pds.pds.models import Profile
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3
+from oms_pds.socialhealth_tasks import getStartTime
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 
@@ -386,26 +387,19 @@ def findMusicGenres():
             answerListCollection.save(musicGenres)
 
 
-
 @task()
 def dumpFunfData():
     profiles = Profile.objects.all()
     outputConnection = sqlite3.connect("oms_pds/static/dump.db")
     c = outputConnection.cursor()
-    c.execute("DROP TABLE IF EXISTS funf;") 
-    c.execute("CREATE TABLE funf (user_id integer, key text, time real, value text);")
-    c.execute("CREATE INDEX funf_key_time_idx on funf(key, time)") 
+    c.execute("CREATE TABLE IF NOT EXISTS funf (user_id integer, key text, time real, value text, PRIMARY KEY (user_id, key, time) on conflict ignore)")
+    startTime = getStartTime(3, False)#max(1378008000, startTimeRow[0]) if startTimeRow is not None else 1378008000
     for profile in profiles:
-        dbName = profile.getDBName()
+        dbName = getDBName(profile)
         funf = connection[dbName]["funf"]
-        user = int(profile.id)     
-        for datum in funf.find():
-            #print type(user), type(datum["key"]), type(datum["time"]), type(datum["value"])
-            key = datum["key"]
-            if key is not None:
-                key = key[key.rfind(".") + 1:]
-                c.execute("INSERT INTO funf VALUES (?,?,?,?);", (user,key,datum["time"],"%s"%datum["value"]))
-    
+        user = int(profile.id)
+        c.executemany("INSERT INTO funf VALUES (?,?,?,?)", [(user,d["key"][d["key"].rfind(".")+1:],d["time"],"%s"%d["value"]) for d in funf.find({"time": {"$gte": startTime}}) if d["key"] is not None])
+
     outputConnection.commit()
     outputConnection.close()
 
@@ -414,11 +408,11 @@ def dumpSurveyData():
     profiles = Profile.objects.all()
     outputConnection = sqlite3.connect("oms_pds/static/dump.db")
     c = outputConnection.cursor()
-    c.execute("DROP TABLE IF EXISTS survey;")
-    c.execute("CREATE TABLE survey (user_id integer, key text, time real, value text);")
+    #c.execute("DROP TABLE IF EXISTS survey;")
+    c.execute("CREATE TABLE IF NOT EXISTS survey (user_id integer, key text, time real, value text, PRIMARY KEY (user_id, key, time) on conflict ignore);")
 
     for profile in profiles:
-        dbName = profile.getDBName()
+        dbName = getDBName(profile)
         answerlist = connection[dbName]["answerlist"]
         user = int(profile.id)
         for datum in answerlist.find({ "key": { "$regex": "Past3Days$"}}):
