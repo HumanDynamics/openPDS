@@ -15,15 +15,6 @@ connection = Connection(
 INTERNAL_DATA_STORE_INSTANCES = {}
 
 def getInternalDataStore(profile, token):
-#    thread_id = threading.current_thread().ident
-#    if (profile, token, thread_id) not in INTERNAL_DATA_STORE_INSTANCES:
-#        try:
-#            internalDataStore = DualInternalDataStore(profile, token)
-#        except Exception as e:
-#            print str(e)
-#            internalDataStore = InternalDataStore(profile, token)
-#        INTERNAL_DATA_STORE_INSTANCES[(profile, token, thread_id)] = internalDataStore
-#    return INTERNAL_DATA_STORE_INSTANCES[(profile, token, thread_id)]
     try:
         internalDataStore = DualInternalDataStore(profile, token)
     except Exception as e:
@@ -59,8 +50,13 @@ class ListWithCount(list):
     def count(self):
         return len(self)
 
+def getColumnValueFromRawData(rawData, columnName, tableDef, source="funf"):    
+    return tableDef["mapping"][source][columnName](rawData) if "mapping" in tableDef and source in tableDef["mapping"] and columnName in tableDef["mapping"][source] else rawData[columnName]
+
 class SQLiteInternalDataStore:
     SQLITE_DB_LOCATION = settings.SERVER_UPLOAD_DIR + "dataStores/"
+    
+    INITIALIZED_DATASTORES = []
 
     LOCATION_TABLE = {
         "name": "LocationProbe",
@@ -125,7 +121,15 @@ class SQLiteInternalDataStore:
             ("bt_mac", "TEXT"),
             ("name", "TEXT"),
             ("rssi", "INTEGER")
-        ]
+        ],
+        "mapping": {
+            "funf": {
+                "bt_mac": lambda d: d["android-bluetooth-device-extra-device"]["maddress"],
+                "class": lambda d: d["android-bluetooth-device-extra-class"]["mclass"],
+                "name": lambda d: d.get("android-bluetooth-device-extra-name", None),
+                "rssi": lambda d: d["android-bluetooth-device-extra-rssi"] 
+            }
+        }
     }
 
     WIFI_TABLE = {
@@ -159,28 +163,31 @@ class SQLiteInternalDataStore:
 
     def __init__(self, profile, token):
         self.profile = profile
-        print profile.uuid
+        #print profile.uuid
         fileName = SQLiteInternalDataStore.SQLITE_DB_LOCATION + profile.getDBName() + ".db"
         self.db = sqlite3.connect(fileName)
-        try:
-            os.chmod(fileName, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC | stat.S_IRWXO | stat.S_IRWXU | stat.S_IRWXG)
-        except:
-            #this is expected if the user accessing the db isn't the one who owns the file
-            pass
-        #os.chmod(fileName, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
         self.db.row_factory = dict_factory
-        c = self.db.cursor()
-        # We probably don't want to run the table creation every time (even if we're checking for existence). 
-        # Make this a setup / initialization method that we run once when a PDS is set up
-        for table in SQLiteInternalDataStore.DATA_TABLE_LIST:
-            if next((c for c in table["columns"] if c[0] == "time"), None) is None:
-                table["columns"].append(("time", "REAL PRIMARY KEY"))
-            createStatement = getCreateStatementForTable(table)
-            c.execute(createStatement)
 
-        for table in SQLiteInternalDataStore.ANSWER_TABLE_LIST:
-            c.execute(getCreateStatementForTable(table))
-        self.db.commit()
+        #Not perfect, since we're still initializing the DBs once per run, it's still better than running the following every time
+        if profile not in SQLiteInternalDataStore.INITIALIZED_DATASTORES:
+            SQLiteInternalDataStore.INITIALIZED_DATASTORES.append(profile)
+            try:
+                os.chmod(fileName, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC | stat.S_IRWXO | stat.S_IRWXU | stat.S_IRWXG)
+            except:
+                #this is expected if the user accessing the db isn't the one who owns the file
+                pass
+            c = self.db.cursor()
+            # We probably don't want to run the table creation every time (even if we're checking for existence). 
+            # Make this a setup / initialization method that we run once when a PDS is set up
+            for table in SQLiteInternalDataStore.DATA_TABLE_LIST:
+                if next((c for c in table["columns"] if c[0] == "time"), None) is None:
+                    table["columns"].append(("time", "REAL PRIMARY KEY"))
+                createStatement = getCreateStatementForTable(table)
+                c.execute(createStatement)
+    
+            for table in SQLiteInternalDataStore.ANSWER_TABLE_LIST:
+                c.execute(getCreateStatementForTable(table))
+            self.db.commit()
 
     def getAnswerFromTable(self, key, table):
         #table = "AnswerList" if isinstance(data, list) else "Answer"
@@ -233,7 +240,7 @@ class SQLiteInternalDataStore:
         wildCards = ("?," * len(table["columns"]))[:-1]
         columnValues = []
         for columnName in [t[0] for t in table["columns"]]:
-            value = time if columnName == "time" else dataValue.get(columnName, None) 
+            value = time if columnName == "time" else getColumnValueFromRawData(dataValue, columnName, table, "funf")
             columnValues.append(value)
         statement = "insert into %s(%s) values(%s)" % (table["name"], ",".join([c[0] for c in table["columns"]]), wildCards)
         self.db.execute(statement, tuple(columnValues))
