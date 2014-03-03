@@ -9,10 +9,12 @@ import json
 import pdb
 import math
 import cluster
+import requests
 from gcm import GCM
 from oms_pds.pds.models import Profile
 from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
+from oms_pds.pds.internal import getInternalDataStore
 import sqlite3
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
@@ -34,6 +36,9 @@ def distanceBetweenLatLongs(latlong1, latlong2):
     a = dLatSin*dLatSin + dLongSin*dLongSin*math.cos(lat1)*math.cos(lat2)
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return earthRadius * c * 1000 # Converting to meters here... more useful for our purposes than km
+
+def listContainsOverlap(boundsList, bounds):
+    return reduce(lambda contains, b: contains or boundsOverlap(bounds, b), boundsList, False)
 
 def boxContainsPoint(box, point):
     return box[0] <= point[0] <= box[2] and box[1] <= point[1] <= box[3] 
@@ -58,16 +63,18 @@ def mergeBoxes(bounds1, bounds2):
 def centroid(points):
     if len(points) == 0:
         return (0,0)
-    sums = reduce(lambda x,y: (x[0] + y[0], x[1] + y[1]), points, (0,0))
+    sums = reduce(lambda p1,p2: (p1[0] + p2[0], p1[1] + p2[1]), points, (0,0))
     return (sums[0] / len(points), sums[1] / len(points))
 
-def findRecentPlaceBounds(recentPlaceKey, timeRanges):
+def findRecentPlaceBounds(recentPlaceKey, timeRanges, numPlaces=1):
     profiles = Profile.objects.all()
     data = {}
     
     for profile in profiles:
-        dbName = profile.getDBName()
-        collection = connection[dbName]["funf"]
+        # TODO: figure out how to get at a token here...
+        internalDataStore = getInternalDataStore(profile, "")
+        #dbName = profile.getDBName()
+        #collection = connection[dbName]["funf"]
         locations = []
 
         # An explanation for why we're doing things the way we are below 
@@ -93,29 +100,40 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges):
         potentialRegions = []
         #pdb.set_trace()
         for timeRange in timeRanges:
-            values = [entry["value"] for entry in collection.find({ "key": { "$regex": "LocationProbe$"}, "time": { "$gte": timeRange[0], "$lt": timeRange[1]}}, limit=100)]
+            # NOTE: is a limit on the number of entries still necessary, if we're choosing the timeRanges carefully?
+            values = [entry["value"] for entry in internalDataStore.getData("LocationProbe", timeRange[0], timeRange[1])]
             # Use all locations except the most gratuitously inaccurate ones
             values = [value for value in values if float(value["maccuracy"]) < 100]
             clusters = clusterFunfLocations(values, 100)
             if (len(clusters) > 0):
+                #clusters.sort(key = lambda cluster: -len(cluster))
+                #topClusters = clusters[:min(len(clusters), numPlaces)]
                 clusterLocations = max(clusters, key= lambda cluster: len(cluster))
                 if isinstance(clusterLocations, list):
-                    workLats = [loc[0] for loc in clusterLocations]
-                    workLongs = [loc[1] for loc in clusterLocations]
-                    potentialRegions.append([min(workLats), min(workLongs), max(workLats), max(workLongs)])
-      
+                    lats = [loc[0] for loc in clusterLocations]
+                    longs = [loc[1] for loc in clusterLocations]
+                    if min(lats) != max(lats) and min(longs) != max(longs):
+                        #Only add regions that aren't degenerate (single points)
+                        potentialRegions.append([min(lats), min(longs), max(lats), max(longs)])
+
         if len(potentialRegions) > 0: 
-            overlaps = [{ "region" : r1, "overlapList": [r2 for r2 in potentialRegions if r2 is not r1 and boundsOverlap(r1, r2)]} for r1 in potentialRegions]
-            mostOverlap = max(overlaps, key = lambda entry: len(entry["overlapList"]))
-            mostVoted = reduce(lambda r1, r2: mergeBoxes(r1, r2), mostOverlap["overlapList"], mostOverlap["region"])
-            
-            answerlistCollection = connection[dbName]["answerlist"]
-            answer = answerlistCollection.find({ "key" : "RecentPlaces" })
-            answer = answer[0] if answer.count() > 0 else {"key": "RecentPlaces", "value":[]}
-            data[profile.uuid] = [datum for datum in answer["value"] if datum["key"] != recentPlaceKey]
+            overlaps = [{ "region": r1, "overlapList": [r2 for r2 in potentialRegions if r2 is not r1 and boundsOverlap(r1, r2)]} for r1 in potentialRegions]
+            reduced = [{ "region": reduce(lambda r1, r2: mergeBoxes(r1,r2), r["overlapList"], r["region"]), "votes": len(r["overlapList"])} for r in overlaps]
+            reduced.sort(key = lambda r: -r["votes"])
+            final = []
+            for r in reduced:
+                if not listContainsOverlap([f["region"] for f in final], r["region"]):
+                    final.append(r)
+            mostOverlap = final[:min(len(final), numPlaces)]
+            mostVoted = [r["region"] for r in mostOverlap]
+            if numPlaces == 1: 
+                mostVoted = mostVoted[0]
+            answer = internalDataStore.getAnswerList("RecentPlaces")
+            answer = answer[0]["value"] if answer.count() > 0 else []
+            data[profile.uuid] = [datum for datum in answer if datum["key"] != recentPlaceKey]
             data[profile.uuid].append({ "key": recentPlaceKey, "bounds": mostVoted})
-            answer["value"] = data[profile.uuid]
-            answerlistCollection.save(answer)
+            answer = data[profile.uuid]
+            internalDataStore.saveAnswer("RecentPlaces", answer)
     return data
 
 def clusterFunfLocations(values, distance):
@@ -166,20 +184,23 @@ def findRecentLocations():
 def findRecentPlaces():
     currentTime = time.time()
     today = date.fromtimestamp(currentTime)
-    startTime = time.mktime((today - timedelta(days=6)).timetuple())
+    startTime = time.mktime((today - timedelta(days=14)).timetuple())
 
     # Note: we're not taking the full 9-5 sampling. Clustering is expensive, so anything we can leave out helps...
     # Combined with the fact that "lunch" time might not be indicative of work locations, this might be more accurate anyway       
     nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
-    #nineToFives.extend([(two, two + 3600*2) for two in range(int(startTime + 3600*14), int(currentTime), 3600*24)])
-
-    
+    #nineToFives.extend([(two, two + 3600*2) for two in range(int(startTime + 3600*14), int(currentTime), 3600*24)])    
     #print "Finding work locations..."       
     data = findRecentPlaceBounds("work", nineToFives)
-    midnightToSixes = [(midnight, midnight + 3600*6) for midnight in range(int(startTime), int(currentTime), 3600* 24)]
 
+    midnightToSixes = [(midnight, midnight + 3600*6) for midnight in range(int(startTime), int(currentTime), 3600* 24)]
     #print "Finding home locations..."
     data = findRecentPlaceBounds("home", midnightToSixes)
+
+    for hour in range(0, 24):
+        timeRanges = [(midnight + hour*3600, midnight + (hour + 1)*3600) for midnight in range(int(startTime), int(currentTime), 3600*24)]
+
+        data = findRecentPlaceBounds("%s"%hour, timeRanges, 1)
 
     return data
 
@@ -235,6 +256,38 @@ def estimateTimes():
                     place["end"] = averageEndTime
                     recentPlaces["value"].append(place)
                     answerListCollection.save(recentPlaces)
+
+@task()
+def findMeetups(owner_uuid="e21b23bf-3798-4b0e-b11d-fd06e6f227c0", participant_uuids=["693398b0-662c-41c2-a0ee-36ee024c6af7"], token="7e7fec1924"):
+    url = "http://pds.linkedpersonaldata.org/api/personal_data/answerlist/?key=RecentPlaces&datastore_owner__uuid=%s&bearer_token=%s"%(requester_uuid, token)
+    headers = { "content-type": "application/json" }
+    requester_places = requests.get(url, headers = headers)
+    print "Meetup between %s and %s"%(owner_uuid, requester_uuid)
+    if requester_places.status_code == requests.codes.ok:
+        owner = Profile.objects.get(uuid = owner_uuid)
+        internalDataStore = getInternalDataStore(owner, token)
+        requester_places = requester_places.json()
+        requester_places = requester_places["objects"][0]["value"]
+        print requester_places
+        owner_places = internalDataStore.getAnswerList("RecentPlaces")[0]["value"]
+        print owner_places
+        min_distance = 9999999999 #proxy for a int_max or whatever Python calls it
+        min_distance_key = None
+        meeting_point = None
+        for place in requester_places:            
+            owner_place = next((p for p in owner_places if p["key"] not in ["work", "home"] and p["key"]==place["key"]), None)
+            print "Checking places: %s, %s" % (place, owner_place)
+            if owner_place is not None:
+                # NOTE: change this to use the center of the bounds, rather than the upper-left?
+                distance = distanceBetweenLatLongs((place["bounds"][0], place["bounds"][1]), (owner_place["bounds"][0], owner_place["bounds"][1]))
+                if distance < min_distance:
+                    print "%s < %s" % (distance, min_distance)
+                    min_distance = distance
+                    min_distance_key = place["key"]
+                    meeting_point = centroid([(place["bounds"][0], place["bounds"][1]), (owner_place["bounds"][0], owner_place["bounds"][1])])
+        print "Best Time: %s" % min_distance_key
+        print "Meeting point: %s,%s" % meeting_point
+
 
 @task()
 def findSuggestedPlaces():

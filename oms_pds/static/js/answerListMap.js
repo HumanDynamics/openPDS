@@ -76,28 +76,56 @@ geolocate.events.register("locationupdated",geolocate,function(e) {
         minLat = minLong = Number.MAX_VALUE;
         maxLat = maxLong = -Number.MAX_VALUE;
         this.entryBounds = [];
+        var j = 0;
         for (i in entries) {
             entry = entries[i];
             ext = entry["bounds"];
             if (ext) {
-                minLat = Math.min(minLat, ext[0]);
-                maxLat = Math.max(maxLat, ext[2]);
-                minLong = Math.min(minLong, ext[1]);
-                maxLong = Math.max(maxLong, ext[3]);                            
+                if (typeof ext[0] !== "number") {
+                    for (b in ext) {
+                        r = ext[b];
 
-                bounds = OpenLayers.Bounds.fromArray(ext, true);
-                bounds = bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
-                box = new OpenLayers.Feature.Vector(bounds.toGeometry());
-                boxes.addFeatures([box]);
-                this.entryBounds[i] = bounds.clone();
-                var me = this;                
-                var radioButton = $("<input type='radio' name='place' value='"+i+"' id='place"+i+"' />");
-                $("#footer").append(radioButton.click(
-                    function () { 
-                        me.map.zoomToExtent(me.entryBounds[this.value]); 
+                        minLat = Math.min(minLat, r[0]);
+                        maxLat = Math.max(maxLat, r[2]);
+                        minLong = Math.min(minLong, r[1]);
+                        maxLong = Math.max(maxLong, r[3]);
+        
+                        bounds = OpenLayers.Bounds.fromArray(r, true);
+                        bounds = bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
+                        box = new OpenLayers.Feature.Vector(bounds.toGeometry());
+                        boxes.addFeatures([box]);
+                        this.entryBounds[j] = bounds.clone();
+                        var me = this;
+                        var radioButton = $("<input type='radio' name='place' value='"+j+"' id='place"+j+"' />");
+                        $("#footer").append(radioButton.click(
+                            function () {
+                                me.map.zoomToExtent(me.entryBounds[this.value]);
+                            }
+                        ));
+                        $("#footer").append($("<label for='place"+j+"'>"+entry["key"]+"</label>"));
+                        j++;
                     }
-                ));
-                $("#footer").append($("<label for='place"+i+"'>"+entry["key"]+"</label>"));
+                } else {
+                    minLat = Math.min(minLat, ext[0]);
+                    maxLat = Math.max(maxLat, ext[2]);
+                    minLong = Math.min(minLong, ext[1]);
+                    maxLong = Math.max(maxLong, ext[3]);                            
+    
+                    bounds = OpenLayers.Bounds.fromArray(ext, true);
+                    bounds = bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
+                    box = new OpenLayers.Feature.Vector(bounds.toGeometry());
+                    boxes.addFeatures([box]);
+                    this.entryBounds[i] = bounds.clone();
+                    var me = this;                
+                    var radioButton = $("<input type='radio' name='place' value='"+j+"' id='place"+j+"' />");
+                    $("#footer").append(radioButton.click(
+                        function () { 
+                            me.map.zoomToExtent(me.entryBounds[this.value]); 
+                        }
+                    ));
+                    $("#footer").append($("<label for='place"+j+"'>"+entry["key"]+"</label>"));
+                    j++;
+                }
             }
             points = entry["points"];
 

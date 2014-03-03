@@ -195,7 +195,7 @@ class SQLiteInternalDataStore:
         c = self.db.cursor()
         c.execute(statement, (key,))
         result = c.fetchone()
-        return { "key": result["key"], "value": ast.literal_eval(result["value"]) } if result is not None else None
+        return ListWithCount([{ "key": result["key"], "value": ast.literal_eval(result["value"]) }]) if result is not None else None
 
     def getAnswer(self, key):
         return self.getAnswerFromTable(key, "Answer")
