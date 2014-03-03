@@ -146,7 +146,7 @@ def dumpFunfData():
     c.execute("CREATE TABLE IF NOT EXISTS funf (user_id integer, key text, time real, value text, PRIMARY KEY (user_id, key, time) on conflict ignore)")
     startTime = getStartTime(3, False)#max(1378008000, startTimeRow[0]) if startTimeRow is not None else 1378008000
     for profile in profiles:
-        dbName = getDBName(profile)
+        dbName = profile.getDBName()
         funf = connection[dbName]["funf"]
         user = int(profile.id)
         c.executemany("INSERT INTO funf VALUES (?,?,?,?)", [(user,d["key"][d["key"].rfind(".")+1:],d["time"],"%s"%d["value"]) for d in funf.find({"time": {"$gte": startTime}}) if d["key"] is not None])
@@ -163,7 +163,7 @@ def dumpSurveyData():
     c.execute("CREATE TABLE IF NOT EXISTS survey (user_id integer, key text, time real, value text, PRIMARY KEY (user_id, key, time) on conflict ignore);")
 
     for profile in profiles:
-        dbName = getDBName(profile)
+        dbName = profile.getDBName()
         answerlist = connection[dbName]["answerlist"]
         user = int(profile.id)
         for datum in answerlist.find({ "key": { "$regex": "Past3Days$"}}):
