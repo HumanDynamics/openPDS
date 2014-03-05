@@ -7,13 +7,11 @@ import time
 from datetime import date, timedelta
 import json
 import pdb
-import math
-import cluster
 from gcm import GCM
-from oms_pds.pds.models import Profile
 from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3
+import random
 from oms_pds.socialhealth_tasks import getStartTime
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """

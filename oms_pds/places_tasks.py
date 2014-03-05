@@ -181,6 +181,7 @@ def findRecentLocations():
     
     return data
 
+@task()
 def findRecentPlaces():
     currentTime = time.time()
     today = date.fromtimestamp(currentTime)
@@ -268,7 +269,7 @@ def scoreMeetup(places):
     return distance_score + variance_score, center
 
 @task()
-def findMeetups(owner_uuid="280e418a-8032-4de3-b62a-ad173fea4811", participant_uuids=["5241576e-43da-4b08-8a71-b477f931e021", "72d9d8e3-3a57-4508-9515-2b881afc0d8e"], token="b3dbac8916"):
+def findMeetups(owner_uuid="280e418a-8032-4de3-b62a-ad173fea4811", participant_uuids=["5241576e-43da-4b08-8a71-b477f931e021", "72d9d8e3-3a57-4508-9515-2b881afc0d8e"], description="", token="b3dbac8916"):
     participant_places = {}
     owner = Profile.objects.get(uuid = owner_uuid)
     internalDataStore = getInternalDataStore(owner, token)
@@ -304,8 +305,8 @@ def findMeetups(owner_uuid="280e418a-8032-4de3-b62a-ad173fea4811", participant_u
     print participant_locations
     answer = internalDataStore.getAnswerList("Meetups")
     answer = answer[0]["value"] if answer is not None and answer.count() > 0 else []
-    answer = [v for v in answer if v["participants"] != participant_uuids]
-    answer.append({"participants": participant_uuids, "hour": min_score_key, "place": meeting_point})
+    answer = [v for v in answer if "description" in v and v["description"] != description]
+    answer.append({"description": description, "participants": participant_uuids, "hour": min_score_key, "place": meeting_point})
     internalDataStore.saveAnswer("Meetups", answer)
 
 @task()
