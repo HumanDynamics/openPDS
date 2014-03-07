@@ -3,7 +3,7 @@ from oms_pds.pds.internal import InternalDataStore
 class MeetupInternalDataStore(InternalDataStore):
     # NOTE: This class depends on Mongo APIs and as such, only works with the Mongo IDS
     # Moving forward, this should change to support any IDS implementation
-    def addParticipantToMeetupRequest(self, meetup_uuid, participant_uuid):
+    def addParticipantToApprovals(self, meetup_uuid, participant_uuid):
         meetup = self.getMeetupRequest(meetup_uuid)
         meetup = meetup if meetup is not None else { "uuid": meetup_uuid, "approvals": [participant_uuid] }
         if participant_uuid not in meetup["approvals"]: 

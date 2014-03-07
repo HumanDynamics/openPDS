@@ -95,7 +95,7 @@ def data(request):
             print "Inserted %s rows" % len(inserted)
         except Exception as e:
             print "Exception from funf_connector on pds:"
-            print e.message
+            print "%s"%e
             result = {'success':False, 'error_message':e.message}
         finally:
             response_dict = {"status":"success"}

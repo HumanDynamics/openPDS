@@ -1,0 +1,24 @@
+{% extends "backboneLayout.html" %}
+
+{% block more_scripts %}
+<script>
+    //ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+    //ANSWERLIST_KEY = "socialhealth";
+    MEETUP_REQUEST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="meetup_request" %}";
+    PROFILE_API_URL = "{{ PROFILE_API_URL }}"
+</script>
+
+<script src="{{ STATIC_URL }}js/profile.js"></script>
+<script src="{{ STATIC_URL }}js/meetup.js"></script>
+<script>
+$(function () {
+    window.createRequestApp = new CreateMeetupRequestView({ autocomplete: true, container: $(".container")});
+//	window.radialApp = new SocialHealthRadialView();
+//	$(window).bind("resize", function () { radialApp.render(); });
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+{% endblock %}

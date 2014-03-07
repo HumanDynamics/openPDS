@@ -41,6 +41,32 @@ def updateMeetupScore(total_distance, total_variance, center, numUsers, place):
     return new_distance, new_variance, new_center
 
 @task()
+def sendMeetupRequestToParticipants(meetup, token):
+    print "Sending meetup to participants: %s"%meetup
+    url = "http://working-title.media.mit.edu:8004/api/personal_data/meetup_request/?datastore_owner__uuid=%s&bearer_token=%s"
+
+    success = True
+
+    for participant in meetup["participants"]:
+        r = requests.post(url%(participant, token), data=json.dumps(meetup), headers={ "content-type": "application/json"})
+        if r.status_code <> 201:
+            print "Failed sending meetup request to participants, meetup will not happen"
+            print r.status_code
+            success = False
+    return 
+
+@task()
+def notifyRequesterOfApprovalStatus(meetup_uuid, requester, approved, owner_uuid, token):
+    print "Notifying requester of uuid: %s, %s"%(requester, meetup_uuid)
+    # This was called by the MeetupRequestResource because there was either a new approval or denial
+    # as such, we need to notify the requester
+    url ="http://working-title.media.mit.edu:8004/api/meetup/update_approval_status?datastore_owner=%s&bearer_token=%s&meetup_uuid=%s&participant=%s&approved=%s"%(requester,token,meetup_uuid,owner_uuid,approved)
+    r = requests.get(url)
+    if r.status_code <> requests.codes.ok:
+        print "Failed notifying requester of approval status"
+        print r.status_code
+
+@task()
 def initiateMeetupScheduling(owner_uuid, meetup_uuid, token):
     owner = Profile.objects.get(uuid = owner_uuid)
     internalDataStore = getInternalDataStore(owner, token)
@@ -71,12 +97,6 @@ def helpScheduleMeetup(owner_uuid, meetup_uuid, running_totals, token):
 
     participant_uuids = meetup_request["participants"]
     my_index = len(participant_uuids) if owner_uuid == requester_uuid else participant_uuids.index(owner_uuid)
-    #previous_uuid = participant_uuids[my_index - 1] if my_index > 0 else requester_uuid
-    #running_totals_url = "http://working-title.media.mit.edu:8004/api/personal_data/answerlist/?key=Meetup%s&datastore_owner__uuid=%s&bearer_token=%s"%(meetup_uuid, previous_uuid, token)
-    #r = requests.get(running_totals_url, headers = {"content-type": "application/json"})
-    #if r.status_code != requests.codes.ok:
-    #    return
-    #running_totals = r.json()[0]["value"]
   
     owner_places = internalDataStore.getAnswerList("RecentPlaces")[0]["value"]
     answer = []
@@ -94,23 +114,33 @@ def helpScheduleMeetup(owner_uuid, meetup_uuid, running_totals, token):
             new_center = center
         answer.append({"key": key, "total_distance": new_distance, "total_variance": new_variance, "center": new_center})
 
-    internalDataStore.saveAnswer("Meetup%s"%meetup_uuid, answer)
+    #internalDataStore.saveAnswer("Meetup%s"%meetup_uuid, answer)
     if my_index < len(participant_uuids) - 1: 
         next_uuid = participant_uuids[my_index + 1]
     else:
         next_uuid = requester_uuid
     
     if owner_uuid == requester_uuid:
-        chooseMeetupAndPushResult(meetup_request, answer)
+        chooseMeetupAndPushResult(meetup_request, answer, token)
     else:
         next_contribution_url = "http://working-title.media.mit.edu:8004/meetup/help_schedule?meetup_uuid=%s&bearer_token=%s&datastore_owner__uuid=%s"%(meetup_uuid, token, next_uuid)
         requests.post(next_contribution_url,data=json.dumps(answer),headers={"content-type":"application/json"})
 
-def chooseMeetupAndPushResult(meetup_request, running_totals):
-    print "Choosing meetup %s" % meetup_request
-    running_totals.sort(key = lambda scores: -(scores["total_distance"] + math.sqrt(scores["total_variance"])))
+def chooseMeetupAndPushResult(meetup_request, running_totals, token):
+    running_totals.sort(key = lambda scores: (scores["total_distance"] + math.sqrt(scores["total_variance"])))
     top = running_totals[0]
-    print top
+    meetup_request["place"] = list(top["center"])
+    meetup_request["time"] = top["key"]
+    url = "http://working-title.media.mit.edu:8004/api/personal_data/meetup_request/?datastore_owner__uuid=%s&bearer_token=%s"
+    headers = {"content-type": "application/json"}
+    meetup_request.pop("_id", None)
+    data = json.dumps({k:meetup_request[k] for k in meetup_request.keys() if k not in ["_id", "approved"]})
+    total_participants = meetup_request["participants"] + [meetup_request["requester"]]
+    
+    for participant in total_participants:
+        r = requests.post(url%(participant, token), data=data, headers=headers)
+        if r.status_code <> 201:
+            print "Error when pushing result to participant %s: %s"%(participant, r.status_code)
     
 
 @task()
