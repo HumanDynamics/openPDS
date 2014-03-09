@@ -2,7 +2,6 @@ from celery import task
 from oms_pds.pds.models import Profile, Notification, Device
 from bson import ObjectId
 from pymongo import Connection
-from django.conf import settings
 import time
 from datetime import date, timedelta
 import json
@@ -14,6 +13,7 @@ from gcm import GCM
 from oms_pds.pds.models import Profile
 from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
+from oms_pds import settings
 from oms_pds.meetup.internal import getInternalDataStore
 from oms_pds.places_tasks import centroid, distanceBetweenLatLongs
 import sqlite3
@@ -43,24 +43,24 @@ def updateMeetupScore(total_distance, total_variance, center, numUsers, place):
 @task()
 def sendMeetupRequestToParticipants(meetup, token):
     print "Sending meetup to participants: %s"%meetup
-    url = "http://working-title.media.mit.edu:8004/api/personal_data/meetup_request/?datastore_owner__uuid=%s&bearer_token=%s"
-
+    url = settings.DEFAULT_PDS_URL+"/api/personal_data/meetup_request/?datastore_owner__uuid=%s&bearer_token=%s"
     success = True
+    data = json.dumps({ k:meetup[k] for k in meetup if k != "approved" })   
 
     for participant in meetup["participants"]:
-        r = requests.post(url%(participant, token), data=json.dumps(meetup), headers={ "content-type": "application/json"})
+        r = requests.post(url%(participant, token), data=data, headers={ "content-type": "application/json"})
         if r.status_code <> 201:
             print "Failed sending meetup request to participants, meetup will not happen"
             print r.status_code
             success = False
-    return 
+    return success
 
 @task()
 def notifyRequesterOfApprovalStatus(meetup_uuid, requester, approved, owner_uuid, token):
     print "Notifying requester of uuid: %s, %s"%(requester, meetup_uuid)
     # This was called by the MeetupRequestResource because there was either a new approval or denial
     # as such, we need to notify the requester
-    url ="http://working-title.media.mit.edu:8004/api/meetup/update_approval_status?datastore_owner=%s&bearer_token=%s&meetup_uuid=%s&participant=%s&approved=%s"%(requester,token,meetup_uuid,owner_uuid,approved)
+    url = settings.DEFAULT_PDS_URL+"/api/meetup/update_approval_status?datastore_owner=%s&bearer_token=%s&meetup_uuid=%s&participant=%s&approved=%s"%(requester,token,meetup_uuid,owner_uuid,approved)
     r = requests.get(url)
     if r.status_code <> requests.codes.ok:
         print "Failed notifying requester of approval status"
@@ -84,7 +84,7 @@ def initiateMeetupScheduling(owner_uuid, meetup_uuid, token):
     next_uuid = meetup_request["participants"][0]
     
     print "%s initiating meetup scheduling for %s"%(owner_uuid, meetup_uuid)
-    next_contribution_url = "http://working-title.media.mit.edu:8004/meetup/help_schedule?meetup_uuid=%s&bearer_token=%s&datastore_owner__uuid=%s"%(meetup_uuid, token, next_uuid)
+    next_contribution_url = settings.DEFAULT_PDS_URL+"/meetup/help_schedule?meetup_uuid=%s&bearer_token=%s&datastore_owner__uuid=%s"%(meetup_uuid, token, next_uuid)
     requests.post(next_contribution_url, data=json.dumps(answer), headers={"content-type":"application/json"})
 
 @task()
@@ -123,7 +123,7 @@ def helpScheduleMeetup(owner_uuid, meetup_uuid, running_totals, token):
     if owner_uuid == requester_uuid:
         chooseMeetupAndPushResult(meetup_request, answer, token)
     else:
-        next_contribution_url = "http://working-title.media.mit.edu:8004/meetup/help_schedule?meetup_uuid=%s&bearer_token=%s&datastore_owner__uuid=%s"%(meetup_uuid, token, next_uuid)
+        next_contribution_url = settings.DEFAULT_PDS_URL+"/meetup/help_schedule?meetup_uuid=%s&bearer_token=%s&datastore_owner__uuid=%s"%(meetup_uuid, token, next_uuid)
         requests.post(next_contribution_url,data=json.dumps(answer),headers={"content-type":"application/json"})
 
 def chooseMeetupAndPushResult(meetup_request, running_totals, token):
@@ -131,7 +131,7 @@ def chooseMeetupAndPushResult(meetup_request, running_totals, token):
     top = running_totals[0]
     meetup_request["place"] = list(top["center"])
     meetup_request["time"] = top["key"]
-    url = "http://working-title.media.mit.edu:8004/api/personal_data/meetup_request/?datastore_owner__uuid=%s&bearer_token=%s"
+    url = settings.DEFAULT_PDS_URL+"/api/personal_data/meetup_request/?datastore_owner__uuid=%s&bearer_token=%s"
     headers = {"content-type": "application/json"}
     meetup_request.pop("_id", None)
     data = json.dumps({k:meetup_request[k] for k in meetup_request.keys() if k not in ["_id", "approved"]})
@@ -156,7 +156,7 @@ def scheduleMeetup(owner_uuid="280e418a-8032-4de3-b62a-ad173fea4811", meetup_uui
     owner_places = internalDataStore.getAnswerList("RecentPlaces")[0]["value"]
 
     for uuid in participant_uuids:
-        url = "http://working-title.media.mit.edu:8004/api/personal_data/answerlist/?key=RecentPlaces&datastore_owner__uuid=%s&bearer_token=%s"%(uuid, token)
+        url = settings.DEFAULT_PDS_URL+"/api/personal_data/answerlist/?key=RecentPlaces&datastore_owner__uuid=%s&bearer_token=%s"%(uuid, token)
         headers = { "content-type": "application/json" }
         requester_places = requests.get(url, headers = headers)
         print "Meetup between %s and %s"%(owner_uuid, uuid)

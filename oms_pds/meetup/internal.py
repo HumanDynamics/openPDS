@@ -5,10 +5,9 @@ class MeetupInternalDataStore(InternalDataStore):
     # Moving forward, this should change to support any IDS implementation
     def addParticipantToApprovals(self, meetup_uuid, participant_uuid):
         meetup = self.getMeetupRequest(meetup_uuid)
-        meetup = meetup if meetup is not None else { "uuid": meetup_uuid, "approvals": [participant_uuid] }
-        if participant_uuid not in meetup["approvals"]: 
+        if meetup is not None and participant_uuid not in meetup["approvals"]:
             meetup["approvals"].append(participant_uuid)
-        self.db["meetup_request"].save(meetup)
+            self.db["meetup_request"].save(meetup)
 
     def approveMeetupRequest(self, meetup_uuid):
         meetup = self.getMeetupRequest(meetup_uuid)

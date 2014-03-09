@@ -31,26 +31,6 @@ def create_request(request):
     template = { "PROFILE_API_URL": profile_api_url, "STATIC_URL": settings.STATIC_URL}
     return render_to_response("meetup/create_meetup_request.html", template)
 
-def request_meetup(request):
-    params = get_parameters(request, ["bearer_token", "datastore_owner__uuid"])
-    participants = ["280e418a-8032-4de3-b62a-ad173fea4811", "72d9d8e3-3a57-4508-9515-2b881afc0d8e"]
-    meetup_request = {"description": "Test meetup", "uuid": "%s"%uuid.uuid4(), "requester": params[1], "participants": participants}
-
-    profile = Profile.objects.get(uuid = params[1])
-    ids = getInternalDataStore(profile, params[0])
-    ids.addMeetupRequest(meetup_request["uuid"], meetup_request["requester"], meetup_request["participants"], meetup_request["description"])
-    url = "http://working-title.media.mit.edu:8004/api/personal_data/meetup_request/?datastore_owner__uuid=%s&bearer_token=%s"
-    print "%s"%meetup_request
-    payload = json.dumps(meetup_request)
-    headers = {"content-type": "application/json"}
-
-    for participant in participants:
-        r = requests.post(url%(participant, params[0]), data=payload, headers=headers)
-        if r.status_code != requests.codes.ok:
-            print "Failed sending meetup request %s to %s"%(meetup_request["uuid"],participant)
-    
-    return HttpResponse('{"success": true}', content_type="application/json")
-
 def update_approval_status(request):
     params = get_parameters(request, ["meetup_uuid", "participant", "bearer_token", "datastore_owner", "approved"])
     if len(params) == 0:

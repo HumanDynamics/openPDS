@@ -27,15 +27,33 @@ window.MeetupRequestView = Backbone.View.extend({
     tagName: "li",
     className: "meetup-request",
     
-    initialize: function () {
-        _.bindAll(this, "render", "hide");
+    initialize: function (options) {
+        _.bindAll(this, "render", "hide", "profilesReset");
         this.rendered = false;
         this.model.on("change", this.render);
         this.model.on("destroy", this.hide);
+        this.uuid = GET("datastore_owner");
+        this.profilesReady = false;
+        if (options.profiles) {
+            options.profiles.bind("reset", this.profilesReset);
+        }
     },
 
     hide: function () {
         $(this.el).hide("fast");
+    },
+    
+    profilesReset: function (profiles) {
+        this.profiles = profiles;
+        this.render();
+    },
+
+    getUserText: function (uuid) {
+        return (uuid == this.uuid)? "Me":((this.profiles)? this.profiles.find(function (p) { return p.get("uuid") == uuid; }).get("user").email : uuid);
+    },
+    
+    getMapLink: function (place) {
+        return "<a href='http://maps.google.com/maps?z=12&t=m&q=loc:"+place[0]+"+"+place[1]+"' target='_blank'>("+place[0].toFixed(4)+", "+place[1].toFixed(4)+")</a>";
     },
     
     render: function () {
@@ -46,12 +64,16 @@ window.MeetupRequestView = Backbone.View.extend({
         var approved = this.model.get("approved");
         var time = this.model.get("time");
         var place = this.model.get("place");
+        var requesterText = this.getUserText(requester);
+        var approvedText = (approved)? "Waiting on participants to approve...":"Must be approved first!";
+        var timePlaceText = (time && place)? time + ":00 at "+this.getMapLink(place):"TBD ("+approvedText+")";
+        var participantsText = requesterText+", "+_.map(participants, function (uuid) { return me.getUserText(uuid); }).join(", ");
+
         if (!this.rendered) {
             var subject = $("<div class='meetup-request-subject'></div>").text(description);
-            var from = $("<div class='meetup-request-from'></div>").text("From: "+requester); // NOTE: this will output the uuid, not the email
-            var approvedText = (approved)? "Waiting on participants to approve...":"Must be approved first!";
-            var timePlaceText = (time && place)? time + ":00 at ("+place[0]+", "+place[1]+")":"TBD ("+approvedText+")";
-            var where = $("<div class=meetup-request-location'></div>").text("Time & Place: "+timePlaceText);
+            this.from = $("<div class='meetup-request-from'></div>");
+            this.who = $("<div class='meetup-request-who'></div>");
+            this.where = $("<div class='meetup-request-location'></div>");
             var actions = $("<div data-role='controlgroup' data-type='horizontal' data-mini='true'></div>");
             this.approveButton = $("<button>Approve</button>").click(function (e) { 
                 me.model.save({ approved: true });
@@ -66,11 +88,18 @@ window.MeetupRequestView = Backbone.View.extend({
             actions.append(this.approveButton);
             actions.append(this.denyButton);
             actions.append(this.deleteButton);
-            $(this.el).append(subject);
-            $(this.el).append(from);
-            $(this.el).append(where);
-            $(this.el).append(actions);
+            actions.controlgroup();
+            this.$el.append(subject);
+            this.$el.append(this.from);
+            this.$el.append(this.who);
+            this.$el.append(this.where);
+            this.$el.append(actions);
         }
+        
+        this.from.text("From: "+requesterText);
+        this.who.text("With: "+participantsText);
+        this.where.html("Time & Place: "+timePlaceText);
+
         if (approved) {
             this.approveButton.addClass("ui-disabled");
             this.denyButton.addClass("ui-disabled");
@@ -86,8 +115,11 @@ window.MeetupRequestCollectionView = Backbone.View.extend({
     attributes: {"data-role": "listview", "data-inset": "false", "data-filter": "true", "data-theme": "a", "data-filter-placeholder": "Filter Meetups..." },
     
     initialize: function (options) {
-        _.bindAll(this, "render", "collectionReset");
+        _.bindAll(this, "render", "collectionReset", "addMeetup");
         this.container = options.container;
+        if (options.profiles) {
+            this.profiles = options.profiles;
+        }
         if (!this.collection) {
             this.collection = new MeetupRequestCollection();
             this.collection.bind("reset", this.collectionReset);
@@ -96,16 +128,22 @@ window.MeetupRequestCollectionView = Backbone.View.extend({
             this.collection.bind("reset", this.collectionReset);
         }
 
-        this.collection.on("add", this.collectionReset);
+        this.collection.on("add", this.addMeetup);
         this.periodicUpdating = false;
         this.render();
+    },
+
+    addMeetup: function (model) {
+        var mrView = new MeetupRequestView({ model: model, profiles: this.profiles });
+        $(this.el).append(mrView.render());
+        $(this.el).listview("refresh");
     },
 
     collectionReset: function () {
         var me = this;
         $(this.el).empty();
         this.collection.each(function (meetup) {
-            var mrView = new MeetupRequestView({ model: meetup });
+            var mrView = new MeetupRequestView({ model: meetup, profiles: me.profiles });
             $(me.el).append(mrView.render());
         });
         $(this.el).listview().listview("refresh");
@@ -113,7 +151,7 @@ window.MeetupRequestCollectionView = Backbone.View.extend({
         if (this.periodicUpdating) {
             setInterval(function () {
                 me.collection.fetch();
-            }, 10000);
+            }, 5000);
             this.periodicUpdating = false;
         }
     },
@@ -134,7 +172,7 @@ window.CreateMeetupRequestView = Backbone.View.extend({
         options || (options = { autocomplete: false });
         this.autoComplete = options.autocomplete;
         this.container = options.container;
-        this.numBoxes = 0;
+        this.numBoxesAdded = 0;
         this.participants = [];
         this.profilesReady = false;
         if (!this.autoComplete) {
@@ -186,20 +224,22 @@ window.CreateMeetupRequestView = Backbone.View.extend({
 
     removeEmptyTextBoxes: function () {
         var me = this;
+        var numBoxes = $(".meetup-participant").length;
         $(".meetup-participant").each(function (i, e) {
             var $this = $(this);
-            if ($this.val().length == 0 && i < me.numBoxes - 1) {
-                $this.remove();
-                me.numBoxes--;
+            if ($this.val().length == 0 && i < numBoxes - 1) {
+                $("#"+$this.attr("id")+"Container").hide("fast", function () { $(this).remove(); });
             }
         });
     },    
 
     addParticipantTextBox: function (setFocus) {
         var me = this;
-        this.numBoxes++;
-        var id = "participant" + this.numBoxes;
-                
+        this.numBoxesAdded++;
+        var id = "participant" + this.numBoxesAdded;
+        var participantContainer = $("<div id='"+id+"Container"+"'></div>");        
+        this.$("#meetupParticipantsContainer").append(participantContainer);
+
         var participantInput = $("<input type='text' id='"+id+"' class='meetup-participant' />").keyup(function (event) {
            var $this = $(this)
            if ($this.val().length > 0 && me.allBoxesUsed()) {
@@ -213,7 +253,7 @@ window.CreateMeetupRequestView = Backbone.View.extend({
             participantInput.focus();
         }
 
-        this.$("#meetupParticipantsContainer").append(participantInput).trigger("create");
+        participantContainer.append(participantInput);//.trigger("create");
 
         if (this.autoComplete) {
             var participantUl = $("<ul data-role='listview' data-input='#"+id+"' data-inset='true' data-filter='true' data-filter-reveal='true' data-filter-placeholder='Paricipant email...'></ul>");
@@ -226,8 +266,10 @@ window.CreateMeetupRequestView = Backbone.View.extend({
                 });
                 participantUl.append(item);
             });
-            this.$("#meetupParticipantsContainer").append(participantUl).trigger("create");
+            participantContainer.append(participantUl);//.trigger("create");
         }
+        participantContainer.trigger("create");
+        //this.$("#meetupParticipantsContainer").append(participantContainer);
     },
     
     addCreateButton: function () {
@@ -269,7 +311,8 @@ window.CreateMeetupRequestView = Backbone.View.extend({
             this.collection.create({
                 requester: requester,
                 description: description,
-                participants: participants
+                participants: participants,
+                approved: true
             });
         } else {
             // Profiles haven't finished loading... maybe queue up the request so it's done in setProfilesReady?
@@ -294,7 +337,7 @@ window.MeetupRequestDashboardView = Backbone.View.extend({
         $(this.el).append(this.collectionContainer);
 
         this.createView = new CreateMeetupRequestView({ collection: this.collection, container: this.createContainer, autocomplete: true});
-        this.collectionView = new MeetupRequestCollectionView({ collection: this.collection, container: this.collectionContainer });
+        this.collectionView = new MeetupRequestCollectionView({ collection: this.collection, container: this.collectionContainer, profiles:this.createView.profileCollection });
 
         this.collection.fetch();
     },
