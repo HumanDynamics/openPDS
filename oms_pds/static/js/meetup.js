@@ -35,7 +35,11 @@ window.MeetupRequestView = Backbone.View.extend({
         this.uuid = GET("datastore_owner");
         this.profilesReady = false;
         if (options.profiles) {
-            options.profiles.bind("reset", this.profilesReset);
+            if (options.profiles.length > 0) {
+                this.profilesReset(options.profiles);
+            } else {
+                options.profiles.bind("reset", this.profilesReset);
+            }
         }
     },
 
@@ -64,16 +68,18 @@ window.MeetupRequestView = Backbone.View.extend({
         var approved = this.model.get("approved");
         var time = this.model.get("time");
         var place = this.model.get("place");
+        var uuid = this.model.get("uuid");
         var requesterText = this.getUserText(requester);
         var approvedText = (approved)? "Waiting on participants to approve...":"Must be approved first!";
         var timePlaceText = (time && place)? time + ":00 at "+this.getMapLink(place):"TBD ("+approvedText+")";
-        var participantsText = requesterText+", "+_.map(participants, function (uuid) { return me.getUserText(uuid); }).join(", ");
-
+        var participantsText = requesterText+", "+_.map(participants, function (u) { return me.getUserText(u); }).join(", ");
+        var mapView = (time && place && uuid)? new AnswerListMap(null, [place[0], place[1]], "map"+uuid):null;
         if (!this.rendered) {
             var subject = $("<div class='meetup-request-subject'></div>").text(description);
             this.from = $("<div class='meetup-request-from'></div>");
             this.who = $("<div class='meetup-request-who'></div>");
             this.where = $("<div class='meetup-request-location'></div>");
+            this.map = $("<div class='meetup-request-map' style='height: 50px'></div>");
             var actions = $("<div data-role='controlgroup' data-type='horizontal' data-mini='true'></div>");
             this.approveButton = $("<button>Approve</button>").click(function (e) { 
                 me.model.save({ approved: true });
@@ -93,13 +99,16 @@ window.MeetupRequestView = Backbone.View.extend({
             this.$el.append(this.from);
             this.$el.append(this.who);
             this.$el.append(this.where);
+            this.$el.append(this.map);
             this.$el.append(actions);
         }
         
         this.from.text("From: "+requesterText);
         this.who.text("With: "+participantsText);
         this.where.html("Time & Place: "+timePlaceText);
-
+        if (mapView) {
+            this.map.attr("id", "map"+uuid);
+        }
         if (approved) {
             this.approveButton.addClass("ui-disabled");
             this.denyButton.addClass("ui-disabled");

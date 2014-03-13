@@ -4,7 +4,11 @@
 <script>
     MEETUP_REQUEST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="meetup_request" %}";
     PROFILE_API_URL = "{{ PROFILE_API_URL }}"
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}"
 </script>
+<script src="http://openlayers.org/dev/OpenLayers.mobile.js"></script>
+<script src="{{ STATIC_URL }}js/answerList.js"></script>
+<script src="{{ STATIC_URL }}js/answerListMap.js"></script>
 <script src="{{ STATIC_URL }}js/profile.js"></script>
 <script src="{{ STATIC_URL }}js/meetup.js"></script>
 

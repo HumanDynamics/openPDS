@@ -9,6 +9,7 @@ import pdb
 import math
 import cluster
 import requests
+import random
 from gcm import GCM
 from oms_pds.pds.models import Profile
 from SPARQLWrapper import SPARQLWrapper, JSON
@@ -18,18 +19,11 @@ from oms_pds.meetup.internal import getInternalDataStore
 from oms_pds.places_tasks import centroid, distanceBetweenLatLongs
 import sqlite3
 
-def scoreMeetup(places):
-    if len(places) == 0:
-        return 99999999
-    center = centroid([(p["bounds"][0], p["bounds"][1]) for p in places])
-    distances = [distanceBetweenLatLongs(center, (p["bounds"][0], p["bounds"][1])) for p in places]
-    distance_score = reduce(lambda d1, d2: d1 +  d2, distances, 0)
-    average_distance = distance_score / len(places)
-    variance_score = math.sqrt(reduce(lambda s, d: s + (d - average_distance)**2, distances, 0))
-    return distance_score + variance_score, center
+def randomPointInRegion(bounds):
+    return (random.uniform(bounds[0], bounds[2]), random.uniform(bounds[1], bounds[3]))
 
 def updateMeetupScore(total_distance, total_variance, center, numUsers, place):
-    place_point = (place["bounds"][0], place["bounds"][1])
+    place_point = randomPointInRegion(place["bounds"])
     center_sum = (center[0] * numUsers, center[1] * numUsers)
     print "%s %s %s"%(place["key"],center, place_point)
     new_center = ((center_sum[0] + place_point[0]) / (numUsers + 1), (center_sum[1] + place_point[1]) / (numUsers + 1))
@@ -141,7 +135,22 @@ def chooseMeetupAndPushResult(meetup_request, running_totals, token):
         r = requests.post(url%(participant, token), data=data, headers=headers)
         if r.status_code <> 201:
             print "Error when pushing result to participant %s: %s"%(participant, r.status_code)
-    
+
+# NOTE: the methods below are old and pull data from all participants into a centralized machine
+# Moving forward, these should be updated to compute a result for this machine as a cluster of PDSes
+# Meaning, instead of calling the external API for each user, we should make them work in a ring
+# where they contribute the result for the entire cluster of PDSes on this machine - a sort of hybrid
+# between below and above implementations. Below might even want to repurpose above to do that. 
+
+def scoreMeetup(places):
+    if len(places) == 0:
+        return 99999999
+    center = centroid([(p["bounds"][0], p["bounds"][1]) for p in places])
+    distances = [distanceBetweenLatLongs(center, (p["bounds"][0], p["bounds"][1])) for p in places]
+    distance_score = reduce(lambda d1, d2: d1 +  d2, distances, 0)
+    average_distance = distance_score / len(places)
+    variance_score = math.sqrt(reduce(lambda s, d: s + (d - average_distance)**2, distances, 0))
+    return distance_score + variance_score, center
 
 @task()
 def scheduleMeetup(owner_uuid="280e418a-8032-4de3-b62a-ad173fea4811", meetup_uuid="", token="b3dbac8916"):

@@ -1,9 +1,16 @@
 window.AnswerListMap = Backbone.View.extend({
     el: "#answerListMapContainer",
     
-    initialize: function (answerKey, center) {
+    initialize: function (answerKey, center, containerId) {
         _.bindAll(this, "render", "renderPlaces");
         
+
+        if (containerId) {
+            this.containerId = containerId;
+            this.el = "#" + containerId;
+        } else {
+            this.containerId = "answerListMapContainer";
+        }
         this.center = center;
         this.render();
         this.answerLists = new AnswerListCollection([],{ "key": answerKey });
@@ -13,7 +20,7 @@ window.AnswerListMap = Backbone.View.extend({
     
     render: function () {
         this.map = new OpenLayers.Map({ 
-            div: "answerListMapContainer",
+            div: this.containerId,
             projection: new OpenLayers.Projection("EPSG:900913"),
             displayProjection: new OpenLayers.Projection("EPSG:4326"),
             numZoomLevels: 18,
@@ -46,10 +53,10 @@ window.AnswerListMap = Backbone.View.extend({
     },
 
     renderPlaces: function () {
+//        if (this.answerLists.length == 0) {
         var entries = this.answerLists.at(0).get("value");
         var boxes  = new OpenLayers.Layer.Vector( "Boxes" );
         var pointsLayer = new OpenLayers.Layer.Vector("Points");
-
 
         var minLat = minLong = Number.MAX_VALUE;
         var maxLat = maxLong = -Number.MAX_VALUE;
