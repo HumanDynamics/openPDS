@@ -7,11 +7,11 @@ from oms_pds.pds.models import Role, Profile, Purpose, Scope, SharingLevel
 from oms_pds.views import federated_sparql_proxy
 #from oms_pds.meetup.views import add_approved_participant, contribute_to_scheduling
 admin.autodiscover()
-admin.site.register(Role)
-admin.site.register(Profile)
-admin.site.register(Purpose)
-admin.site.register(Scope)
-admin.site.register(SharingLevel)
+#admin.site.register(Role)
+#admin.site.register(Profile)
+#admin.site.register(Purpose)
+#admin.site.register(Scope)
+#admin.site.register(SharingLevel)
 
 
 #from tastypie.api import Api
@@ -65,6 +65,7 @@ urlpatterns = patterns('oms_pds.views',
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
 	
-    (r'^funfSetting/', 'funfSetting'),
+    #(r'^funfSetting/', 'funfSetting'),
+    (r"accesscontrol/", include("oms_pds.accesscontrol.urls")),
     (r'^checkboxes/', direct_to_template, { 'template' : 'multiplecheckboxes.html' }),
 )
