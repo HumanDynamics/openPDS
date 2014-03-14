@@ -5,6 +5,7 @@ import stat
 import threading
 from pymongo import Connection
 from oms_pds.pds.models import Profile
+from oms_pds.accesscontrol.models import Settings
 from oms_pds import settings
 
 connection = Connection(
@@ -306,3 +307,58 @@ class DualInternalDataStore:
     def saveData(self, data):
         self.ids.saveData(data)
         self.sids.saveData(data)
+
+class AccessControlledInternalDataStore:
+    def __init__(self, profile, token, app_id, lab_id, service_id):
+	self.profile = profile
+	self.datastore_owner_id = self.profile.id
+	self.app_id = app_id
+	self.lab_id = lab_id
+	self.service_id = service_id
+	#self.enabled = check and set
+
+    def getData(self, probe, startTime, endTime):
+
+	enabled_flag = False
+	probe_flag = False
+	#object.find()
+	#dictionary mapping, no rows returned --> empty set of data. 
+	for settings in Settings.objects.raw('SELECT * FROM accesscontrol_settings WHERE app_id = %s AND lab_id = %s AND service_id = %s ', [self.app_id, self.lab_id, self.service_id]):
+		enabled_flag = settings.enabled
+		if 'activity' in probe:
+			probe_flag = settings.activity_probe
+		elif 'sms' in probe:
+			probe_flag = settings.sms_probe
+		elif 'call_log' in probe:		
+			probe_flag = settings.call_log_probe
+		elif 'bluetooth' in probe:
+			probe_flag = settings.bluetooth_probe
+		elif 'wifi' in probe:
+			probe_flag = settings.wifi_probe
+		elif 'simple_location' in probe:
+			probe_flag = settings.simple_location_probe
+		elif 'screen' in probe:
+			probe_flag = settings.screen_probe
+		elif 'running_applications' in probe:	
+			probe_flag = settings.running_applications_probe
+		elif 'hardware_info' in probe:
+			probe_flag = settings.hardware_info_probe
+		elif 'app_usage' in probe:
+			probe_flag = settings.app_usage_probe
+
+	if enabled_flag and probe_flag:
+		return getDataInternal(probe, startTime, endTime)
+	else:
+		return None
+	
+			
+def getAccessControlledInternalDataStore(profile, token, app_id, lab_id, service_id):
+    try:
+        internalDataStore = AccessControlledInternalDataStore(profile, token, app_id, lab_id, service_id)
+    except Exception as e:
+	internalDataStore = None
+        print str(e)
+    return internalDataStore
+
+def getDataInternal(probe, startTime, endTime):
+	return True
