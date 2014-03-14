@@ -1,9 +1,8 @@
 window.AnswerListMap = Backbone.View.extend({
     el: "#answerListMapContainer",
     
-    initialize: function (answerKey, center, containerId) {
-        _.bindAll(this, "render", "renderPlaces");
-        
+    initialize: function (answerKey, center, containerId, autoResize) {
+        _.bindAll(this, "render", "renderPlaces");        
 
         if (containerId) {
             this.containerId = containerId;
@@ -11,6 +10,8 @@ window.AnswerListMap = Backbone.View.extend({
         } else {
             this.containerId = "answerListMapContainer";
         }
+
+        this.autoResize = autoResize;
         this.center = center;
         this.render();
         this.answerLists = new AnswerListCollection([],{ "key": answerKey });
@@ -32,15 +33,23 @@ window.AnswerListMap = Backbone.View.extend({
             new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}}),
         ]);  
         var osm = new OpenLayers.Layer.OSM();
-        this.map.addLayers([osm]);
-        this.updateSize();
+        this.boxes  = new OpenLayers.Layer.Vector( "Boxes" );
+        this.pointsLayer = new OpenLayers.Layer.Vector("Points");
+
+        this.map.addLayers([osm, this.boxes, this.pointsLayer]);
+        if (this.center) {
+            this.setCenter(this.center, 18);
+        }
+        if (this.autoResize) {
+            this.updateSize();
+        }
     },
     
-    addKeyRadioButton: function (ext, boxes, entry, j, keyFields) {
+    addBoxWithRadioButton: function (ext, entry, j, keyFields) {
         var bounds = OpenLayers.Bounds.fromArray(ext, true);
         bounds = bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
         var box = new OpenLayers.Feature.Vector(bounds.toGeometry());
-        boxes.addFeatures([box]);
+        this.boxes.addFeatures([box]);
         this.entryBounds[j] = bounds.clone();
         var me = this;
         var radioButton = $("<label for='place"+j+"'>"+entry["key"]+"</label><input type='radio' data-mini='true' name='place' value='"+j+"' id='place"+j+"' />");
@@ -53,10 +62,7 @@ window.AnswerListMap = Backbone.View.extend({
     },
 
     renderPlaces: function () {
-//        if (this.answerLists.length == 0) {
-        var entries = this.answerLists.at(0).get("value");
-        var boxes  = new OpenLayers.Layer.Vector( "Boxes" );
-        var pointsLayer = new OpenLayers.Layer.Vector("Points");
+        var entries = (this.answerLists && this.answerLists.length > 0)? this.answerLists.at(0).get("value"):[];
 
         var minLat = minLong = Number.MAX_VALUE;
         var maxLat = maxLong = -Number.MAX_VALUE;
@@ -77,7 +83,7 @@ window.AnswerListMap = Backbone.View.extend({
                         maxLat = Math.max(maxLat, r[2]);
                         minLong = Math.min(minLong, r[1]);
                         maxLong = Math.max(maxLong, r[3]);
-                        this.addKeyRadioButton(r, boxes, entry, j, keyFields); 
+                        this.addBoxWithRadioButton(r, entry, j, keyFields); 
                         j++;
                     }
                 } else {
@@ -85,7 +91,7 @@ window.AnswerListMap = Backbone.View.extend({
                     maxLat = Math.max(maxLat, ext[2]);
                     minLong = Math.min(minLong, ext[1]);
                     maxLong = Math.max(maxLong, ext[3]);                            
-                    this.addKeyRadioButton(ext, boxes, entry, j, keyFields);
+                    this.addBoxWithRadioButton(ext, entry, j, keyFields);
                     j++;
                 }
             }
@@ -102,31 +108,41 @@ window.AnswerListMap = Backbone.View.extend({
                     maxLat = Math.max(maxLat, point[0]);
                     minLong = Math.min(minLong, point[1]);
                     maxLong = Math.max(maxLong, point[1]);
-
-                    pointGeometry = new OpenLayers.Geometry.Point(point[1], point[0]);
-                    pointGeometry = pointGeometry.transform(this.map.displayProjection, this.map.getProjectionObject());
-                    pointVector = new OpenLayers.Feature.Vector(pointGeometry);
-                    pointsLayer.addFeatures([pointVector]);
+                    
+                    this.addPoint(point);
                 }
             }
         }
-        this.map.addLayers([boxes,pointsLayer]);
         
         if (minLong < Number.MAX_VALUE && maxLong > -Number.MAX_VALUE && !this.center) {
             bounds = OpenLayers.Bounds.fromArray([minLong, minLat, maxLong, maxLat]);
             bounds.transform(this.map.displayProjection, this.map.getProjectionObject());
             this.map.zoomToExtent(bounds);
         } else if (this.center) {
-            //center = new OpenLayers.Geometry.Point(this.center[1], this.center[0]);
-            center = new OpenLayers.LonLat(this.center[1], this.center[0]);
-            center.transform(this.map.displayProjection, this.map.getProjectionObject());
-            this.map.setCenter(center, 18);
-            //this.map.setCenter(new OpenLayers.LonLat(this.center[1], this.center[0]), 10);
+            this.setCenter(this.center, 18);
         }
-        this.updateSize();
-        //setTimeout(this.updateSize, 1000);
+        if (this.autoResize) {
+            this.updateSize();
+        }
     },
     
+    addPoint: function (point) {
+        var pointGeometry = new OpenLayers.Geometry.Point(point[1], point[0]);
+        pointGeometry = pointGeometry.transform(this.map.displayProjection, this.map.getProjectionObject());
+        var pointVector = new OpenLayers.Feature.Vector(pointGeometry);
+        this.pointsLayer.addFeatures([pointVector]);
+    },
+   
+    setCenter: function (latLong, zoom, plot) {
+        this.center = latLong;
+        var center = new OpenLayers.LonLat(this.center[1], this.center[0]);
+        center.transform(this.map.displayProjection, this.map.getProjectionObject());
+        this.map.setCenter(center, 18);
+        if (plot) {
+            this.addPoint(latLong);
+        }
+    },
+ 
     zoomIn: function () {
         if (this.map) {
             this.map.zoomIn();

@@ -73,13 +73,14 @@ window.MeetupRequestView = Backbone.View.extend({
         var approvedText = (approved)? "Waiting on participants to approve...":"Must be approved first!";
         var timePlaceText = (time && place)? time + ":00 at "+this.getMapLink(place):"TBD ("+approvedText+")";
         var participantsText = requesterText+", "+_.map(participants, function (u) { return me.getUserText(u); }).join(", ");
-        var mapView = (time && place && uuid)? new AnswerListMap(null, [place[0], place[1]], "map"+uuid):null;
+        
         if (!this.rendered) {
             var subject = $("<div class='meetup-request-subject'></div>").text(description);
             this.from = $("<div class='meetup-request-from'></div>");
             this.who = $("<div class='meetup-request-who'></div>");
             this.where = $("<div class='meetup-request-location'></div>");
-            this.map = $("<div class='meetup-request-map' style='height: 50px'></div>");
+            this.map = $("<div class='meetup-request-map' style='height: 200px'></div>");
+            this.mapView = null;
             var actions = $("<div data-role='controlgroup' data-type='horizontal' data-mini='true'></div>");
             this.approveButton = $("<button>Approve</button>").click(function (e) { 
                 me.model.save({ approved: true });
@@ -106,8 +107,10 @@ window.MeetupRequestView = Backbone.View.extend({
         this.from.text("From: "+requesterText);
         this.who.text("With: "+participantsText);
         this.where.html("Time & Place: "+timePlaceText);
-        if (mapView) {
+        if (uuid) {
             this.map.attr("id", "map"+uuid);
+            this.mapView = (time && place && uuid)? new AnswerListMap(null, [place[0], place[1]], "map"+uuid):null;
+            this.mapView.setCenter([place[0], place[1]], 18, true);
         }
         if (approved) {
             this.approveButton.addClass("ui-disabled");
