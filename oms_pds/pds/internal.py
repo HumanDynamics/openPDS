@@ -6,6 +6,7 @@ import threading
 from pymongo import Connection
 from oms_pds.pds.models import Profile
 from oms_pds.accesscontrol.models import Settings
+from oms_pds.accesscontrol.internal import AccessControlledInternalDataStore, getAccessControlledInternalDataStore
 from oms_pds import settings
 
 connection = Connection(
@@ -15,12 +16,12 @@ connection = Connection(
 
 INTERNAL_DATA_STORE_INSTANCES = {}
 
-def getInternalDataStore(profile, token):
+def getInternalDataStore(profile, app_id, lab_id, token):
     try:
-        internalDataStore = DualInternalDataStore(profile, token)
+        internalDataStore = DualInternalDataStore(profile, app_id, lab_id, token)
     except Exception as e:
         print str(e)
-        internalDataStore = InternalDataStore(profile, token)
+        internalDataStore = InternalDataStore(profile, app_id, lab_id, token)
     return internalDataStore
 
 def dict_factory(cursor, row):
@@ -54,7 +55,7 @@ class ListWithCount(list):
 def getColumnValueFromRawData(rawData, columnName, tableDef, source="funf"):    
     return tableDef["mapping"][source][columnName](rawData) if "mapping" in tableDef and source in tableDef["mapping"] and columnName in tableDef["mapping"][source] else rawData[columnName]
 
-class SQLiteInternalDataStore:
+class SQLiteInternalDataStore(AccessControlledInternalDataStore):
     SQLITE_DB_LOCATION = settings.SERVER_UPLOAD_DIR + "dataStores/"
     
     INITIALIZED_DATASTORES = []
@@ -162,7 +163,8 @@ class SQLiteInternalDataStore:
 
     ANSWER_TABLE_LIST = [ANSWER_TABLE, ANSWERLIST_TABLE]
 
-    def __init__(self, profile, token):
+    def __init__(self, profile, app_id, lab_id, token):
+        super(SQLiteInternalDataStore, self).__init__(profile, app_id, lab_id)
         self.profile = profile
         #print profile.uuid
         fileName = SQLiteInternalDataStore.SQLITE_DB_LOCATION + profile.getDBName() + ".db"
@@ -211,7 +213,7 @@ class SQLiteInternalDataStore:
         c.execute(statement, (key, "%s"%data))
         self.db.commit()
     
-    def getData(self, key, startTime, endTime):
+    def getDataInternal(self, key, startTime, endTime):
         table = key # A simplification for now
         statement = "select * from %s" % table
         times = ()
@@ -247,8 +249,9 @@ class SQLiteInternalDataStore:
         self.db.execute(statement, tuple(columnValues))
         self.db.commit()
     
-class InternalDataStore:
-    def __init__(self, profile, token):
+class InternalDataStore(AccessControlledInternalDataStore):
+    def __init__(self, profile, app_id, lab_id, token):
+        super(InternalDataStore, self).__init__(profile, app_id, lab_id)
         # This should check the token and pull down approved scopes for it
         self.profile = profile
         self.db = connection[profile.getDBName()]
@@ -271,7 +274,7 @@ class InternalDataStore:
     def getAnswerList(self, key):
         return self.db["answerlist"].find({"key": key })
 
-    def getData(self, key, startTime, endTime):
+    def getDataInternal(self, key, startTime, endTime):
         # In this case, we're assuming the only source is Funf
         dataFilter = {"key": {"$regex": key+"$"}}
         if startTime is not None or endTime is not None:
@@ -286,10 +289,11 @@ class InternalDataStore:
     def saveData(self, data):
         self.db["funf"].save(data)
 
-class DualInternalDataStore:
-    def __init__(self, profile, token):
-        self.ids = InternalDataStore(profile, token)
-        self.sids = SQLiteInternalDataStore(profile, token)
+class DualInternalDataStore(AccessControlledInternalDataStore):
+    def __init__(self, profile, app_id, lab_id, token):
+        super(DualInternalDataStore, self).__init__(profile, app_id, lab_id)
+        self.ids = InternalDataStore(profile, app_id, lab_id, token)
+        self.sids = SQLiteInternalDataStore(profile, app_id, lab_id, token)
 
     def saveAnswer(self, key, data):
         self.ids.saveAnswer(key, data)
@@ -301,64 +305,10 @@ class DualInternalDataStore:
     def getAnswerList(self, key):
         return self.ids.getAnswerList(key)
 
-    def getData(self, key, startTime, endTime):
+    def getDataInternal(self, key, startTime, endTime):
         return self.ids.getData(key, startTime, endTime)
 
     def saveData(self, data):
         self.ids.saveData(data)
         self.sids.saveData(data)
 
-class AccessControlledInternalDataStore:
-    def __init__(self, profile, token, app_id, lab_id, service_id):
-	self.profile = profile
-	self.datastore_owner_id = self.profile.id
-	self.app_id = app_id
-	self.lab_id = lab_id
-	self.service_id = service_id
-	#self.enabled = check and set
-
-    def getData(self, probe, startTime, endTime):
-
-	enabled_flag = False
-	probe_flag = False
-	#object.find()
-	#dictionary mapping, no rows returned --> empty set of data. 
-	for settings in Settings.objects.raw('SELECT * FROM accesscontrol_settings WHERE app_id = %s AND lab_id = %s AND service_id = %s ', [self.app_id, self.lab_id, self.service_id]):
-		enabled_flag = settings.enabled
-		if 'activity' in probe:
-			probe_flag = settings.activity_probe
-		elif 'sms' in probe:
-			probe_flag = settings.sms_probe
-		elif 'call_log' in probe:		
-			probe_flag = settings.call_log_probe
-		elif 'bluetooth' in probe:
-			probe_flag = settings.bluetooth_probe
-		elif 'wifi' in probe:
-			probe_flag = settings.wifi_probe
-		elif 'simple_location' in probe:
-			probe_flag = settings.simple_location_probe
-		elif 'screen' in probe:
-			probe_flag = settings.screen_probe
-		elif 'running_applications' in probe:	
-			probe_flag = settings.running_applications_probe
-		elif 'hardware_info' in probe:
-			probe_flag = settings.hardware_info_probe
-		elif 'app_usage' in probe:
-			probe_flag = settings.app_usage_probe
-
-	if enabled_flag and probe_flag:
-		return getDataInternal(probe, startTime, endTime)
-	else:
-		return None
-	
-			
-def getAccessControlledInternalDataStore(profile, token, app_id, lab_id, service_id):
-    try:
-        internalDataStore = AccessControlledInternalDataStore(profile, token, app_id, lab_id, service_id)
-    except Exception as e:
-	internalDataStore = None
-        print str(e)
-    return internalDataStore
-
-def getDataInternal(probe, startTime, endTime):
-	return True

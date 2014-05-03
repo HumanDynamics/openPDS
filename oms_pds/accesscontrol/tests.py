@@ -13,6 +13,7 @@ from oms_pds.pds.models import Profile
 from oms_pds.pds.internal import getInternalDataStore, InternalDataStore
 from oms_pds.accesscontrol.models import Settings
 
+from oms_pds.probedatavisualization_tasks import recentProbeDataScores 
 class SimpleTest(TestCase):
     def test_basic_addition(self):
         """
@@ -41,13 +42,16 @@ class InternalDataStoreTest(TestCase):
 	def setUp(self):
 		#user
 		owner = Profile.objects.create(uuid='12345')
-		access_control_setting = Settings.objects.create(datastore_owner_id = owner.id, app_id = 'app', lab_id = 'lab', service_id = 'service', enabled = 1, activity_probe = 1, sms_probe = 1, call_log_probe = 1, bluetooth_probe = 1, wifi_probe = 1, simple_location_probe = 1, screen_probe = 1, running_applications_probe = 1, hardware_info_probe = 1, app_usage_probe = 1)  
+		access_control_setting = Settings.objects.create(datastore_owner_id = owner.id, app_id = 'app', lab_id = 'lab', service_id = 'service', enabled = 0, activity_probe = 1, sms_probe = 1, call_log_probe = 1, bluetooth_probe = 1, wifi_probe = 1, simple_location_probe = 1, screen_probe = 1, running_applications_probe = 1, hardware_info_probe = 1, app_usage_probe = 1)  
 
 	def test_creation(self):
-		token="b3dbac8916"
 		try:
 			owner = Profile.objects.get(uuid='12345')
-			internalDataStore = getAccessControlledInternalDataStore(owner, token, "app", "lab", "service")
+			internalDataStore = getAccessControlledInternalDataStore(owner, "app", "lab", "service")
 			internalDataStore.getData('bluetooth_probe', 0, 1000)
 		except Profile.DoesNotExist:
 			print "Does not exist"
+
+class ProbeDataVisualizationTest(TestCase):
+	def test_visualization(self):
+		recentProbeDataScores()
