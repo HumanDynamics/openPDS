@@ -63,7 +63,7 @@ def notifyRequesterOfApprovalStatus(meetup_uuid, requester, approved, owner_uuid
 @task()
 def initiateMeetupScheduling(owner_uuid, meetup_uuid, token):
     owner = Profile.objects.get(uuid = owner_uuid)
-    internalDataStore = getInternalDataStore(owner, token)
+    internalDataStore = getInternalDataStore(owner, "Living Lab", "Meetup", token)
     meetup_request = internalDataStore.getMeetupRequest(meetup_uuid)
 
     owner_places = internalDataStore.getAnswerList("RecentPlaces")[0]["value"]
@@ -85,7 +85,7 @@ def initiateMeetupScheduling(owner_uuid, meetup_uuid, token):
 def helpScheduleMeetup(owner_uuid, meetup_uuid, running_totals, token):
     print "%s contributing to meetup %s"%(owner_uuid, meetup_uuid)
     owner = Profile.objects.get(uuid = owner_uuid)
-    internalDataStore = getInternalDataStore(owner, token)
+    internalDataStore = getInternalDataStore(owner, "Living Lab", "Meetup", token)
     meetup_request = internalDataStore.getMeetupRequest(meetup_uuid)
     requester_uuid = meetup_request["requester"]
 
@@ -158,7 +158,7 @@ def scheduleMeetup(owner_uuid="280e418a-8032-4de3-b62a-ad173fea4811", meetup_uui
     participant_uuids=["5241576e-43da-4b08-8a71-b477f931e021", "72d9d8e3-3a57-4508-9515-2b881afc0d8e"]
     participant_places = {}
     owner = Profile.objects.get(uuid = owner_uuid)
-    internalDataStore = getInternalDataStore(owner, token)
+    internalDataStore = getInternalDataStore(owner, "Living Lab", "Meetup", token)
     meetup_request = internalDataStore.getMeetupRequest(meetup_uuid)
     if meetup_request is None or "approved" not in meetup_request or not meetup_request["approved"]:
         return 

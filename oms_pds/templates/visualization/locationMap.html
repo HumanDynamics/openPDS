@@ -5,12 +5,9 @@ Recent Places
 {% endblock %}
 
 {% block more_scripts %}
-<script src="http://openlayers.org/dev/OpenLayers.mobile.js"></script>
-<script src="http://d3js.org/d3.v2.js"></script>
-
+<script src="{{ STATIC_URL }}js/OpenLayers.mobile.js"></script>
 <script>
     ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
-//    ANSWERLIST_KEY = "RecentPlaces";
 </script>
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>

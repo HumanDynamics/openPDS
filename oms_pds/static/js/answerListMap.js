@@ -28,7 +28,9 @@ window.AnswerListMap = Backbone.View.extend({
             tileManager: new OpenLayers.TileManager(),
             controls: [
                 new OpenLayers.Control.Zoom(),
-                new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}})
+                new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}}),
+//                new OpenLayers.Control.CacheWrite(),
+//                new OpenLayers.Control.CacheRead()
             ]
 //            fractionalZoom: true
         });

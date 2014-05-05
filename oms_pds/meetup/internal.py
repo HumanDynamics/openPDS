@@ -23,6 +23,6 @@ class MeetupInternalDataStore(InternalDataStore):
     def getMeetupRequest(self, uuid):
         return self.db["meetup_request"].find_one({"uuid": uuid})
 
-def getInternalDataStore(profile, token):
-    return MeetupInternalDataStore(profile, token)
+def getInternalDataStore(profile, app_id, lab_id, token):
+    return MeetupInternalDataStore(profile, app_id, lab_id, token)
 

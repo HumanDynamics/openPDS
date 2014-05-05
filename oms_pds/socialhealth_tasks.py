@@ -24,6 +24,13 @@ connection = Connection(
     port=getattr(settings, "MONGODB_PORT", None)
 )
 
+ANSWERKEY_NAME_MAPPING = {
+    "recentFocusByHour": "Focus",
+    "recentSocialByHour": "Social",
+    "recentActivityByHour": "Activity",
+    "socialhealth": "My Social Health"
+}
+
 def copyData(fromInternalDataStore, toInternalDataStore):
     startTime = 1391291231
     endTime = 1392768449
@@ -92,7 +99,7 @@ def activityForTimeRange(internalDataStore, start, end, includeBlanks = False, i
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
 
     activityEntries = internalDataStore.getData("ActivityProbe", start, end)
-    if includeBlanks or activityEntries.count() > 0:
+    if activityEntries is not None and (includeBlanks or activityEntries.count() > 0):        
         for data in activityEntries:
             #pdb.set_trace()
             dataValue = data["value"]
@@ -117,7 +124,7 @@ def focusForTimeRange(internalDataStore, start, end, includeBlanks = False, incl
     hours = float((end - start)) / 3600.0
 
     screenOnEntries = internalDataStore.getData("ScreenProbe", start, end)
-    if includeBlanks or screenOnEntries.count() > 0:
+    if screenOnEntries is not None and (includeBlanks or screenOnEntries.count() > 0):
         for data in screenOnEntries:
             dataValue = data["value"]
             screenOnCount += 1 if dataValue["screen_on"] else 0
@@ -138,7 +145,7 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
     # Also, filter out entries that were far away (looking at signal strength > -75) This number just seemed to fit the data well
     # The rationale for the signal strength filtering is that we want to try and keep this to face-to-face interactions
     bluetoothEntries = internalDataStore.getData("BluetoothProbe", start, end)
-    if includeBlanks or bluetoothEntries.count() > 0:
+    if bluetoothEntries is not None and (includeBlanks or bluetoothEntries.count() > 0):
         bluetoothEntries = [bt["value"] for bt in bluetoothEntries if "android-bluetooth-device-extra-class" in bt["value"] and bt["value"]["android-bluetooth-device-extra-class"]["mclass"] & 0x00FF00 == 512]
 #        bluetoothEntries = [bt for bt in bluetoothEntries if bt["android-bluetooth-device-extra-rssi"] > -75]
         macKey = "android-bluetooth-device-extra-device"
@@ -156,7 +163,7 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
     # at entries collected during that time frame
     smsEntries = internalDataStore.getData("SmsProbe", start, None)
     
-    if includeBlanks or smsEntries.count() > 0 or score > 0:
+    if smsEntries is not None and (includeBlanks or smsEntries.count() > 0 or score > 0):
         # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages        
         messages = [smsEntry["value"] for smsEntry in smsEntries]
         messages = [message for message in messages if message["date"] >= start*1000 and message["date"] < end*1000]
@@ -177,7 +184,7 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
 
     callLogEntries = internalDataStore.getData("CallLogProbe", start, end)
 
-    if includeBlanks or callLogEntries.count() > 0 or score > 0:
+    if callLogEntries is not None and (includeBlanks or callLogEntries.count() > 0 or score > 0):
         callSets = [callEntry["value"] for callEntry in callLogEntries]
         #v4 = "calls" not in callSets[0]
         callSets = [value["calls"] if "calls" in value else value for value in callSets]
@@ -204,15 +211,15 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
     return None
 
 
-def aggregateForAllUsers(answerKey, timeRanges, aggregator, includeBlanks = False, mean = None, dev = None):
+def aggregateForAllUsers(answerKey, timeRanges, aggregator, serviceId, includeBlanks = False, mean = None, dev = None):
     profiles = Profile.objects.all()
     aggregates = {}
 
     for profile in profiles:
         # NOTE: need a means of getting at a token for authorizing this task to run. For now, we're not checking anyway, so it's blank
-        internalDataStore = getInternalDataStore(profile, "")
+        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", serviceId, "")
 #        if mean is None or dev is None:
-        data = aggregateForUser(profile, internalDataStore, answerKey, timeRanges, aggregator, includeBlanks)
+        data = aggregateForUser(internalDataStore, answerKey, timeRanges, aggregator, includeBlanks)
 #        else:
 #            data = aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks, mean.get(profile.uuid), dev.get(profile.uuid))
         if data is not None and len(data) > 0:
@@ -220,7 +227,7 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, includeBlanks = Fals
 
     return aggregates
 
-def aggregateForUser(profile, internalDataStore, answerKey, timeRanges, aggregator, includeBlanks = False):
+def aggregateForUser(internalDataStore, answerKey, timeRanges, aggregator, includeBlanks = False):
     aggregates = []
     
     for (start, end) in timeRanges:
@@ -244,7 +251,7 @@ def recentActivityLevels(includeBlanks = False):
     answerKey = "RecentActivityByHour"
     timeRanges = [(start, start + interval) for start in range(int(startTime), int(endTime), interval)]
     #pdb.set_trace()
-    return aggregateForAllUsers(answerKey, timeRanges, activityForTimeRange, includeBlanks)
+    return aggregateForAllUsers(answerKey, timeRanges, activityForTimeRange, "Activity", includeBlanks)
 
 def recentFocusLevels(includeBlanks = False, means = None, devs = None):
     currentTime = time.time()
@@ -252,7 +259,7 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
     today = date.fromtimestamp(currentTime)
     startTime = time.mktime((today - timedelta(days=6)).timetuple())
     timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
-    data = aggregateForAllUsers(None, timeRanges, focusForTimeRange, includeBlanks)
+    data = aggregateForAllUsers(None, timeRanges, focusForTimeRange, "Focus", includeBlanks)
  
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
@@ -269,24 +276,33 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
                     data[uuid].append(f)               
             profile = Profile.objects.get(uuid = uuid)
             # TODO: get a token here to run internal queries against...
-            ids = getInternalDataStore(profile, "")
+            ids = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "Focus", "")
             ids.saveAnswer(answerKey, data[uuid]) 
     return data
 
 def recentSocialLevels(includeBlanks = False):
-    currentTime = time.time()
     answerKey = "RecentSocialByHour"
-    today = date.fromtimestamp(currentTime)
-    startTime = time.mktime((today - timedelta(days=6)).timetuple())
+    currentTime = time.time()
+    startTime = getStartTime(6, True)
     timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
-    data = aggregateForAllUsers(answerKey, timeRanges, socialForTimeRange, includeBlanks)
+    data = aggregateForAllUsers(answerKey, timeRanges, socialForTimeRange, "Social", includeBlanks)
     
     return data
+
+def recentSocialLevels2(internalDataStore, includeBlanks = False):
+    answerKey = "RecentSocialByHour"
+    currentTime = time.time()
+    starttime = getStartTime(6, True)
+    timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
+    data = aggregateForUser(internalDataStore, answerKey, timeRanges, socialForTimeRange, "Social", includeBlanks)
+
+    return data
+
 
 def recentActivityScore():
     #data = recentActivityLevels(False)
     currentTime = time.time()
-    data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 7, currentTime)], activityForTimeRange, False)
+    data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 7, currentTime)], activityForTimeRange, "Activity", False)
     score = {}
    
     for uuid, activityList in data.iteritems():
@@ -351,7 +367,7 @@ def recentSocialHealthScores():
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         print "storing %s" % profile.uuid
         
-        internalDataStore = getInternalDataStore(profile, "")
+        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "My Social Health", "")
  
         data[profile.uuid] = []
         #pdb.set_trace()
@@ -375,3 +391,55 @@ def recentSocialHealthScores():
     #recentFocusLevels(True)
     return data
 
+def getToken(profile, app_uuid):
+    return ""
+
+@task()
+def recentSocialHealthScores2():
+    profiles = Profile.objects.all()
+    startTime = getStartTime(6, True)
+    currentTime = time.time()
+    timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
+
+    sums = {"activity": 0, "social": 0, "focus": 0}
+    activeUsers = []
+    data = {}
+
+    for profile in profiles:
+        token = getToken(profile, "app-uuid")
+        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "My Social Health", token)
+
+        activityLevels = aggregateForUser(internalDataStore, "RecentActivityByHour", timeRanges, activityForTimeRange, False)
+       
+        if len(activityLevels) > 0:
+            socialLevels = aggregateForUser(internalDataStore, "RecentSocialByHour", timeRanges, socialForTimeRange, True)
+            focusLevels = aggregateForUser(internalDataStore, "RecentFocusByHour", timeRanges, focusForTimeRange, True)
+
+            activityScore = computeActivityScore(activityLevels)
+            socialScore = computeSocialScore(socialLevels)
+            focusScore = computeFocusScore(focusLevels)
+    
+            sums["activity"] += activityScore
+            sums["social"] += socialScore
+            sums["focus"] += focusScore
+            activeUsers.append(profile)
+    
+            data[profile.uuid] = {}
+            data[profile.uuid]["user"] = {
+                "activity": activityScore,
+                "social": socialScore,
+                "focus": focusScore
+            } 
+
+    numUsers = len(activeUsers)
+    if numUsers > 0:
+        averages = { k: sums[k] / numUsers for k in sums }
+        variances = { k: [(data[p.uuid]["user"][k] - averages[k])**2 for p in activeUsers] for k in averages }
+        stdDevs = { k: math.sqrt(sum(variances[k]) / len(variances[k])) for k in variances }
+        for profile in activeUsers:
+            token = getToken(profile, "app-uuid")
+            internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "My Social Health", token)
+            data[profile.uuid]["averageLow"] = { k: max(0, averages[k] - stdDevs[k]) for k in stdDevs }
+            data[profile.uuid]["averageHigh"] = { k: min(averages[k] + stdDevs[k], 10) for k in stdDevs }
+            internalDataStore.saveAnswer("socialhealth", data[profile.uuid])
+    return data
