@@ -9,8 +9,9 @@ Recent Activity
 
 <script>
     ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
-    ANSWERLIST_KEY = "RecentActivityByHour";
-    ANSWERLIST_VALUE_SELECTOR = function (a) { return (a.total > 0)? 10 * ((a.low + a.high) / a.total) : 0; };
+    ANSWERLIST_ACTIVITY_KEY = "RecentActivityByHour";
+    ANSWERLIST_LOCATION_KEY = "RecentPlaces";
+    ANSWERLIST_ACTIVITY_VALUE_SELECTOR = function (a) { return (a.total > 0)? 10 * ((a.low + a.high) / a.total) : 0; };
 </script>
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>

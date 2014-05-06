@@ -16,5 +16,5 @@ urlpatterns = patterns('oms_pds.visualization.views',
     (r'^places', "places"),
     (r'^meetup_home', meetup_home),
 #    (r"^places", direct_to_template, { "template" : "visualization/locationMap.html" })
-    (r'^activityByLocation', direct_to_template, { 'template' : 'visualization/activityByLocation.html' }),
+    (r'^mitfit/activityByLocation$', direct_to_template, { 'template' : 'visualization/activityByLocation.html' }),
 )
