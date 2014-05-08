@@ -26,7 +26,8 @@ def probeForTimeRange(probe, internalDataStore, start, end, includeBlanks = Fals
     if probeEntries is not None and (includeBlanks or probeEntries.count() > 0):
 	values = [data["value"] for data in probeEntries]
         if probe == 'LocationProbe':
-	    values = [value for value in values if float(value["maccuracy"]) < 30]
+	    #Commented out next line because locations obtained through wifi have maccuracy > 30.
+#	    values = [value for value in values if float(value["maccuracy"]) < 30]
 	    clusters = places_tasks.clusterFunfLocations(values, 20)
 	    #We're only interested in places that have more than 3 samples - either the users stayed there a while, or returned there a number of times)
             clusters = [cluster for cluster in clusters if len(cluster) > 3]
@@ -69,7 +70,7 @@ def recentProbeDataScores(uuid):
     profile = Profile.objects.get(uuid = uuid)
     startTime = socialhealth_tasks.getStartTime(6, True)
     currentTime = time.time()
-    timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
+    timeRanges = [(start, start + 3600) for start in range(int(startTime), int(currentTime), 3600)]
 
     probeAnswerKeys = {'recentActivityProbeByHour': 'ActivityProbe', 'recentSmsProbeByHour': 'SmsProbe', 'recentCallLogProbeByHour': 'CallLogProbe', 
                        'recentBluetoothProbeByHour': 'BluetoothProbe', 'recentWifiProbeByHour': 'WifiProbe', 'recentSimpleLocationProbeByHour': 'LocationProbe', 

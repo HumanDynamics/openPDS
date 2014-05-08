@@ -1,40 +1,41 @@
 {% extends "backboneLayout.html" %}
 
 {% block title %}
-Recent Activity
+Recent Places
 {% endblock %}
 
 {% block more_scripts %}
-<script src="http://d3js.org/d3.v2.js"></script>
-
+<script src="{{ STATIC_URL }}js/OpenLayers.mobile.js"></script>
 <script>
     ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
-    ANSWERLIST_ACTIVITY_KEY = "RecentActivityByHour";
-    ANSWERLIST_LOCATION_KEY = "RecentPlaces";
-    ANSWERLIST_ACTIVITY_VALUE_SELECTOR = function (a) { return (a.total > 0)? 10 * ((a.low + a.high) / a.total) : 0; };
 </script>
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>
 <script src="{{ STATIC_URL }}js/activityByLocation.js"></script>
+<script src="{{ STATIC_URL }}js/urlEncode.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
 
 <script>
 $(function () {
-    console.log("calling AnswerByHourGraph()");
-    window.activityGraph = new AnswerByHourGraph();
-//    window.selfAssessedActivityGraph = new AnswerByHourGraph("SelfAssessedRecentActivityByHour", function (a) { return a.start * 1000; }, function (a) { return a.activity; });
-    $(window).bind("resize", function () { activityGraph.render(); });
-//    $(window).bind("resize", function () { selfAssessedActivityGraph.render(); });
+    
+    window.answerListMap = new AnswerListMap("recentSimpleLocationProbeByHour", "recentActivityProbeByHour", {% if lat %}[{{ lat }}, {{ long }}]{% else %}null{% endif %},"answerListMapContainer", "answerListTimesContainer", true);
+    $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
+    $("#plus").live('click', answerListMap.zoomIn);
+    $("#minus").live('click', answerListMap.zoomOut);
+    
 });
 </script>
+
 {% endblock %}
 
 {% block content %}
-<div class="answerContent">
-	<div id="answerByHourGraphContainer">
-	<h2>Recent Activity Levels</h2>
-	</div>
-	<div>
-	ActivityByLocation: Activity level uses the motion sensors on your phone to approximate how active you are during the day. This information is then used to generate your activity score on the social health triangle.
-	</div>
+<div id="answerListMapContainer">
 </div>
+
+<div id="answerListTimesContainer">
+</div>
+
+<div id="footer" data-role="footer">
+</div>
+
 {% endblock %}

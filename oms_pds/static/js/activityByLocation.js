@@ -1,93 +1,157 @@
-window.AnswerByHourGraph = Backbone.View.extend({
-	el: "#answerByHourGraphContainer",
-	
-	initialize: function (answerKey, timeSelector, valueSelector) {
-		_.bindAll(this, "render");
-		
-        this.answerKey = answerKey || ANSWERLIST_KEY;
-        this.timeSelector = timeSelector || function (a) { return a.start * 1000; };
-        this.valueSelector = valueSelector || ANSWERLIST_VALUE_SELECTOR;
+window.AnswerListMap = Backbone.View.extend({
+    el: "#answerListMapContainer",
+    
+    initialize: function (locationAnswerKey, activityAnswerKey, center, mapContainerId, timesContainerId, autoResize) {
+        _.bindAll(this, "render", "renderPlaces");        
 
-		this.activityByHourList = new AnswerListCollection([], { "key": this.answerKey });
-		this.activityByHourList.bind("reset", this.render);
-		this.activityByHourList.fetch();
-	},
-	
-	render: function () {
+        if (mapContainerId) {
+            this.mapContainerId = mapContainerId;
+            this.el = "#" + mapContainerId;
+        } else {
+            this.mapContainerId = "answerListMapContainer";
+        }
+
+        if (timesContainerId) {
+            this.timesContainerId = timesContainerId;
+            this.timesEl = "#" + timesContainerId;
+        } else {
+            this.timesContainerId = "answerListTimesContainer";
+	    this.timesEl = "#" + timesContainerId;
+        }
+	this.timesElement = $(this.timesEl);
+	this.timesElement.append("The times you are most active:<br/>");
+
+        this.autoResize = autoResize;
+        this.center = center;
+        this.render();
+        this.locationAnswerLists = new AnswerListCollection([],{ "key": locationAnswerKey });
+	this.activityAnswerLists = new AnswerListCollection([],{ "key": activityAnswerKey });
+        this.locationAnswerLists.bind("reset", this.renderPlaces);
+        this.activityAnswerLists.bind("reset", this.renderPlaces);
+        this.locationAnswerLists.fetch();
+	this.activityAnswerLists.fetch();
+    },
+    
+    render: function () {
+	this.overlay = new OpenLayers.Layer.Vector('Overlay', {
+            styleMap: new OpenLayers.StyleMap({
+                externalGraphic: 'http://www.openlayers.org/dev/img/marker.png',
+                graphicWidth: 20, graphicHeight: 24, graphicYOffset: -24,
+            })
+        });
+
+
+        this.map = new OpenLayers.Map({
+            div: this.mapContainerId, projection: "EPSG:3857",
+            zoom: 15
+        });
+
+	this.map.addLayers([new OpenLayers.Layer.OSM(), this.overlay]);
+    },
+
+    renderPlaces: function () {
+        var locationEntries = (this.locationAnswerLists && this.locationAnswerLists.length > 0)? this.locationAnswerLists.at(0).get("value"):[];
+        var activityEntries = (this.activityAnswerLists && this.activityAnswerLists.length > 0)? this.activityAnswerLists.at(0).get("value"):[];
+	var highActivityLocations = []
+	var highActivityStartTimes = []
+	for (i in locationEntries){
+            var locationEntry = locationEntries[i];
+            var centroid = locationEntry["centroid"];
 		
-                console.log("In function");
-		// It might not be necessary to remove the graph first. D3 seems to have some capability to change the data and have the graph update
-		if (this.graph) {
-			this.graph.remove();
+            var startTime = locationEntry["start"];
+            var endTime = locationEntry["end"];
+		
+	    if(activityEntries[i] != undefined && centroid[0] != undefined){
+                var high = activityEntries[i]["high"];
+		var low = activityEntries[i]["low"];
+		if ( high + low > 0 ){
+		    var normalizedActivity = (high - low)/(high + low);
+	            if (normalizedActivity > 0.8){
+		        repeatLocation = false;
+		        for (highActivityLocation in highActivityLocations){
+			    console.log(centroid[0]);
+			    console.log(highActivityLocation);
+		            if (centroid[0][0] = highActivityLocation[0] && centroid[0][1] == highActivityLocation[1]){
+			        repeatLocation = true;
+				break;
+			    }
+			}
+                        if(repeatLocation == false){
+			    highActivityLocations.push(centroid[0]);
+                            console.log(centroid);
+                            this.addPoint(centroid[0]);
+                        }
+
+	                var startDate = new Date(startTime*1000);
+                        var startHours = startDate.getHours();
+                        var endDate = new Date(endTime*1000);
+                        var endHours = endDate.getHours();
+
+                        repeatTime = false;
+                        for (highActivityStartTime in highActivityStartTimes){
+                            if (startHours = highActivityStartTime){
+                                repeatTime = true;
+                                break;
+                            }
+                        }
+			if(repeatTime == false){
+				this.timesElement.append("From " + startHours + " to " + endHours + "<br/>");
+			}
+		    }
 		}
-		var padding = [0,20,40,0];
-		var w = $(this.el).width() - 50, h = 150;
-		var pink = d3.rgb(238,98,226);
-		var lightblue = d3.rgb(122,205,247);
-        var yellow = d3.rgb(200,200, 50);
-		var me = this;
-
-		// For now, activity in an hour is calculated as the percentage of intervals that have some activity in them during that hour
-		// We then multiply by 10 to get scores consistent with our social health radial scores
-		var entries = this.activityByHourList.at(0).get("value").map(this.valueSelector);
-                console.log(entries);
-        var selfEntries = this.activityByHourList.at(0).get("value").map(function (a) { return (a.selfAssessed !== undefined)? a.selfAssessed : 0; })
-		var timestamps = this.activityByHourList.at(0).get("value").map(this.timeSelector);
-		// We're performing some simple smoothing on the data here to avoid the drastic peaks and valleys typical of activity data
-		//entries = entries.map(function (a, i) { return 0.5 * a + (0.25 * entries[Math.max(0, i - 1)]) + (0.25 * entries[Math.min(entries.length - 1, i + 1)]); });
-
-		// Add zero entries to the beginning and end of entries, with duplicate beginning and end timestamps associated with them
-		// This closes up the data in case we want to do an area graph
-		entries.push(0);
-		entries.unshift(0);
-        selfEntries.push(0);
-        selfEntries.unshift(0);
-		timestamps.push(timestamps[timestamps.length-1]);
-		timestamps.unshift(timestamps[0]);
-
-		var endDate = new Date();//entries[entries.length - 1].date);
-		endDate.setTime(timestamps[timestamps.length - 1]);
-		
-		var startDate = new Date();
-		startDate.setTime(timestamps[0]);
-		//endDate = new Date(endDate.getUTCFullYear(), endDate.getUTCMonth(), endDate.getUTCDate() + 1);
-		
-		//this.x = d3.scale.linear().domain([0, entries.length]).range([0,w]);
-		//this.x = d3.scale.ordinal().domain(d3.time.days(startDate, endDate)).rangeRoundBands([0,w], 0.1);
-		this.x = d3.time.scale().domain([startDate, endDate]).rangeRound([0,w]);
-		this.y = d3.scale.linear().range([0,h]);
-		// In the event of all-zero data, use 1 as the max activity to avoid an incorrect graph
-		// (a domain of [0,0] mapping to a range of [0, h], for instance, results in obvious problems)
-		var maxActivity = Math.max(d3.max(entries), Math.max(d3.max(selfEntries), 1));
-		
-		this.y.domain([maxActivity, 0]);
-		
-		// Orienting the x axis as left so we can rotate it later for vertical labels
-		//var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(entries.length);
-
-		var xAxis = d3.svg.axis().scale(this.x).orient("left").ticks(d3.time.hours, 12);//.tickFormat(d3.time.format.utc("%b %e"));
-		var yAxis = d3.svg.axis().scale(this.y).orient("left").ticks(10);
-
-		var line = d3.svg.line()
-			.x(function (d, i) { 
-				var thisDate = new Date();
-				thisDate.setTime(timestamps[i]);
-				return me.x(thisDate);
-			})
-			.y(function (d) { 
-				return me.y(d);
-			})
-			.interpolate("basis");
-
-		this.graph = d3.select(this.el).append("svg").attr("class", "chart");
-		
-		// Append the x axis
-		this.graph.append("g").attr("class", "axis").attr("transform", "translate(" + padding[2] + "," + (h + padding[1]) + ")rotate(-90 )").call(xAxis);
-		
-		// Append the y axis
-		this.graph.append("g").attr("class", "axis").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").call(yAxis);
-
-		this.graph.append("svg:path").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").attr("d", line(entries)).attr("fill", pink).style("opacity", 0.6);
-        this.graph.append("svg:path").attr("transform", "translate(" + padding[2] + "," + padding[1] + ")").attr("d", line(selfEntries)).attr("fill", yellow).style("opacity", 0.4);
+	    }
 	}
+	if (this.center) {
+            this.setCenter(this.center, 18);
+        }
+        if (this.autoResize) {
+            this.updateSize();
+        }
+    },
+    
+    addPoint: function (point) {
+	console.log(point);
+	var pointGeometry = new OpenLayers.Geometry.Point(point[1], point[0]).transform('EPSG:4326', 'EPSG:3857');
+        this.overlay.addFeatures([new OpenLayers.Feature.Vector(pointGeometry, {tooltip: 'OpenLayers'})]);
+
+	this.map.setCenter(pointGeometry.getBounds().getCenterLonLat());
+    },
+   
+    setCenter: function (latLong, zoom, plot) {
+        this.center = latLong;
+        var center = new OpenLayers.LonLat(this.center[1], this.center[0]);
+        center.transform(this.map.displayProjection, this.map.getProjectionObject());
+        this.map.setCenter(center, 18);
+        if (plot) {
+            this.addPoint(latLong);
+        }
+    },
+ 
+    zoomIn: function () {
+        if (this.map) {
+            this.map.zoomIn();
+        }
+    },
+    
+    zoomOut: function () {
+        if (this.map) {
+            this.map.zoomOut();
+        }
+    },
+    
+    updateSize: function () {
+        var navbar= $("div[data-role='navbar']:visible"),
+        content = $("div[data-role='content']:visible:visible"),
+        footer = $("div[data-role='footer']:visible"),
+        viewHeight = $(window).height(),
+        contentHeight = viewHeight - navbar.outerHeight() - footer.outerHeight();
+        if (content.outerHeight() !== contentHeight) {
+            content.height(contentHeight);
+        }
+    
+        if (this.map && this.map instanceof OpenLayers.Map) {
+            this.map.updateSize();
+        }
+    }
+    
 });
