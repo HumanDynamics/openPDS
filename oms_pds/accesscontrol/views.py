@@ -40,7 +40,8 @@ def storeAccessControl(request):
 					values[column] = data.get(column)
 
 			context = Context.objects.get(datastore_owner = profile, context_label = data.get('settings_context_label'))
-			settings, created = Settings.objects.get_or_create(datastore_owner = profile, app_id = values['app_id'], lab_id = values['lab_id'], context_label = context)
+			settings, created = Settings.objects.get_or_create(datastore_owner = profile, app_id = values['app_id'], lab_id = values['lab_id'])
+		        settings.context_label = context
 			settings.activity_probe = values['activity_probe']
 			settings.sms_probe = values['sms_probe']
 			settings.call_log_probe = values['call_log_probe']

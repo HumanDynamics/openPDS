@@ -66,22 +66,24 @@ def aggregateForUser(probe, internalDataStore, answerKey, timeRanges, aggregator
     return aggregates
 
 @task()
-def recentProbeDataScores(uuid):
-    profile = Profile.objects.get(uuid = uuid)
-    startTime = socialhealth_tasks.getStartTime(6, True)
-    currentTime = time.time()
-    timeRanges = [(start, start + 3600) for start in range(int(startTime), int(currentTime), 3600)]
+def recentProbeDataScores():
+#    profile = Profile.objects.get(uuid = uuid)
+    profiles = Profile.objects.all()
+    for profile in profiles:
+        startTime = socialhealth_tasks.getStartTime(6, True)
+        currentTime = time.time()
+        timeRanges = [(start, start + 3600) for start in range(int(startTime), int(currentTime), 3600)]
 
-    probeAnswerKeys = {'recentActivityProbeByHour': 'ActivityProbe', 'recentSmsProbeByHour': 'SmsProbe', 'recentCallLogProbeByHour': 'CallLogProbe', 
+        probeAnswerKeys = {'recentActivityProbeByHour': 'ActivityProbe', 'recentSmsProbeByHour': 'SmsProbe', 'recentCallLogProbeByHour': 'CallLogProbe', 
                        'recentBluetoothProbeByHour': 'BluetoothProbe', 'recentWifiProbeByHour': 'WifiProbe', 'recentSimpleLocationProbeByHour': 'LocationProbe', 
                        'recentRunningApplicationsProbeByHour': 'RunningApplicationsProbe', 'recentHardwareInfoProbeByHour': 'HardwareInfoProbe', 
                        'recentAppUsageProbeByHour': 'AppUsageProbe'}
 
-    print profile
-    token = socialhealth_tasks.getToken(profile, "app-uuid")
-    internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+        print profile
+        token = socialhealth_tasks.getToken(profile, "app-uuid")
+        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
 
-    for probeAnswerKey, probe in probeAnswerKeys.iteritems():
-        print probe
-	probeLevels = aggregateForUser(probe, internalDataStore, probeAnswerKey, timeRanges, probeForTimeRange, False)
-	print probeLevels
+        for probeAnswerKey, probe in probeAnswerKeys.iteritems():
+            print probe
+	    probeLevels = aggregateForUser(probe, internalDataStore, probeAnswerKey, timeRanges, probeForTimeRange, False)
+	    print probeLevels
