@@ -131,10 +131,47 @@ window.SurveyQuestionStarView = SurveyQuestionDropDownView.extend({
     }
 });
 
+window.SurveyQuestionButtonView = SurveyQuestionDropDownView.extend({
+    el: "<div>",
+    selectedAnswer: 0,   
+
+    bindAll: function () {
+        _.bindAll(this, "render");
+    },
+    
+    render: function () {
+        var $el = $(this.el);
+        var me = this;
+
+        $el.empty();
+        $el.append("<h2>" + this.questionText + "</h2>");
+        var answers = $("<div data-role='controlgroup'>");
+
+        $.each(this.surveyQuestion, function () {
+            var answerValue = this.attributes.survey_answer.value;
+            var answerButton = $("<button type='button'>" + this.attributes.survey_answer.description + "</button>");
+            answerButton.click(function () { me.selectedAnswer = answerValue; me.saveAnswer(); });
+            answers.append(answerButton); 
+            answerButton.buttonMarkup();
+        });
+        $el.append(answers);
+        answers.controlgroup();
+        answers.controlgroup("refresh");
+        return $el
+    },
+    
+    selectedValue: function () {
+        return this.selectedAnswer;
+    }
+});
+
 window.SurveyQuestionView = function (surveyQuestion) {
     switch (surveyQuestion[0].attributes.survey_question.answer_type) {
         case 1:
             surveyQuestionView = new SurveyQuestionStarView(surveyQuestions[question]);
+            break;
+        case 3:
+            surveyQuestionView = new SurveyQuestionButtonView(surveyQuestions[question]);
             break;
         default:
             surveyQuestionView = new SurveyQuestionDropDownView(surveyQuestions[question]);

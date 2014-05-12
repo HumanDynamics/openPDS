@@ -13,6 +13,7 @@ from collections import Counter
 import sqlite3
 import random
 from oms_pds.socialhealth_tasks import getStartTime
+from oms_pds.internal.mongo import InternalDataStore
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 
@@ -30,6 +31,20 @@ def ensureFunfIndexes():
         dbName = profile.getDBName()
         collection = connection[dbName]["funf"]
         collection.ensure_index([("time", -1), ("key", 1)], cache_for=7200, background=True, unique=True, dropDups=True)
+
+@task()
+def recentProbeCounts():
+    profiles = Profile.objects.all()
+    startTime = getStartTime(1, False)
+    
+    for profile in profiles:
+        ids = InternalDataStore(profile, "")
+        probes = ["ActivityProbe", "SimpleLocationProbe", "CallLogProbe", "SmsProbe", "WifiProbe", "BluetoothProbe"]
+        answer = {}
+        for probe in probes:
+            data = ids.getData(probe, startTime, None)
+            answer[probe] = data.count()
+        ids.saveAnswer("RecentProbeCounts", answer)
 
 def addNotification(profile, notificationType, title, content, uri):
     notification, created = Notification.objects.get_or_create(datastore_owner=profile, type=notificationType)
@@ -78,6 +93,14 @@ def sendPast3DaysSurvey():
 @task()
 def sendExperienceSampleSurvey():
     broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=9")
+
+@task()
+def sendSleepStartSurvey():
+    broadcastNotification(2, "Sleep Tracker", "Please take this survey right before bed", "/survey/?survey=10")
+
+@task()
+def sendSleepEndSurvey():
+    broadcastNotification(2, "Sleep Tracker", "Please take this survey right after waking up", "/survey/?survey=11")
 
 def minDiff(elements, item):
     return min([abs(el - item) for el in elements])

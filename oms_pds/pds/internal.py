@@ -3,6 +3,9 @@ import sqlite3
 import os
 import stat
 import threading
+import psycopg2
+import psycopg2.extras
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pymongo import Connection
 from oms_pds.pds.models import Profile
 from oms_pds.accesscontrol.models import Settings
@@ -32,6 +35,8 @@ def dict_factory(cursor, row):
         if col[0] == "time":
             dataRow = True
             d["time"] = row[idx]
+        elif col[0] == "key": 
+            d["key"] = row[idx]
         else:
             v[col[0]] = row[idx]
     if dataRow:
@@ -53,7 +58,7 @@ class ListWithCount(list):
         return len(self)
 
 def getColumnValueFromRawData(rawData, columnName, tableDef, source="funf"):    
-    return tableDef["mapping"][source][columnName](rawData) if "mapping" in tableDef and source in tableDef["mapping"] and columnName in tableDef["mapping"][source] else rawData[columnName]
+    return tableDef["mapping"][source][columnName](rawData) if "mapping" in tableDef and source in tableDef["mapping"] and columnName in tableDef["mapping"][source] else rawData[columnName] if columnName in rawData else None
 
 class SQLiteInternalDataStore(AccessControlledInternalDataStore):
     SQLITE_DB_LOCATION = settings.SERVER_UPLOAD_DIR + "dataStores/"
@@ -95,12 +100,17 @@ class SQLiteInternalDataStore(AccessControlledInternalDataStore):
             ("subject", "TEXT"),
             ("thread_id", "INTEGER"),
             ("body", "TEXT"),
-            ("date", "INTEGER"),
+            ("date", "BIGINT"),
             ("type", "INTEGER"),
             ("message_read", "INTEGER"),
             ("protocol", "INTEGER"),
             ("status", "INTEGER")
-        ]
+        ],
+        "mapping": {
+            "funf": {
+                "message_read": lambda d: d["read"]
+            }
+        }
     }
 
     CALL_LOG_TABLE = {
@@ -110,10 +120,15 @@ class SQLiteInternalDataStore(AccessControlledInternalDataStore):
             ("name", "TEXT"),
             ("number", "TEXT"),
             ("number_type", "TEXT"),
-            ("date", "INTEGER"),
+            ("date", "BIGINT"),
             ("type", "INTEGER"),
             ("duration", "INTEGER")
-        ]
+        ],
+        "mapping": {
+            "funf": {
+                "number_type": lambda d: d["numbertype"]
+            }
+        }
     }
 
     BLUETOOTH_TABLE = {
@@ -170,6 +185,7 @@ class SQLiteInternalDataStore(AccessControlledInternalDataStore):
         fileName = SQLiteInternalDataStore.SQLITE_DB_LOCATION + profile.getDBName() + ".db"
         self.db = sqlite3.connect(fileName)
         self.db.row_factory = dict_factory
+        self.source = "sql"
 
         #Not perfect, since we're still initializing the DBs once per run, it's still better than running the following every time
         if profile not in SQLiteInternalDataStore.INITIALIZED_DATASTORES:
@@ -184,7 +200,7 @@ class SQLiteInternalDataStore(AccessControlledInternalDataStore):
             # Make this a setup / initialization method that we run once when a PDS is set up
             for table in SQLiteInternalDataStore.DATA_TABLE_LIST:
                 if next((c for c in table["columns"] if c[0] == "time"), None) is None:
-                    table["columns"].append(("time", "REAL PRIMARY KEY"))
+                    table["columns"].append(("time", "DOUBLE PRECISION PRIMARY KEY"))
                 createStatement = getCreateStatementForTable(table)
                 c.execute(createStatement)
     
@@ -192,10 +208,16 @@ class SQLiteInternalDataStore(AccessControlledInternalDataStore):
                 c.execute(getCreateStatementForTable(table))
             self.db.commit()
 
+    def getCursor(self):
+        return self.db.cursor()
+
+    def getVariablePlaceholder(self):
+        return "?"
+
     def getAnswerFromTable(self, key, table):
         #table = "AnswerList" if isinstance(data, list) else "Answer"
-        statement = "select key,value from %s where key=?" % table
-        c = self.db.cursor()
+        statement = "select key,value from %s where key=%s" %(table, self.getVariablePlaceholder())
+        c = self.getCursor()
         c.execute(statement, (key,))
         result = c.fetchone()
         return ListWithCount([{ "key": result["key"], "value": ast.literal_eval(result["value"]) }]) if result is not None else None
@@ -208,47 +230,98 @@ class SQLiteInternalDataStore(AccessControlledInternalDataStore):
 
     def saveAnswer(self, key, data):
         table = "AnswerList" if isinstance(data, list) else "Answer"
-        statement = "insert or replace into %s(key, value) values(?, ?)" % table
-        c = self.db.cursor()
+        p = self.getVariablePlaceholder()
+        statement = "insert or replace into %s(key, value) values(%s, %s)" %(table,p,p)
+        c = self.getCursor()
         c.execute(statement, (key, "%s"%data))
         self.db.commit()
+        c.close()
     
     def getDataInternal(self, key, startTime, endTime):
         table = key # A simplification for now
-        statement = "select * from %s" % table
+        statement = "select '%s' as key,* from %s" %(key,table)
         times = ()
 
         if startTime is not None or endTime is not None:
             statement += " where "
             if startTime is not None: 
                 times = (startTime,)
-                statement += "time >= ?" 
+                statement += "time >= %s" % self.getVariablePlaceholder()
                 statement += " and " if endTime is not None else ""
             if endTime is not None:
                 times = times + (endTime,)
-                statement += "time < ?"
+                statement += "time < %s" % self.getVariablePlaceholder()
 
-        c = self.db.cursor()
+        c = self.getCursor()
         c.execute(statement, times)
         return ListWithCount(c.fetchall())
     
     def saveData(self, data):
         # Again, assuming only funf data at the moment...
         tableName = data["key"].rpartition(".")[2]
+        source = "funf" if data["key"].rpartition(".")[0].startswith("edu.mit.media.funf") else "sql"
         time = data["time"]
         dataValue = data["value"]
         table = next((t for t in SQLiteInternalDataStore.DATA_TABLE_LIST if tableName.endswith(t["name"])), None)
         if table is None:
             return False
-        wildCards = ("?," * len(table["columns"]))[:-1]
+        wildCards = (("%s,"%self.getVariablePlaceholder()) * len(table["columns"]))[:-1]
         columnValues = []
         for columnName in [t[0] for t in table["columns"]]:
-            value = time if columnName == "time" else getColumnValueFromRawData(dataValue, columnName, table, "funf")
+            value = time if columnName == "time" else getColumnValueFromRawData(dataValue, columnName, table, source)
             columnValues.append(value)
         statement = "insert into %s(%s) values(%s)" % (table["name"], ",".join([c[0] for c in table["columns"]]), wildCards)
-        self.db.execute(statement, tuple(columnValues))
+        print statement
+        print columnValues
+        c = self.getCursor()
+        c.execute(statement, tuple(columnValues))
         self.db.commit()
+        c.close()
+
+class PostgresInternalDataStore(SQLiteInternalDataStore):
+    INITIALIZED_DATASTORES = []
+
+    def __init__(self, profile, token):
+        self.profile = profile
+        self.token = token
+        self.source = "sql"
+
+        if profile not in PostgresInternalDataStore.INITIALIZED_DATASTORES:            
+            PostgresInternalDataStore.INITIALIZED_DATASTORES.append(profile)
+            try:
+                init_conn = psycopg2.connect(user="postgres", password="p0stgre5", database=profile.getDBName().lower())
+            except psycopg2.OperationalError:
+                init_conn = psycopg2.connect(user="postgres", password="p0stgre5")
+                init_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+                init_cur = init_conn.cursor()
+                init_cur.execute("create database %s;"%profile.getDBName())
+                init_cur.close()
+                init_conn.close()
+                init_conn = psycopg2.connect(user="postgres", password="p0stgre5", database=profile.getDBName().lower())
+
+            init_cur = init_conn.cursor()
+            # We probably don't want to run the table creation every time (even if we're checking for existence). 
+            # Make this a setup / initialization method that we run once when a PDS is set up
+            for table in SQLiteInternalDataStore.DATA_TABLE_LIST:
+                if next((c for c in table["columns"] if c[0] == "time"), None) is None:
+                    table["columns"].append(("time", "DOUBLE PRECISION PRIMARY KEY"))
+                createStatement = getCreateStatementForTable(table)
+                init_cur.execute(createStatement)
+
+            for table in SQLiteInternalDataStore.ANSWER_TABLE_LIST:
+                init_cur.execute(getCreateStatementForTable(table))
+            init_conn.commit()
+            init_cur.close()
+            init_conn.close()
+        self.db = psycopg2.connect(user="postgres", password="p0stgre5", database=profile.getDBName().lower())
     
+    def getCursor(self):
+        return self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    def getVariablePlaceholder(self):
+        return "%s"
+        
+
 class InternalDataStore(AccessControlledInternalDataStore):
     def __init__(self, profile, app_id, lab_id, token):
         super(InternalDataStore, self).__init__(profile, app_id, lab_id)
@@ -288,7 +361,7 @@ class InternalDataStore(AccessControlledInternalDataStore):
     
     def saveData(self, data):
         self.db["funf"].save(data)
-
+ 
 class DualInternalDataStore(AccessControlledInternalDataStore):
     def __init__(self, profile, app_id, lab_id, token):
         super(DualInternalDataStore, self).__init__(profile, app_id, lab_id)
