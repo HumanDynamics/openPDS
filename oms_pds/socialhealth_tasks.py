@@ -217,7 +217,7 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, serviceId, includeBl
 
     for profile in profiles:
         # NOTE: need a means of getting at a token for authorizing this task to run. For now, we're not checking anyway, so it's blank
-        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", serviceId, "")
+        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "")
 #        if mean is None or dev is None:
         data = aggregateForUser(internalDataStore, answerKey, timeRanges, aggregator, includeBlanks)
 #        else:
@@ -276,7 +276,7 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
                     data[uuid].append(f)               
             profile = Profile.objects.get(uuid = uuid)
             # TODO: get a token here to run internal queries against...
-            ids = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "Focus", "")
+            ids = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "")
             ids.saveAnswer(answerKey, data[uuid]) 
     return data
 
@@ -317,8 +317,8 @@ def recentFocusScore():
     #data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 7, currentTime)], focusForTimeRange, False)
     score = {}
 
-    screenOnAverages = { uuid: float(sum([f["focus"] for f in focusList])) / len(focusList)  for uuid, focusList in data.iteritems()}
-    screenOnStdDevs = { uuid: math.sqrt(sum([(f["focus"] - screenOnAverages[uuid])**2 for f in focusList]) / len(focusList)) for uuid, focusList in data.iteritems()}
+    screenOnAverages = { uuid: float(sum([f["focus"] for f in focusList])) / len(focusList) if len(focusList) > 0 else 0  for uuid, focusList in data.iteritems()}
+    screenOnStdDevs = { uuid: math.sqrt(sum([(f["focus"] - screenOnAverages[uuid])**2 for f in focusList]) / len(focusList)) if len(focusList) > 0 else 0 for uuid, focusList in data.iteritems()}
     data = recentFocusLevels(True, screenOnAverages, screenOnStdDevs)
     
     for uuid, focusList in data.iteritems():
@@ -367,7 +367,7 @@ def recentSocialHealthScores():
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         print "storing %s" % profile.uuid
         
-        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "My Social Health", "")
+        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "")
  
         data[profile.uuid] = []
         #pdb.set_trace()
@@ -407,7 +407,7 @@ def recentSocialHealthScores2():
 
     for profile in profiles:
         token = getToken(profile, "app-uuid")
-        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "My Social Health", token)
+        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
 
         activityLevels = aggregateForUser(internalDataStore, "RecentActivityByHour", timeRanges, activityForTimeRange, False)
        
@@ -438,7 +438,7 @@ def recentSocialHealthScores2():
         stdDevs = { k: math.sqrt(sum(variances[k]) / len(variances[k])) for k in variances }
         for profile in activeUsers:
             token = getToken(profile, "app-uuid")
-            internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "My Social Health", token)
+            internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
             data[profile.uuid]["averageLow"] = { k: max(0, averages[k] - stdDevs[k]) for k in stdDevs }
             data[profile.uuid]["averageHigh"] = { k: min(averages[k] + stdDevs[k], 10) for k in stdDevs }
             internalDataStore.saveAnswer("socialhealth", data[profile.uuid])
