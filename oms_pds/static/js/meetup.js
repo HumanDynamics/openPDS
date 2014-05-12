@@ -49,7 +49,9 @@ window.MeetupRequestView = Backbone.View.extend({
     
     profilesReset: function (profiles) {
         this.profiles = profiles;
-        this.render();
+        //this.render();
+        var me = this;
+        setTimeout(function () { me.render(); }, 1000);
     },
 
     getUserText: function (uuid) {
@@ -110,7 +112,9 @@ window.MeetupRequestView = Backbone.View.extend({
         if (uuid) {
             this.map.attr("id", "map"+uuid);
             this.mapView = (time && place && uuid)? new AnswerListMap(null, [place[0], place[1]], "map"+uuid):null;
-            this.mapView.setCenter([place[0], place[1]], 18, true);
+            if (place) {
+                this.mapView.setCenter([place[0], place[1]], 18, true);
+            }
         }
         if (approved) {
             this.approveButton.addClass("ui-disabled");
