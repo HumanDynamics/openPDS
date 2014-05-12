@@ -62,7 +62,8 @@ def data(request):
     datastore_owner_uuid = request.GET["datastore_owner__uuid"]
     datastore_owner, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
     print "Creating IDS for %s" % datastore_owner_uuid
-    internalDataStore = getInternalDataStore(datastore_owner, token)
+    #internalDataStore = getInternalDataStore(datastore_owner, "Living Lab", "Social Health Tracker", "Activity", token)
+    internalDataStore = getInternalDataStore(datastore_owner, "Living Lab", "Social Health Tracker", token)
     #collection = connection[datastore_owner.getDBName()]["funf"]
     funf_password = "changeme"
     key = decrypt.key_from_password(str(funf_password))

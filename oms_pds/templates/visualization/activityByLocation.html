@@ -11,14 +11,14 @@ Recent Places
 </script>
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>
-<script src="{{ STATIC_URL }}js/answerListMap.js"></script>
+<script src="{{ STATIC_URL }}js/activityByLocation.js"></script>
 <script src="{{ STATIC_URL }}js/urlEncode.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
 
 <script>
 $(function () {
     
-    window.answerListMap = new AnswerListMap("RecentPlaces",{% if lat %}[{{ lat }}, {{ long }}]{% else %}null{% endif %},"answerListMapContainer", true);
+    window.answerListMap = new AnswerListMap("recentSimpleLocationProbeByHour", "recentActivityProbeByHour", {% if lat %}[{{ lat }}, {{ long }}]{% else %}null{% endif %},"answerListMapContainer", "answerListTimesContainer", true);
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
     $("#plus").live('click', answerListMap.zoomIn);
     $("#minus").live('click', answerListMap.zoomOut);
@@ -30,6 +30,9 @@ $(function () {
 
 {% block content %}
 <div id="answerListMapContainer">
+</div>
+
+<div id="answerListTimesContainer">
 </div>
 
 <div id="footer" data-role="footer">

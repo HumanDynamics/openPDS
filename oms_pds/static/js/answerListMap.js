@@ -26,12 +26,18 @@ window.AnswerListMap = Backbone.View.extend({
             displayProjection: new OpenLayers.Projection("EPSG:4326"),
             numZoomLevels: 18,
             tileManager: new OpenLayers.TileManager(),
+            controls: [
+                new OpenLayers.Control.Zoom(),
+                new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}}),
+//                new OpenLayers.Control.CacheWrite(),
+//                new OpenLayers.Control.CacheRead()
+            ]
 //            fractionalZoom: true
         });
 
-        this.map.addControls([
-            new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}}),
-        ]);  
+//        this.map.addControls([
+//            new OpenLayers.Control.TouchNavigation({dragPanOption: { enableKinetic: true}}),
+//        ]);  
         var osm = new OpenLayers.Layer.OSM();
         this.boxes  = new OpenLayers.Layer.Vector( "Boxes" );
         this.pointsLayer = new OpenLayers.Layer.Vector("Points");

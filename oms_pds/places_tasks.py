@@ -72,7 +72,7 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges, numPlaces=1):
     
     for profile in profiles:
         # TODO: figure out how to get at a token here...
-        internalDataStore = getInternalDataStore(profile, "")
+        internalDataStore = getInternalDataStore(profile, "Living Lab", "My Places", "")
         #dbName = profile.getDBName()
         #collection = connection[dbName]["funf"]
         locations = []
@@ -257,57 +257,6 @@ def estimateTimes():
                     place["end"] = averageEndTime
                     recentPlaces["value"].append(place)
                     answerListCollection.save(recentPlaces)
-
-def scoreMeetup(places):
-    if len(places) == 0:
-        return 99999999
-    center = centroid([(p["bounds"][0], p["bounds"][1]) for p in places])
-    distances = [distanceBetweenLatLongs(center, (p["bounds"][0], p["bounds"][1])) for p in places]
-    distance_score = reduce(lambda d1, d2: d1 +  d2, distances, 0)
-    average_distance = distance_score / len(places)
-    variance_score = math.sqrt(reduce(lambda s, d: s + (d - average_distance)**2, distances, 0))
-    return distance_score + variance_score, center
-
-@task()
-def findMeetups(owner_uuid="280e418a-8032-4de3-b62a-ad173fea4811", participant_uuids=["5241576e-43da-4b08-8a71-b477f931e021", "72d9d8e3-3a57-4508-9515-2b881afc0d8e"], description="", token="b3dbac8916"):
-    participant_places = {}
-    owner = Profile.objects.get(uuid = owner_uuid)
-    internalDataStore = getInternalDataStore(owner, token)
-    owner_places = internalDataStore.getAnswerList("RecentPlaces")[0]["value"]
-
-    for uuid in participant_uuids:
-        url = "http://working-title.media.mit.edu:8004/api/personal_data/answerlist/?key=RecentPlaces&datastore_owner__uuid=%s&bearer_token=%s"%(uuid, token)
-        headers = { "content-type": "application/json" }
-        requester_places = requests.get(url, headers = headers)
-        print "Meetup between %s and %s"%(owner_uuid, uuid)
-        if requester_places.status_code == requests.codes.ok:
-            print requester_places.json()
-            participant_places[uuid] = requester_places.json()["objects"][0]["value"]
-
-    min_score = 9999999999 #proxy for int_max or whatever Python calls it
-    min_score_key = None
-    meeting_point = None
-    participant_locations = []
-    for place in [p for p in owner_places if p["key"] not in ["work", "home"]]:
-        #print participant_places
-        places_for_key = [p for uid in participant_uuids for p in participant_places[uid] if p["key"] == place["key"]]
-        places_for_key.append(place)        
-        score_for_key, point_for_key = scoreMeetup(places_for_key)  
-        if score_for_key < min_score:
-            print "%s < %s" % (score_for_key, min_score)
-            min_score = score_for_key
-            min_score_key = place["key"]
-            meeting_point = point_for_key
-            participant_locations = [(p["bounds"][0], p["bounds"][1]) for p in places_for_key]
-
-    print "Best Time: %s" % min_score_key
-    print "Meeting point: %s,%s" % meeting_point
-    print participant_locations
-    answer = internalDataStore.getAnswerList("Meetups")
-    answer = answer[0]["value"] if answer is not None and answer.count() > 0 else []
-    answer = [v for v in answer if "description" in v and v["description"] != description]
-    answer.append({"description": description, "participants": participant_uuids, "hour": min_score_key, "place": meeting_point})
-    internalDataStore.saveAnswer("Meetups", answer)
 
 @task()
 def findSuggestedPlaces():
