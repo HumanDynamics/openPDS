@@ -39,8 +39,21 @@ def storeAccessControl(request):
 				else:
 					values[column] = data.get(column)
 
-			context = Context.objects.get(datastore_owner = profile, context_label = data.get('settings_context_label'))
-			settings, created = Settings.objects.get_or_create(datastore_owner = profile, app_id = values['app_id'], lab_id = values['lab_id'])
+                        try:
+			    context = Context.objects.get(datastore_owner = profile, context_label = data.get('settings_context_label'))
+			except Context.DoesNotExist:
+			    context = Context.objects.create(datastore_owner = profile, context_label = data.get('settings_context_label'))
+			    context.context_duration_start = '10 : 0'
+			    context.context_duration_end = '18 : 0'
+			    context.context_duration_days = '[0, 1, 1, 1, 1, 1, 0]'
+			    context.save()
+
+			#settings, created = Settings.objects.get_or_create(datastore_owner = profile, app_id = values['app_id'], lab_id = values['lab_id'], context_label_id = context.id)
+
+			try:
+			    settings = Settings.objects.get(datastore_owner = profile, app_id = values['app_id'], lab_id = values['lab_id'])
+			except Settings.DoesNotExist:
+			    settings = Settings.objects.create(datastore_owner = profile, app_id = values['app_id'], lab_id = values['lab_id'], context_label_id = context.id)
 		        settings.context_label = context
 			settings.activity_probe = values['activity_probe']
 			settings.sms_probe = values['sms_probe']
@@ -71,3 +84,69 @@ def deleteAccessControl(request):
                 context.delete()
 
 	return HttpResponse(request.method)
+
+
+def loadAccessControl(request):
+    values = {}
+    if request.method == "POST":
+	data = json.loads(request.raw_post_data)
+	datastore_owner = data.get(u'datastore_owner')
+	app_id = data.get(u'app_id')
+	lab_id = data.get(u'lab_id')
+
+	print(data)
+	profile = Profile.objects.get(uuid = datastore_owner)
+
+	settings = []
+	try:
+	    setting_object = Settings.objects.get(datastore_owner = profile, app_id = app_id, lab_id = lab_id)
+	except Settings.DoesNotExist:
+	    setting_object = None
+
+	if setting_object is not None:
+            setting = {}
+
+	    setting['activity_probe'] = setting_object.activity_probe
+	    setting['sms_probe'] = setting_object.sms_probe
+            setting['call_log_probe'] = setting_object.call_log_probe
+	    setting['bluetooth_probe'] = setting_object.bluetooth_probe
+	    setting['wifi_probe'] = setting_object.wifi_probe
+	    setting['simple_location_probe'] = setting_object.simple_location_probe
+	    setting['screen_probe'] = setting_object.screen_probe
+	    setting['running_applications_probe'] = setting_object.running_applications_probe
+	    setting['hardware_info_probe'] = setting_object.hardware_info_probe
+	    setting['app_usage_probe'] = setting_object.app_usage_probe
+	    setting['context_label_id'] = setting_object.context_label_id
+            settings.append(setting)
+
+	context_objects = []
+	contexts = []
+        context_objects = list(Context.objects.all().filter(datastore_owner = profile))
+
+	if len(context_objects) == 0:
+	    context = Context.objects.create(datastore_owner = profile, context_label = 'MIT')
+            context.context_duration_start = '10 : 0'
+            context.context_duration_end = '18 : 0'
+            context.context_duration_days = '[0, 1, 1, 1, 1, 1, 0]'
+	    context.context_places = ''
+            context.save()
+	    context_objects.append(context)
+
+	print context_objects
+	for context_object in context_objects:
+	    context = {}
+	    context['id'] = context_object.id
+	    print(context_object.id)
+	    context['context_label'] = context_object.context_label
+	    context['context_duration_start'] = context_object.context_duration_start
+	    context['context_duration_end'] = context_object.context_duration_end
+	    context['context_duration_days'] = context_object.context_duration_days
+	    context['context_places'] = context_object.context_places
+	    contexts.append(context)
+
+	return HttpResponse(json.dumps({
+        "settings": settings, 
+        "contexts": contexts}),
+    content_type="application/json")
+
+

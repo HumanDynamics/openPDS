@@ -67,7 +67,6 @@ def aggregateForUser(probe, internalDataStore, answerKey, timeRanges, aggregator
 
 @task()
 def recentProbeDataScores():
-#    profile = Profile.objects.get(uuid = uuid)
     profiles = Profile.objects.all()
     for profile in profiles:
         startTime = socialhealth_tasks.getStartTime(6, True)
@@ -79,11 +78,11 @@ def recentProbeDataScores():
                        'recentRunningApplicationsProbeByHour': 'RunningApplicationsProbe', 'recentHardwareInfoProbeByHour': 'HardwareInfoProbe', 
                        'recentAppUsageProbeByHour': 'AppUsageProbe'}
 
-        print profile
+#        print profile
         token = socialhealth_tasks.getToken(profile, "app-uuid")
         internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
 
         for probeAnswerKey, probe in probeAnswerKeys.iteritems():
-            print probe
+#            print probe
 	    probeLevels = aggregateForUser(probe, internalDataStore, probeAnswerKey, timeRanges, probeForTimeRange, False)
-	    print probeLevels
+#	    print probeLevels
