@@ -6,14 +6,14 @@ Replace this with more appropriate tests for your application.
 """
 
 from django.test import TestCase
-#from oms_pds.accesscontrol.models import FunfProbeGroupSetting, FunfProbeSetting
-from oms_pds.pds.internal import getAccessControlledInternalDataStore
+#from openpds.accesscontrol.models import FunfProbeGroupSetting, FunfProbeSetting
+from openpds.core.internal import getAccessControlledInternalDataStore
 import sqlite3
-from oms_pds.pds.models import Profile
-from oms_pds.pds.internal import getInternalDataStore, InternalDataStore
-from oms_pds.accesscontrol.models import Settings
+from openpds.core.models import Profile
+from openpds.core.internal import getInternalDataStore, InternalDataStore
+from openpds.accesscontrol.models import Settings
 
-from oms_pds.probedatavisualization_tasks import recentProbeDataScores 
+from openpds.probedatavisualization_tasks import recentProbeDataScores 
 class SimpleTest(TestCase):
     def test_basic_addition(self):
         """

@@ -1,4 +1,4 @@
-from oms_pds.pds.internal import InternalDataStore
+from openpds.backends.mongo import InternalDataStore
 
 class MeetupInternalDataStore(InternalDataStore):
     # NOTE: This class depends on Mongo APIs and as such, only works with the Mongo IDS

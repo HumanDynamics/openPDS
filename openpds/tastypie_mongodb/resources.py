@@ -9,7 +9,7 @@ from tastypie.bundle import Bundle
 from tastypie.resources import Resource
 import pdb
 
-from oms_pds.pds.models import Profile
+from openpds.core.models import Profile
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 

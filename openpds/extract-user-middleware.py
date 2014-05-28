@@ -7,7 +7,7 @@ from django.utils.cache import patch_vary_headers
 from django import http
 #import settings
 from django.conf import settings
-import oms_pds.tastypie_mongodb.resources
+import openpds.tastypie_mongodb.resources
 
 class ExtractUser(object):
     """
@@ -23,7 +23,7 @@ class ExtractUser(object):
 #	        host=getattr(settings, "MONGODB_HOST", None),
 #	        port=getattr(settings, "MONGODB_PORT", None)
 #	    )["User_"+request.GET['multiPDS_user']]
-#	    oms_pds.tastypie_mongodb.resources.Connection = Connection(
+#	    openpds.tastypie_mongodb.resources.Connection = Connection(
 #                host=getattr(settings, "MONGODB_HOST", None),
 #                port=getattr(settings, "MONGODB_PORT", None)
 #            )	["User_"+request.GET['multiPDS_user']]

@@ -15,9 +15,9 @@ class SimpleTest(TestCase):
         """
         self.assertEqual(1 + 1, 2)
 
-from oms_pds.pds.internal import SQLiteInternalDataStore, PostgresInternalDataStore
-from oms_pds.pds.models import Profile
-from oms_pds.socialhealth_tasks import copyData
+from openpds.core.internal import SQLiteInternalDataStore, PostgresInternalDataStore
+from openpds.core.models import Profile
+from openpds.socialhealth_tasks import copyData
 
 def copyDataToPostgres():
     me = Profile.objects.get(id=6)

@@ -1,6 +1,6 @@
 from tastypie.authorization import Authorization
-from oms_pds.authentication import OAuth2Authentication
-from oms_pds.pds.models import Profile, AuditEntry
+from openpds.authentication import OAuth2Authentication
+from openpds.core.models import Profile, AuditEntry
 
 import settings
 import pdb

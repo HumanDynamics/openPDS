@@ -4,9 +4,9 @@ import os
 import stat
 import threading
 from pymongo import Connection
-from oms_pds.pds.models import Profile
-from oms_pds.accesscontrol.models import Settings, Context
-from oms_pds import settings
+from openpds.core.models import Profile
+from openpds.accesscontrol.models import Settings, Context
+from openpds import settings
 import datetime
 import math
 

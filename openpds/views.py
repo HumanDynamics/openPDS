@@ -7,8 +7,8 @@ import settings
 import httplib
 from django import forms
 import json
-from oms_pds.forms.settingsforms import PermissionsForm, Purpose_Form
-from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel, Profile, ResourceKey
+from openpds.forms.settingsforms import PermissionsForm, Purpose_Form
+from openpds.core.models import Scope, Purpose, Role, SharingLevel, Profile, ResourceKey
 from pymongo import Connection
 import pdb
 from fourstore.views import sparql_proxy

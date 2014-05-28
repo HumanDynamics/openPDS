@@ -6,10 +6,10 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.core.exceptions import ObjectDoesNotExist
-from oms_pds.pds.models import Profile
-from oms_pds.meetup.internal import getInternalDataStore
-from oms_pds.meetup.tasks import scheduleMeetup, helpScheduleMeetup, initiateMeetupScheduling
-from oms_pds import settings
+from openpds.core.models import Profile
+from openpds.meetup.internal import getInternalDataStore
+from openpds.meetup.tasks import scheduleMeetup, helpScheduleMeetup, initiateMeetupScheduling
+from openpds import settings
 
 def get_parameters(request, params):
     values = []

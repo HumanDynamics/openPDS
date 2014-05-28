@@ -1,5 +1,5 @@
 from celery import task
-from oms_pds.pds.models import Profile, Notification, Device
+from openpds.core.models import Profile, Notification, Device
 from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
@@ -11,7 +11,7 @@ import math
 import cluster
 from gcm import GCM
 
-from oms_pds.pds.models import Profile
+from openpds.core.models import Profile
 
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),

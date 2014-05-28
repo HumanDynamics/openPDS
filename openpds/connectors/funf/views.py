@@ -8,10 +8,10 @@ import dbdecrypt
 import decrypt
 import sqlite3
 import json, ast
-from oms_pds import settings
-from oms_pds.authorization import PDSAuthorization
-from oms_pds.pds.models import Profile
-from oms_pds.internal.mongo import getInternalDataStore, InternalDataStore
+from openpds import settings
+from openpds.authorization import PDSAuthorization
+from openpds.core.models import Profile
+from openpds.backends.mongo import getInternalDataStore, InternalDataStore
 import pdb
 
 upload_dir = settings.SERVER_UPLOAD_DIR

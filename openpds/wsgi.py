@@ -22,7 +22,7 @@ djcelery.setup_loader()
 
 django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
 
-os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "oms_pds.settings")
+os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "openpds.settings")
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION

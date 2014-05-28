@@ -3,8 +3,8 @@ from celery import task
 import time
 from datetime import date, timedelta
 from collections import Counter
-from oms_pds.internal.mongo import getInternalDataStore
-from oms_pds.pds.models import Profile
+from openpds.backends.mongo import getInternalDataStore
+from openpds.core.models import Profile
 
 def getStartTime(daysAgo, startAtMidnight):
     currentTime = time.time()

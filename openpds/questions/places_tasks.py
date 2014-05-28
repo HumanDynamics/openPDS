@@ -1,5 +1,5 @@
 from celery import task
-from oms_pds.pds.models import Profile, Notification, Device
+from openpds.core.models import Profile, Notification, Device
 from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
@@ -11,10 +11,10 @@ import math
 import cluster
 import requests
 from gcm import GCM
-from oms_pds.pds.models import Profile
+from openpds.core.models import Profile
 from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
-from oms_pds.internal.dual import getInternalDataStore
+from openpds.backends.dual import getInternalDataStore
 import sqlite3
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """

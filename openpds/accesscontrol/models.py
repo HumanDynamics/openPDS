@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext as _
-from oms_pds.pds.models import Profile
+from openpds.core.models import Profile
 
 class Context(models.Model):
         datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="datastore_owner_context")

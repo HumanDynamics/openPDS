@@ -1,5 +1,5 @@
 from celery import task
-from oms_pds.pds.models import Profile, Notification, Device
+from openpds.core.models import Profile, Notification, Device
 from bson import ObjectId
 from pymongo import Connection
 import time
@@ -11,12 +11,11 @@ import cluster
 import requests
 import random
 from gcm import GCM
-from oms_pds.pds.models import Profile
-from SPARQLWrapper import SPARQLWrapper, JSON
+from openpds.core.models import Profile
 from collections import Counter
-from oms_pds import settings
-from oms_pds.meetup.internal import getInternalDataStore
-from oms_pds.places_tasks import centroid, distanceBetweenLatLongs
+from openpds import settings
+from openpds.meetup.internal import getInternalDataStore
+from openpds.questions.places_tasks import centroid, distanceBetweenLatLongs
 import sqlite3
 
 def randomPointInRegion(bounds):

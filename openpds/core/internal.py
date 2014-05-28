@@ -7,10 +7,10 @@ import psycopg2
 import psycopg2.extras
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from pymongo import Connection
-from oms_pds.pds.models import Profile
-from oms_pds.accesscontrol.models import Settings
-from oms_pds.accesscontrol.internal import AccessControlledInternalDataStore, getAccessControlledInternalDataStore
-from oms_pds import settings
+from openpds.core.models import Profile
+from openpds.accesscontrol.models import Settings
+from openpds.accesscontrol.internal import AccessControlledInternalDataStore, getAccessControlledInternalDataStore
+from openpds import settings
 
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),

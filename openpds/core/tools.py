@@ -1,8 +1,8 @@
 #from tastytools.api import Api
 from tastypie.api import Api
 
-from oms_pds.pds.api import FunfResource, FunfConfigResource, RoleResource, PurposeResource, AnswerResource, AnswerListResource, AuditEntryResource, AuditEntryCountResource, ScopeResource, SharingLevelResource, NotificationResource, DeviceResource,IncidentResource
-from oms_pds.meetup.api import MeetupRequestResource
+from openpds.core.api import FunfResource, FunfConfigResource, RoleResource, PurposeResource, AnswerResource, AnswerListResource, AuditEntryResource, AuditEntryCountResource, ScopeResource, SharingLevelResource, NotificationResource, DeviceResource,IncidentResource
+from openpds.meetup.api import MeetupRequestResource
 v1_api = Api(api_name='personal_data')
 v1_api.register(FunfResource())
 v1_api.register(FunfConfigResource())

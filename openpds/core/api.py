@@ -1,17 +1,17 @@
 from tastypie.authorization import Authorization
 from tastypie.resources import ModelResource, fields, ALL_WITH_RELATIONS
-from oms_pds.authentication import OAuth2Authentication
-from oms_pds.authorization import PDSAuthorization
-#from oms_pds.trust.models import SharingLevel, Role, Purpose
-from oms_pds import settings
+from openpds.authentication import OAuth2Authentication
+from openpds.authorization import PDSAuthorization
+#from openpds.trust.models import SharingLevel, Role, Purpose
+from openpds import settings
 import datetime
 import json, ast
 
 from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.validation import Validation
-from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
-from oms_pds.pds.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope, Notification, Device, ResourceKey
+from openpds.tastypie_mongodb.resources import MongoDBResource, Document
+from openpds.core.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope, Notification, Device, ResourceKey
 from django.db import models
 
 import pdb

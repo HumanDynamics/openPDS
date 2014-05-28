@@ -1,8 +1,8 @@
 from django.core.urlresolvers import reverse
 from tastypie.bundle import Bundle
 from tastypie.resources import Resource
-from oms_pds.pds.internal import getInternalDataStore
-from oms_pds.pds.models import Profile
+from openpds.core.internal import getInternalDataStore
+from openpds.core.models import Profile
 
 class Document(dict):
     # dictionary-like object for mongodb documents.

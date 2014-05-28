@@ -1,5 +1,5 @@
 from celery import task
-from oms_pds.pds.models import Profile, Notification, Device
+from openpds.core.models import Profile, Notification, Device
 from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
@@ -11,9 +11,9 @@ import pdb
 import math
 import cluster
 from gcm import GCM
-from oms_pds.pds.models import Profile
-from oms_pds.internal.dual import getInternalDataStore
-from oms_pds.socialhealth_tasks import getStartTime
+from openpds.core.models import Profile
+from openpds.backends.dual import getInternalDataStore
+from openpds.socialhealth_tasks import getStartTime
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3

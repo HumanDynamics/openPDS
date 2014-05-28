@@ -1,7 +1,7 @@
 from celery import task
-from oms_pds.pds.models import Profile
-from oms_pds.pds.internal import getInternalDataStore
-from oms_pds.accesscontrol.models import Optin
+from openpds.core.models import Profile
+from openpds.core.internal import getInternalDataStore
+from openpds.accesscontrol.models import Optin
 
 def hotSpotsComputation(internal_data_store):
     hot_spots = {}

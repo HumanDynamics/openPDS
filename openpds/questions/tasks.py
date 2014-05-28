@@ -1,5 +1,5 @@
 from celery import task
-from oms_pds.pds.models import Profile, Notification, Device
+from openpds.core.models import Profile, Notification, Device
 from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
@@ -12,9 +12,9 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3
 import random
-from oms_pds.socialhealth_tasks import getStartTime
-#from oms_pds.pds.internal.mongo import getInternalDataStore
-from oms_pds.internal.mongo import getInternalDataStore
+from openpds.socialhealth_tasks import getStartTime
+#from openpds.core.internal.mongo import getInternalDataStore
+from openpds.backends.mongo import getInternalDataStore
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 
@@ -176,7 +176,7 @@ def findMusicGenres():
 @task()
 def dumpFunfData():
     profiles = Profile.objects.all()
-    outputConnection = sqlite3.connect("oms_pds/static/dump.db")
+    outputConnection = sqlite3.connect("openpds/static/dump.db")
     c = outputConnection.cursor()
     c.execute("CREATE TABLE IF NOT EXISTS funf (user_id integer, key text, time real, value text, PRIMARY KEY (user_id, key, time) on conflict ignore)")
     startTime = getStartTime(3, False)#max(1378008000, startTimeRow[0]) if startTimeRow is not None else 1378008000
@@ -192,7 +192,7 @@ def dumpFunfData():
 @task()
 def dumpSurveyData():
     profiles = Profile.objects.all()
-    outputConnection = sqlite3.connect("oms_pds/static/dump.db")
+    outputConnection = sqlite3.connect("openpds/static/dump.db")
     c = outputConnection.cursor()
     #c.execute("DROP TABLE IF EXISTS survey;")
     c.execute("CREATE TABLE IF NOT EXISTS survey (user_id integer, key text, time real, value text, PRIMARY KEY (user_id, key, time) on conflict ignore);")

@@ -21,7 +21,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/trustframework/fieldTrialPDS/openPDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
+        'NAME': '/var/www/trustframework/fieldTrialPDS/openPDS/openpds/test.db',                      # Or path to database file if using sqlite3.
         #'NAME': 'test.db',
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
@@ -102,18 +102,18 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     #'django.middleware.csrf.CsrfViewMiddleware',
-    'oms_pds.django-crossdomainxhr-middleware.XsSharing',
-    'oms_pds.extract-user-middleware.ExtractUser',
+    'openpds.django-crossdomainxhr-middleware.XsSharing',
+    'openpds.extract-user-middleware.ExtractUser',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'oms_pds.urls'
+ROOT_URLCONF = 'openpds.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'oms_pds.wsgi.application'
+WSGI_APPLICATION = 'openpds.wsgi.application'
 
 TEMPLATE_DIRS = (os.path.join(os.path.dirname(__file__), 'templates'),)
 
@@ -127,9 +127,9 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'openpds.core',
     'djcelery',
-    #'oms_pds.ra_celery',
+    #'openpds.ra_celery',
     'kombu.transport.django',
-    #'oms_pds.visualization',
+    #'openpds.visualization',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:

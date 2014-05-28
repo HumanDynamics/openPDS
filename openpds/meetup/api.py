@@ -1,12 +1,12 @@
 import uuid
 import requests
-from oms_pds.authentication import OAuth2Authentication
-from oms_pds.authorization import PDSAuthorization
+from openpds.authentication import OAuth2Authentication
+from openpds.authorization import PDSAuthorization
 from tastypie import fields
-from oms_pds.pds.models import Profile
-from oms_pds.tastypie_mongodb.resources import MongoDBResource, Document
-from oms_pds.meetup.internal import getInternalDataStore
-from oms_pds.meetup.tasks import sendMeetupRequestToParticipants, notifyRequesterOfApprovalStatus
+from openpds.core.models import Profile
+from openpds.tastypie_mongodb.resources import MongoDBResource, Document
+from openpds.meetup.internal import getInternalDataStore
+from openpds.meetup.tasks import sendMeetupRequestToParticipants, notifyRequesterOfApprovalStatus
 from gcm import GCM
 
 class MeetupRequestResource(MongoDBResource):

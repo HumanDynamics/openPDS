@@ -2,7 +2,7 @@
 from django.conf.urls.defaults import patterns, include, url
 import logging, random, hashlib, string
 
-urlpatterns = patterns('oms_pds.funf_connector.views',
+urlpatterns = patterns('openpds.funf_connector.views',
     (r'^set_funf_data$',                 'data'),
 #    (r'^set_funf_key$',                 'write_key'),
 #    (r'^journal$',                 'journal'),
