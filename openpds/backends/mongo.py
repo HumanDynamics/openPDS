@@ -1,7 +1,7 @@
 from pymongo import Connection
-from oms_pds.pds.models import Profile
-from oms_pds.accesscontrol.internal import AccessControlledInternalDataStore
-from oms_pds import settings
+from openpds.core.models import Profile
+from openpds.accesscontrol.internal import AccessControlledInternalDataStore
+from openpds import settings
 
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),

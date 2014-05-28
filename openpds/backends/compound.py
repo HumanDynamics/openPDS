@@ -1,5 +1,4 @@
-from oms_pds.accesscontrol.internal import AccessControlledInternalDataStore
-
+from openpds.accesscontrol.internal import AccessControlledInternalDataStore
 
 class CompoundInternalDataStore:
 

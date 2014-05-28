@@ -125,13 +125,10 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
-    'oms_pds.pds',
-    'oms_pds.sharing',
-    'oms_pds.trust',
+    'openpds.core',
     'djcelery',
     #'oms_pds.ra_celery',
     'kombu.transport.django',
-    'crocodile',
     #'oms_pds.visualization',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
@@ -191,7 +188,5 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(levelname)-8s %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
-
 
 GCM_API_KEY = "AIzaSyBTGmBjzM9_CETLxU3YEbtWIS_OUGWHr0s"

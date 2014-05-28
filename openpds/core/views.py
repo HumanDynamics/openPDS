@@ -1,7 +1,9 @@
 from django.shortcuts import render_to_response, get_object_or_404
-from oms_pds.pds.models import Profile
+from django.http import HttpResponse
+from openpds.core.models import Profile
 from pymongo import Connection
-from oms_pds import settings
+from openpds import settings
+import json
 
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
