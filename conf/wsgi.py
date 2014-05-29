@@ -1,5 +1,5 @@
 """
-WSGI config for OMS_PDS project.
+WSGI config for openPDS project.
 
 This module contains the WSGI application used by Django's development server
 and any production WSGI deployments. It should expose a module-level variable
@@ -16,12 +16,15 @@ framework.
 import os
 import site
 import sys
-import django.conf
 import djcelery
+import django.conf
+
+activate_this = os.path.expanduser("/var/www/trustframework/pdsEnv/bin/activate_this.py")
+execfile(activate_this, dict(__file__=activate_this))
+
 djcelery.setup_loader()
-
 django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
-
+sys.path.append('/var/www/trustframework/pdsEnv/openPDS')
 os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "openpds.settings")
 
 # This application object is used by any WSGI server configured to use this
@@ -29,7 +32,3 @@ os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "openpds.settings")
 # setting points here.
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
-
-# Apply WSGI middleware here.
-# from helloworld.wsgi import HelloWorldApplication
-# application = HelloWorldApplication(application)
