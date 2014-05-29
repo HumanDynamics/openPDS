@@ -17,9 +17,6 @@ from collections import Counter
 from openpds.backends.dual import getInternalDataStore
 import sqlite3
 
-"""the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
-
-
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
     port=getattr(settings, "MONGODB_PORT", None)

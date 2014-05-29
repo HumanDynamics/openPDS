@@ -4,9 +4,7 @@ import os
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
-MONGODB_HOST = None
-MONGODB_PORT = None
-MONGODB_DATABASE = 'pds'
+DATA_STORAGE_ENGINE = 'openpds.backends.mongo'
 SERVER_OMS_REGISTRY='working-title.media.mit.edu:8003'
 DEFAULT_PDS_URL = 'http://working-title.media.mit.edu:8004'
 
@@ -103,7 +101,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     #'django.middleware.csrf.CsrfViewMiddleware',
     'openpds.django-crossdomainxhr-middleware.XsSharing',
-    'openpds.extract-user-middleware.ExtractUser',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
@@ -127,7 +124,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'openpds.core',
     'djcelery',
-    #'openpds.ra_celery',
     'kombu.transport.django',
     #'openpds.visualization',
     # Uncomment the next line to enable the admin:

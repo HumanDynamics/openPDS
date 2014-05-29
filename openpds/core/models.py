@@ -1,9 +1,5 @@
 from django.conf import settings
 from django.db import models
-from mongoengine import *
-
-connect(settings.MONGODB_DATABASE)
-
 
 class Profile(models.Model):
     uuid = models.CharField(max_length=36, unique=True, blank = False, null = False, db_index = True)

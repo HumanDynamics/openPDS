@@ -14,9 +14,6 @@ from openpds.core.models import Profile
 from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 
-"""the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
-
-
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
     port=getattr(settings, "MONGODB_PORT", None)

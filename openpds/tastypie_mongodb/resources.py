@@ -11,15 +11,10 @@ import pdb
 
 from openpds.core.models import Profile
 
-"""the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
-
-
 db = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
     port=getattr(settings, "MONGODB_PORT", None)
 )
-#[settings.MONGODB_DATABASE]
-
 
 class Document(dict):
     # dictionary-like object for mongodb documents.
@@ -38,11 +33,11 @@ class MongoDBResource(Resource):
             # moving forward, we'll want to remove this fallback and require that the owner is specified
             # from the owner uuid, we're looking up the internal identifier from the corresponding profile
             #pdb.set_trace()
-            database = settings.MONGODB_DATABASE
+            database = None
             if (request and "datastore_owner__uuid" in request.GET):
                 profile, created = Profile.objects.get_or_create(uuid = request.GET["datastore_owner__uuid"])
                 database = profile.getDBName()
-            return db[database][self._meta.collection]
+            return db[database][self._meta.collection] if database is not None else None
         except AttributeError:
             raise ImproperlyConfigured("Define a collection in your resource.")
 
