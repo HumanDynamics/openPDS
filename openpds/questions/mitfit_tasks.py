@@ -12,7 +12,7 @@ import math
 import cluster
 from gcm import GCM
 from openpds.core.models import Profile
-from openpds.backends.mongo import getInternalDataStore
+from openpds import getInternalDataStore
 from collections import Counter
 import sqlite3
 import socialhealth_tasks

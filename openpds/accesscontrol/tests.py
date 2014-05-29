@@ -10,7 +10,7 @@ from django.test import TestCase
 from openpds.core.internal import getAccessControlledInternalDataStore
 import sqlite3
 from openpds.core.models import Profile
-from openpds.core.internal import getInternalDataStore, InternalDataStore
+from openpds import getInternalDataStore
 from openpds.accesscontrol.models import Settings
 
 from openpds.probedatavisualization_tasks import recentProbeDataScores 

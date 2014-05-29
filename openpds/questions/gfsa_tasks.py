@@ -12,7 +12,7 @@ import math
 import cluster
 from gcm import GCM
 from openpds.core.models import Profile
-from openpds.backends.dual import getInternalDataStore
+from openpds import getInternalDataStore
 from openpds.socialhealth_tasks import getStartTime
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter

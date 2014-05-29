@@ -14,7 +14,7 @@ from gcm import GCM
 from openpds.core.models import Profile
 from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
-from openpds.backends.dual import getInternalDataStore
+from openpds import getInternalDataStore
 import sqlite3
 
 connection = Connection(

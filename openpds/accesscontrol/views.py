@@ -10,7 +10,7 @@ import json, ast
 from openpds import settings
 from openpds.authorization import PDSAuthorization
 from openpds.core.models import Profile
-from openpds.backends.mongo import getInternalDataStore, InternalDataStore
+from openpds import getInternalDataStore
 import pdb
 from openpds.accesscontrol.models import Settings, Context, Optin
 

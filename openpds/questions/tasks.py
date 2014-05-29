@@ -13,7 +13,7 @@ from collections import Counter
 import sqlite3
 import random
 from openpds.socialhealth_tasks import getStartTime
-from openpds.backends.mongo import getInternalDataStore
+from openpds import getInternalDataStore
 
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),

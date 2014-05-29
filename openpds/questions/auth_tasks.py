@@ -3,7 +3,7 @@ from celery import task
 import time
 from datetime import date, timedelta
 from collections import Counter
-from openpds.backends.mongo import getInternalDataStore
+from openpds import getInternalDataStore
 from openpds.core.models import Profile
 
 def getStartTime(daysAgo, startAtMidnight):

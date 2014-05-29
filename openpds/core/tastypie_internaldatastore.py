@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from tastypie.bundle import Bundle
 from tastypie.resources import Resource
-from openpds.core.internal import getInternalDataStore
+from openpds import getInternalDataStore
 from openpds.core.models import Profile
 
 class Document(dict):

@@ -11,7 +11,7 @@ import json, ast
 from openpds import settings
 from openpds.authorization import PDSAuthorization
 from openpds.core.models import Profile
-from openpds.backends.mongo import getInternalDataStore, InternalDataStore
+from openpds import getInternalDataStore
 import pdb
 
 upload_dir = settings.SERVER_UPLOAD_DIR

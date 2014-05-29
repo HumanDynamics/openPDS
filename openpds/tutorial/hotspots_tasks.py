@@ -1,6 +1,6 @@
 from celery import task
 from openpds.core.models import Profile
-from openpds.core.internal import getInternalDataStore
+from openpds import getInternalDataStore
 from openpds.accesscontrol.models import Optin
 
 def hotSpotsComputation(internal_data_store):
