@@ -13,7 +13,7 @@ from collections import Counter
 import sqlite3
 import random
 from oms_pds.socialhealth_tasks import getStartTime
-from oms_pds.internal.mongo import InternalDataStore
+from oms_pds.pds.internal import InternalDataStore
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 
@@ -38,8 +38,9 @@ def recentProbeCounts():
     startTime = getStartTime(1, False)
     
     for profile in profiles:
-        ids = InternalDataStore(profile, "")
-        probes = ["ActivityProbe", "SimpleLocationProbe", "CallLogProbe", "SmsProbe", "WifiProbe", "BluetoothProbe"]
+        #ids = InternalDataStore(profile, "")
+        ids = InternalDataStore(profile, "", "", "")
+        probes = ["ActivityProbe", "CallLogProbe", "SmsProbe", "WifiProbe", "BluetoothProbe"]
         answer = {}
         for probe in probes:
             data = ids.getData(probe, startTime, None)
