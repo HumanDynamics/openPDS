@@ -17,12 +17,14 @@
 -->
 <script>
 $(function () {
-	window.radialApp = new SocialHealthRadialView();
+//	window.radialApp = new SocialHealthRadialView();
 //	window.answerRating = new AnswerRatingStarView({ el: "#answer_rating", key: "SocialHealthAnswerRating" });
 //    window.activityRating = new AnswerRatingStarView({ el: "#activity_rating", key: "SelfReportedActivityRating" });
 //    window.socialRating = new AnswerRatingStarView({ el: "#social_rating", key: "SelfReportedSocialRating" });
 //    window.focusRating = new AnswerRatingStarView({ el: "#focus_rating", key: "SelfReportedFocusRating" });
-	$(window).bind("resize", function () { radialApp.render(); });
+//	$(window).bind("resize", function () { radialApp.render(); });
+    window.arcApp = new SocialHealthArcView();
+    $(window).bind("resize", function () { arcApp.render(); });
 });
 </script>
 

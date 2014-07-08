@@ -66,7 +66,7 @@ def centroid(points):
     sums = reduce(lambda p1,p2: (p1[0] + p2[0], p1[1] + p2[1]), points, (0,0))
     return (sums[0] / len(points), sums[1] / len(points))
 
-def findRecentPlaceBounds(recentPlaceKey, timeRanges, numPlaces=1):
+def findRecentPlaceBounds(recentPlaceKey, timeRanges, numPlaces=1, answerKey="RecentPlaces"):
     profiles = Profile.objects.all()
     data = {}
     
@@ -128,12 +128,12 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges, numPlaces=1):
             mostVoted = [r["region"] for r in mostOverlap]
             if numPlaces == 1: 
                 mostVoted = mostVoted[0]
-            answer = internalDataStore.getAnswerList("RecentPlaces")
+            answer = internalDataStore.getAnswerList(answerKey)
             answer = answer[0]["value"] if answer.count() > 0 else []
             data[profile.uuid] = [datum for datum in answer if datum["key"] != recentPlaceKey]
             data[profile.uuid].append({ "key": recentPlaceKey, "bounds": mostVoted})
             answer = data[profile.uuid]
-            internalDataStore.saveAnswer("RecentPlaces", answer)
+            internalDataStore.saveAnswer(answerKey, answer)
     return data
 
 def clusterFunfLocations(values, distance):
@@ -187,6 +187,11 @@ def findRecentPlaces():
     today = date.fromtimestamp(currentTime)
     startTime = time.mktime((today - timedelta(days=14)).timetuple())
 
+    profiles = Profile.objects.all()
+    for profile in profiles:
+        ids = getInternalDataStore(profile, "Living Lab", "My Places", "")
+        ids.saveAnswer("RecentPlaces", [])
+
     # Note: we're not taking the full 9-5 sampling. Clustering is expensive, so anything we can leave out helps...
     # Combined with the fact that "lunch" time might not be indicative of work locations, this might be more accurate anyway       
     nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
@@ -198,12 +203,23 @@ def findRecentPlaces():
     #print "Finding home locations..."
     data = findRecentPlaceBounds("home", midnightToSixes)
 
+    print "... done with RecentPlaces"
+    return data
+
+@task()
+def findHourlyPlaces():
+    currentTime = time.time()
+    today = date.fromtimestamp(currentTime)
+    startTime = time.mktime((today - timedelta(days=14)).timetuple())
+
     for hour in range(0, 24):
         timeRanges = [(midnight + hour*3600, midnight + (hour + 1)*3600) for midnight in range(int(startTime), int(currentTime), 3600*24)]
 
-        data = findRecentPlaceBounds("%s"%hour, timeRanges, 1)
+        data = findRecentPlaceBounds("%s"%hour, timeRanges, 1, "HourlyPlaces")
 
+    print "... done with RecentPlaces"
     return data
+
 
 @task()
 def estimateTimes():

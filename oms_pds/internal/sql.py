@@ -60,11 +60,7 @@ class ListWithCount(list):
 def getColumnValueFromRawData(rawData, columnName, tableDef, source="funf"):    
     return tableDef["mapping"][source][columnName](rawData) if "mapping" in tableDef and source in tableDef["mapping"] and columnName in tableDef["mapping"][source] else rawData[columnName] if columnName in rawData else None
 
-class SQLiteInternalDataStore(AccessControlledInternalDataStore):
-    SQLITE_DB_LOCATION = settings.SERVER_UPLOAD_DIR + "dataStores/"
-    
-    INITIALIZED_DATASTORES = []
-
+class SQLInternalDataStore(AccessControlledInternalDataStore):
     LOCATION_TABLE = {
         "name": "LocationProbe",
         "columns": [
@@ -178,42 +174,6 @@ class SQLiteInternalDataStore(AccessControlledInternalDataStore):
 
     ANSWER_TABLE_LIST = [ANSWER_TABLE, ANSWERLIST_TABLE]
 
-    def __init__(self, profile, app_id, lab_id, token):
-        super(SQLiteInternalDataStore, self).__init__(profile, app_id, lab_id)
-        self.profile = profile
-        #print profile.uuid
-        fileName = SQLiteInternalDataStore.SQLITE_DB_LOCATION + profile.getDBName() + ".db"
-        self.db = sqlite3.connect(fileName)
-        self.db.row_factory = dict_factory
-        self.source = "sql"
-
-        #Not perfect, since we're still initializing the DBs once per run, it's still better than running the following every time
-        if profile not in SQLiteInternalDataStore.INITIALIZED_DATASTORES:
-            SQLiteInternalDataStore.INITIALIZED_DATASTORES.append(profile)
-            try:
-                os.chmod(fileName, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC | stat.S_IRWXO | stat.S_IRWXU | stat.S_IRWXG)
-            except:
-                #this is expected if the user accessing the db isn't the one who owns the file
-                pass
-            c = self.db.cursor()
-            # We probably don't want to run the table creation every time (even if we're checking for existence). 
-            # Make this a setup / initialization method that we run once when a PDS is set up
-            for table in SQLiteInternalDataStore.DATA_TABLE_LIST:
-                if next((c for c in table["columns"] if c[0] == "time"), None) is None:
-                    table["columns"].append(("time", "DOUBLE PRECISION PRIMARY KEY"))
-                createStatement = getCreateStatementForTable(table)
-                c.execute(createStatement)
-    
-            for table in SQLiteInternalDataStore.ANSWER_TABLE_LIST:
-                c.execute(getCreateStatementForTable(table))
-            self.db.commit()
-
-    def getCursor(self):
-        return self.db.cursor()
-
-    def getVariablePlaceholder(self):
-        return "?"
-
     def getAnswerFromTable(self, key, table):
         #table = "AnswerList" if isinstance(data, list) else "Answer"
         statement = "select key,value from %s where key=%s" %(table, self.getVariablePlaceholder())
@@ -270,13 +230,62 @@ class SQLiteInternalDataStore(AccessControlledInternalDataStore):
         for columnName in [t[0] for t in table["columns"]]:
             value = time if columnName == "time" else getColumnValueFromRawData(dataValue, columnName, table, source)
             columnValues.append(value)
-        statement = "insert or replace into %s(%s) values(%s)" % (table["name"], ",".join([c[0] for c in table["columns"]]), wildCards)
+        statement = "insert into %s(%s) values(%s)" % (table["name"], ",".join([c[0] for c in table["columns"]]), wildCards)
+        print statement
+        print columnValues
         c = self.getCursor()
         c.execute(statement, tuple(columnValues))
         self.db.commit()
         c.close()
 
-class PostgresInternalDataStore(SQLiteInternalDataStore):
+    def getCursor(self):
+        raise NotImplementedError("Subclasses must specify how to get a cursor.")
+
+    def getVariablePlaceholder(self):
+        raise NotImplementedError("Subclasses must specify a variable placeholder.")
+
+class SQLiteInternalDataStore(SQLInternalDataStore):
+    SQLITE_DB_LOCATION = settings.SERVER_UPLOAD_DIR + "dataStores/"
+    
+    INITIALIZED_DATASTORES = []
+
+    def __init__(self, profile, app_id, lab_id, token):
+        super(SQLiteInternalDataStore, self).__init__(profile, app_id, lab_id)
+        self.profile = profile
+        #print profile.uuid
+        fileName = SQLiteInternalDataStore.SQLITE_DB_LOCATION + profile.getDBName() + ".db"
+        self.db = sqlite3.connect(fileName)
+        self.db.row_factory = dict_factory
+        self.source = "sql"
+
+        #Not perfect, since we're still initializing the DBs once per run, it's still better than running the following every time
+        if profile not in SQLiteInternalDataStore.INITIALIZED_DATASTORES:
+            SQLiteInternalDataStore.INITIALIZED_DATASTORES.append(profile)
+            try:
+                os.chmod(fileName, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC | stat.S_IRWXO | stat.S_IRWXU | stat.S_IRWXG)
+            except:
+                #this is expected if the user accessing the db isn't the one who owns the file
+                pass
+            c = self.db.cursor()
+            # We probably don't want to run the table creation every time (even if we're checking for existence). 
+            # Make this a setup / initialization method that we run once when a PDS is set up
+            for table in SQLInternalDataStore.DATA_TABLE_LIST:
+                if next((c for c in table["columns"] if c[0] == "time"), None) is None:
+                    table["columns"].append(("time", "DOUBLE PRECISION PRIMARY KEY"))
+                createStatement = getCreateStatementForTable(table)
+                c.execute(createStatement)
+    
+            for table in SQLInternalDataStore.ANSWER_TABLE_LIST:
+                c.execute(getCreateStatementForTable(table))
+            self.db.commit()
+
+    def getCursor(self):
+        return self.db.cursor()
+
+    def getVariablePlaceholder(self):
+        return "?"
+
+class PostgresInternalDataStore(SQLInternalDataStore):
     INITIALIZED_DATASTORES = []
 
     def __init__(self, profile, token):
@@ -300,13 +309,13 @@ class PostgresInternalDataStore(SQLiteInternalDataStore):
             init_cur = init_conn.cursor()
             # We probably don't want to run the table creation every time (even if we're checking for existence). 
             # Make this a setup / initialization method that we run once when a PDS is set up
-            for table in SQLiteInternalDataStore.DATA_TABLE_LIST:
+            for table in SQLInternalDataStore.DATA_TABLE_LIST:
                 if next((c for c in table["columns"] if c[0] == "time"), None) is None:
                     table["columns"].append(("time", "DOUBLE PRECISION PRIMARY KEY"))
                 createStatement = getCreateStatementForTable(table)
                 init_cur.execute(createStatement)
 
-            for table in SQLiteInternalDataStore.ANSWER_TABLE_LIST:
+            for table in SQLInternalDataStore.ANSWER_TABLE_LIST:
                 init_cur.execute(getCreateStatementForTable(table))
             init_conn.commit()
             init_cur.close()
@@ -317,69 +326,4 @@ class PostgresInternalDataStore(SQLiteInternalDataStore):
         return self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
     def getVariablePlaceholder(self):
-        return "%s"
-        
-
-class InternalDataStore(AccessControlledInternalDataStore):
-    def __init__(self, profile, app_id, lab_id, token):
-        super(InternalDataStore, self).__init__(profile, app_id, lab_id)
-        # This should check the token and pull down approved scopes for it
-        self.profile = profile
-        self.db = connection[profile.getDBName()]
-
-    def saveAnswer(self, key, data):
-        collection = self.db["answerlist"] if isinstance(data, list) else self.db["answer"]
-
-        answer = collection.find({ "key": key })
-        if answer.count() == 0:
-            answer = { "key": key }
-        else:
-            answer = answer[0]
-        
-        answer["value"] = data
-        collection.save(answer)
-    
-    def getAnswer(self, key):
-        return self.db["answer"].find({ "key": key })
-
-    def getAnswerList(self, key):
-        return self.db["answerlist"].find({"key": key })
-
-    def getDataInternal(self, key, startTime, endTime):
-        # In this case, we're assuming the only source is Funf
-        dataFilter = {"key": {"$regex": key+"$"}}
-        if startTime is not None or endTime is not None:
-            timeFilter = {}
-            if startTime is not None:
-                timeFilter["$gte"] = startTime
-            if endTime is not None:
-                timeFilter["$lt"] = endTime
-            dataFilter["time"] = timeFilter
-        return self.db["funf"].find(dataFilter)
-    
-    def saveData(self, data):
-        self.db["funf"].save(data)
- 
-class DualInternalDataStore(AccessControlledInternalDataStore):
-    def __init__(self, profile, app_id, lab_id, token):
-        super(DualInternalDataStore, self).__init__(profile, app_id, lab_id)
-        self.ids = InternalDataStore(profile, app_id, lab_id, token)
-        self.sids = SQLiteInternalDataStore(profile, app_id, lab_id, token)
-
-    def saveAnswer(self, key, data):
-        self.ids.saveAnswer(key, data)
-        self.sids.saveAnswer(key, data)
-
-    def getAnswer(self, key):
-        return self.ids.getAnswer(key)
-
-    def getAnswerList(self, key):
-        return self.ids.getAnswerList(key)
-
-    def getDataInternal(self, key, startTime, endTime):
-        return self.ids.getData(key, startTime, endTime)
-
-    def saveData(self, data):
-        self.ids.saveData(data)
-        self.sids.saveData(data)
-
+        return "%s" 

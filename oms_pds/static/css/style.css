@@ -21,3 +21,23 @@ div.answer-rating {
     fill:none;
     stroke: black;
 }
+
+.ui-btn {
+    text-overflow: inherit;
+}
+
+.user {
+    fill: rgb(0,0,255);
+    opacity: 0.6;
+}
+
+.average {
+    fill: rgb(0,255,0);
+    opacity: 0.3;
+}
+
+.outline {
+    fill: none;
+    stroke: black;
+    stroke-width: 1px;
+}

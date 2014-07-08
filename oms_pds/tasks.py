@@ -13,7 +13,8 @@ from collections import Counter
 import sqlite3
 import random
 from oms_pds.socialhealth_tasks import getStartTime
-from oms_pds.internal.mongo import InternalDataStore
+#from oms_pds.pds.internal.mongo import getInternalDataStore
+from oms_pds.internal.mongo import getInternalDataStore
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 
@@ -33,12 +34,24 @@ def ensureFunfIndexes():
         collection.ensure_index([("time", -1), ("key", 1)], cache_for=7200, background=True, unique=True, dropDups=True)
 
 @task()
+def deleteUnusedProfiles():
+    profiles = Profile.objects.all()
+
+    for profile in profiles:
+        dbName = profile.getDBName()
+        collection = connection[dbName]["funf"]
+        
+        if collection.find().count() == 0:
+            connection.drop_database(dbName)
+            profile.delete()
+
+@task()
 def recentProbeCounts():
     profiles = Profile.objects.all()
     startTime = getStartTime(1, False)
     
     for profile in profiles:
-        ids = InternalDataStore(profile, "")
+        ids = getInternalDataStore(profile, "", "Living Lab", "")
         probes = ["ActivityProbe", "SimpleLocationProbe", "CallLogProbe", "SmsProbe", "WifiProbe", "BluetoothProbe"]
         answer = {}
         for probe in probes:

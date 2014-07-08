@@ -48,12 +48,12 @@ def CDF(x, mean, dev):
     return 0.5 * (1 + math.erf((x - mean) / (dev * math.sqrt(2)))) if dev <> 0 else 0
 
 def computeActivityScore(activityList):
-    recentActiveTotals = [1.0 * float(item["low"]) + item["high"] for item in activityList]
+    recentActiveTotals = [0.0 * float(item["low"]) + item["high"] for item in activityList]
     recentTotal = float(sum([item["total"] for item in activityList]))
      
     factor = 1000.0 / recentTotal if recentTotal > 0 else 1
     activeTotal = factor * float(sum(recentActiveTotals))
-    return min(10.0 * CDF(activeTotal, 54, 39), 10)
+    return min(10.0 * CDF(activeTotal, 50, 35), 10)
 
 def computeFocusScore(focusList):
     recentTotals = [item["focus"] for item in focusList]
@@ -94,6 +94,12 @@ def selfAssessedScoreForTimeRange(internalDataStore, start, end, metric):
 
     return {"start": start, "end": end, "value": average * 2.0 }
 
+def mostRecentLocationEntry(locations, time):
+    #Asumes location entries are sorted by time, and is dumb and linear
+    for l in locations:
+        if l["time"] < time:
+            return l
+    return None
 
 def activityForTimeRange(internalDataStore, start, end, includeBlanks = False, includeSelfAssessed = False):
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
@@ -244,6 +250,18 @@ def getStartTime(daysAgo, startAtMidnight):
     currentTime = time.time()
     return time.mktime((date.fromtimestamp(currentTime) - timedelta(days=daysAgo)).timetuple()) if startAtMidnight else currentTime - daysAgo * 24 * 3600
 
+def sumActivityLevels(ids):
+    start = getStartTime(28, False)
+    activity = ids.getData("ActivityProbe", start, None)
+    levels = [a["value"] for a in activity]
+    for a in levels:
+        if "low_activity_levels" not in a: 
+            print a
+    lows = [a["low_activity_intervals"] for a in levels]
+    highs = [a["high_activity_intervals"] for a in levels]
+    totals = [a["total_intervals"] for a in levels]
+
+    return lows, highs, totals
 def recentActivityLevels(includeBlanks = False):
     startTime = getStartTime(6, True)
     endTime = time.time()
@@ -371,15 +389,21 @@ def recentSocialHealthScores():
  
         data[profile.uuid] = []
         #pdb.set_trace()
-        data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores.get(profile.uuid, 0) })
+        #data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores.get(profile.uuid, 0) })
         data[profile.uuid].append({ "key": "social", "layer": "User", "value": socialScores.get(profile.uuid, 0) })
-        data[profile.uuid].append({ "key": "focus", "layer": "User", "value": focusScores.get(profile.uuid, 0)  })
-        data[profile.uuid].append({ "key": "activity", "layer": "averageLow", "value": max(0, averages[0] - stdDevs[0])})
+        #data[profile.uuid].append({ "key": "focus", "layer": "User", "value": focusScores.get(profile.uuid, 0)  })
+        #data[profile.uuid].append({ "key": "activity", "layer": "averageLow", "value": max(0, averages[0] - stdDevs[0])})
         data[profile.uuid].append({ "key": "social", "layer": "averageLow", "value": max(0, averages[1] - stdDevs[1]) })
-        data[profile.uuid].append({ "key": "focus", "layer": "averageLow", "value": max(0, averages[2] - stdDevs[2]) })
-        data[profile.uuid].append({ "key": "activity", "layer": "averageHigh", "value": min(averages[0] + stdDevs[0], 10) })
+        #data[profile.uuid].append({ "key": "focus", "layer": "averageLow", "value": max(0, averages[2] - stdDevs[2]) })
+        #data[profile.uuid].append({ "key": "activity", "layer": "averageHigh", "value": min(averages[0] + stdDevs[0], 10) })
         data[profile.uuid].append({ "key": "social", "layer": "averageHigh", "value": min(averages[1] + stdDevs[1], 10) })
-        data[profile.uuid].append({ "key": "focus", "layer": "averageHigh", "value": min(averages[2] + stdDevs[2], 10) })
+        #data[profile.uuid].append({ "key": "focus", "layer": "averageHigh", "value": min(averages[2] + stdDevs[2], 10) })
+        data[profile.uuid].append({ "key": "regularity", "layer": "User", "value": focusScores.get(profile.uuid, 0)  })
+        data[profile.uuid].append({ "key": "regularity", "layer": "averageLow", "value": max(0, averages[2] - stdDevs[2]) })
+        data[profile.uuid].append({ "key": "regularity", "layer": "averageHigh", "value": min(averages[2] + stdDevs[2], 10) })
+        data[profile.uuid].append({ "key": "physical activity", "layer": "User", "value": activityScores.get(profile.uuid, 0) })
+        data[profile.uuid].append({ "key": "physical activity", "layer": "averageLow", "value": max(0, averages[0] - stdDevs[0])})
+        data[profile.uuid].append({ "key": "physical activity", "layer": "averageHigh", "value": min(averages[0] + stdDevs[0], 10) })
 
         internalDataStore.saveAnswer("socialhealth", data[profile.uuid])
 
