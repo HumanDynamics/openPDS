@@ -1,0 +1,41 @@
+{% extends "backboneLayout.html" %}
+
+{% block title %}
+Recent Places
+{% endblock %}
+
+{% block more_scripts %}
+<script src="{{ STATIC_URL }}js/OpenLayers.mobile.js"></script>
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+</script>
+
+<script src="{{ STATIC_URL}}js/answerList.js"></script>
+<script src="{{ STATIC_URL }}js/activityByLocation.js"></script>
+<script src="{{ STATIC_URL }}js/urlEncode.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
+
+<script>
+$(function () {
+    
+    window.answerListMap = new AnswerListMap("recentSimpleLocationProbeByHour", "recentActivityProbeByHour", {% if lat %}[{{ lat }}, {{ long }}]{% else %}null{% endif %},"answerListMapContainer", "answerListTimesContainer", true);
+    $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
+    $("#plus").live('click', answerListMap.zoomIn);
+    $("#minus").live('click', answerListMap.zoomOut);
+    
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+<div id="answerListMapContainer">
+</div>
+
+<div id="answerListTimesContainer">
+</div>
+
+<div id="footer" data-role="footer">
+</div>
+
+{% endblock %}

@@ -5,12 +5,13 @@ from django.views.generic.simple import direct_to_template
 from django.contrib import admin
 from oms_pds.pds.models import Role, Profile, Purpose, Scope, SharingLevel
 from oms_pds.views import federated_sparql_proxy
+#from oms_pds.meetup.views import add_approved_participant, contribute_to_scheduling
 admin.autodiscover()
-admin.site.register(Role)
-admin.site.register(Profile)
-admin.site.register(Purpose)
-admin.site.register(Scope)
-admin.site.register(SharingLevel)
+#admin.site.register(Role)
+#admin.site.register(Profile)
+#admin.site.register(Purpose)
+#admin.site.register(Scope)
+#admin.site.register(SharingLevel)
 
 
 #from tastypie.api import Api
@@ -52,6 +53,8 @@ urlpatterns = patterns('oms_pds.views',
     (r'^(?P<owner_uuid>\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b)$', "personalProfileRdf"),
     (r"^(?P<owner_uuid>\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b)/sparql$", federated_sparql_proxy),
     (r'^funf_connector/', include('oms_pds.funf_connector.urls')),
+    (r'^survey/', direct_to_template, { 'template' : 'survey.html' }),
+    (r"meetup/", include("oms_pds.meetup.urls")),
     # Examples:
     # url(r'^$', 'OMS_PDS.views.home', name='home'),
     # url(r'^OMS_PDS/', include('OMS_PDS.foo.urls')),
@@ -61,4 +64,8 @@ urlpatterns = patterns('oms_pds.views',
 
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
+	
+    #(r'^funfSetting/', 'funfSetting'),
+    (r"accesscontrol/", include("oms_pds.accesscontrol.urls")),
+    (r'^checkboxes/', direct_to_template, { 'template' : 'multiplecheckboxes.html' }),
 )

@@ -1,52 +1,23 @@
 #-*- coding: utf-8 -*- 
 from django.shortcuts import render_to_response
-#from django.views.decorators.csrf import csrf_exempt
-#import urllib
-#import urllib2
-#import httplib
-#import hashlib
 import datetime
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.utils import simplejson as json_simple
-#import logging, random, hashlib, string
 import dbmerge, os
-#from Crypto.Cipher import DES
-import pymongo
-from pymongo import Connection
 import dbdecrypt
 import decrypt
 import sqlite3
-#import shutil
-#import time
-from bson import json_util
 import json, ast
-#import sys
 from oms_pds import settings
-import requests
 from oms_pds.authorization import PDSAuthorization
 from oms_pds.pds.models import Profile
+from oms_pds.pds.internal import getInternalDataStore, InternalDataStore
 import pdb
 
 upload_dir = settings.SERVER_UPLOAD_DIR
 
-connection = Connection(
-    host=getattr(settings, "MONGODB_HOST", None),
-    port=getattr(settings, "MONGODB_PORT", None)
-)
-
-def insert_pds(collection, token, pds_json):
-#    try:
-        # get pds location and user id
-        #uuid = request.GET("datastore_owner__uuid")
-
-	#request_path= request.build_absolute_uri("/api/personal_data/funf/?format=json&bearer_token="+str(token)+"&datastore_owner__uuid="+str(uuid))
-	#payload = json.dumps(pds_json)
-	#r = requests.post(request_path, data=payload)
-	#response = r.text
-    collection.save(pds_json)
-#    except Exception as ex:
-#	raise Exception(ex)
-#    return response
+def insert_pds(internalDataStore, token, pds_json):
+    internalDataStore.saveData(pds_json)
 
 def write_key(request):
     '''write the password used to encrypt funf database files to your PDS'''
@@ -90,21 +61,15 @@ def data(request):
     token = request.GET['bearer_token']
     datastore_owner_uuid = request.GET["datastore_owner__uuid"]
     datastore_owner, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
-    collection = connection["User_" + str(datastore_owner.id)]["funf"]
+    print "Creating IDS for %s" % datastore_owner_uuid
+    #internalDataStore = getInternalDataStore(datastore_owner, "Living Lab", "Social Health Tracker", "Activity", token)
+    internalDataStore = getInternalDataStore(datastore_owner, "Living Lab", "Social Health Tracker", token)
+    #collection = connection[datastore_owner.getDBName()]["funf"]
     funf_password = "changeme"
     key = decrypt.key_from_password(str(funf_password))
     print "PDS: set_funf_data on uuid: %s" % datastore_owner_uuid
 
     for filename, file in request.FILES.items():
-    #authenticator = JSONAuthenticator(scope=scope)
-    #try:
-    #    # Validate the request.
-    #    authenticator.validate(request)
-    #except AuthenticationException as e:
-    #    # Return an error response.
-    #    print e
-    #    return authenticator.error_response(content="You didn't authenticate.")
-    #profile = authenticator.user.get_profile()
         try:
             try:
                 file_path = upload_dir + file.name
@@ -125,13 +90,13 @@ def data(request):
                 pds_data['time']=json_insert.get('timestamp')
                 pds_data['value']=json_insert
                 pds_data['key']=name
-                insert_pds(collection, token, pds_data)
+                insert_pds(internalDataStore, token, pds_data)
                 inserted.append(convert_string(json_insert)+'\n')
             result = {'success': True, 'rows_inserted': len(inserted)}
             print "Inserted %s rows" % len(inserted)
         except Exception as e:
             print "Exception from funf_connector on pds:"
-            print e.message
+            print "%s"%e
             result = {'success':False, 'error_message':e.message}
         finally:
             response_dict = {"status":"success"}

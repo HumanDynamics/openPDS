@@ -1,2 +1,3 @@
+*.out
 *.pyc
 oms_pds/settings.py

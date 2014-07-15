@@ -44,7 +44,7 @@ class FunfResource(MongoDBResource):
 
     class Meta:
         authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
+        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = False)
         resource_name = "funf"
         list_allowed_methods = ["delete", "get", "post"]
         object_class = Document
@@ -251,7 +251,7 @@ class NotificationResource(ModelResource):
         profile = Profile.objects.get(uuid = bundle.data["datastore_owner"]["uuid"])
         devices = Device.objects.filter(datastore_owner = profile)
         if devices.count() > 0:
-            gcm = GCM(settings.ASSISTANT_GCM_API_KEY)
+            gcm = GCM(settings.GCM_API_KEY)
             for device in devices:
                 try:
                     gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})

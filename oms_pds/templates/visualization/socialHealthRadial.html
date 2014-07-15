@@ -2,10 +2,6 @@
 
 
 {% block more_scripts %}
-
-  <script src="{{ STATIC_URL }}js/jQuery.ui.datepicker.js"></script>
-     <link rel="stylesheet" href="{{ STATIC_URL}}css/jquery.ui.datepicker.mobile.css" /> 
-  <script src="{{ STATIC_URL }}js/jquery.ui.datepicker.mobile.js"></script>
       
 <script src="http://d3js.org/d3.v2.js"></script>
 
@@ -21,18 +17,21 @@
 -->
 <script>
 $(function () {
-	window.radialApp = new SocialHealthRadialView();
+//	window.radialApp = new SocialHealthRadialView();
 //	window.answerRating = new AnswerRatingStarView({ el: "#answer_rating", key: "SocialHealthAnswerRating" });
 //    window.activityRating = new AnswerRatingStarView({ el: "#activity_rating", key: "SelfReportedActivityRating" });
 //    window.socialRating = new AnswerRatingStarView({ el: "#social_rating", key: "SelfReportedSocialRating" });
 //    window.focusRating = new AnswerRatingStarView({ el: "#focus_rating", key: "SelfReportedFocusRating" });
-	$(window).bind("resize", function () { radialApp.render(); });
-    if (typeof android !== "undefined" && android.updateSharedPreference) {
-        return android.updateSharedPreference("pds_location", "http://pds.linkedpersonaldata.org");
-    }
+//	$(window).bind("resize", function () { radialApp.render(); });
+    window.arcApp = new SocialHealthArcView();
+    $(window).bind("resize", function () { arcApp.render(); });
 });
 </script>
 
+{% endblock %}
+
+{% block css %}
+     <link rel="stylesheet" href="{{ STATIC_URL}}css/jquery.ui.datepicker.mobile.css" /> 
 {% endblock %}
 
 {% block content %}

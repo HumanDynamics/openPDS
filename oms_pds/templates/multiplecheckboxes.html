@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset='UTF-8'>
+	
+	<style>
+ul { 
+  list-style: none;
+  margin: 5px 5px;
+}
+li {
+  margin: 0 0 5px 0;
+}
+
+     </style>
+	
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+	<script>
+  $(function() {
+      $('input[type="checkbox"]').change(function(e) {
+      var checked = $(this).prop("checked"),
+          container = $(this).parent(),
+          siblings = container.siblings();
+  
+      container.find('input[type="checkbox"]').prop({
+          indeterminate: false,
+          checked: checked
+      });
+  
+      function checkSiblings(el) {
+          var parent = el.parent().parent(),
+              all = true;
+  
+          el.siblings().each(function() {
+              return all = ($(this).children('input[type="checkbox"]').prop("checked") === checked);
+          });
+  
+          if (all && checked) {
+              parent.children('input[type="checkbox"]').prop({
+                  indeterminate: false,
+                  checked: checked
+              });
+              checkSiblings(parent);
+          } else if (all && !checked) {
+              parent.children('input[type="checkbox"]').prop("checked", checked);
+              parent.children('input[type="checkbox"]').prop("indeterminate", (parent.find('input[type="checkbox"]:checked').length > 0));
+              checkSiblings(parent);
+          } else {
+              el.parents("li").children('input[type="checkbox"]').prop({
+                  indeterminate: true,
+                  checked: false
+              });
+          }
+        }
+        checkSiblings(container);
+      });
+    });
+    </script>
+</head>
+
+<body>
+	<div id="page-wrap">
+	
+	   <h1>Indeterminate Checkboxes</h1>
+		
+  	 <ul>
+        <li>
+            <input type="checkbox" name="short" id="short">
+            <label for="short">Short Things</label>
+            
+            <ul>
+                 <li>
+                     <input type="checkbox" name="short-1" id="short-1">
+                     <label for="short-1">Smurfs</label>
+                 </li>
+                 <li>
+                     <input type="checkbox" name="short-2" id="short-2">
+                     <label for="short-2">Mushrooms</label>
+                 </li>
+                 <li>
+                     <input type="checkbox" name="short-3" id="short-3">
+                     <label for="short-3">One Sandwich</label>
+                 </li>
+            </ul>
+        </li>
+    </ul>
+	
+	</div>
+
+</body>
+
+</html>

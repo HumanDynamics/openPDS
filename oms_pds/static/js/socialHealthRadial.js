@@ -7,6 +7,112 @@ window.handleTabChange = function (dimension, tabNum) {
 	return true;
 };
 
+window.SocialHealthArcView = Backbone.View.extend({
+    el: "<div class='arc-chart'></div>",
+
+    initialize: function() {
+        _.bindAll(this, "render");
+        this.answerLists = new AnswerListCollection([], { "key": "socialhealth" });
+        this.answerLists.bind("reset", this.render);
+        this.answerLists.fetch();
+    },
+
+    render: function () {
+        if (this.graph) {
+            this.graph.remove();
+        }
+
+        var data = this.answerLists.models[0].attributes["value"];
+        var viewHeight = window.innerHeight - 20;
+        var width = window.innerWidth - 10;
+        var height = viewHeight - 5;
+        var center = { x: width / 2.0 + 5, y: width / 2.0 };
+        var radius = width / 2.0 - 10;
+        var averageData = _.filter(data, function(d) { return d.layer.indexOf("average") != -1; });
+        var userData = _.filter(data, function(d) { return d.layer == "User"; });
+
+        var nest = d3.nest().key(function(d) { return d.key; });
+        // stack essentially just computes the inner radius for consecutive layers such as the average low and high layers we have
+        //var stack = d3.layout.stack()
+        //    .offset("zero")//.offset(function(d) { return d.y0; })
+        //    .values(function(layer) { return layer.values; })
+        //    .x(function(d, i) { return d.key; })
+        //    .y(function(d) { return d.value; });
+
+        //var layers = (averageData != null && averageData.length > 0)? stack(nest.entries(averageData)):[];
+
+        // Now that we got the stacking out of the way, we know the inner and outer radius for the average layer
+        // To simplify things (and optimize a bit), let's throw out the averageLow and replace it with the user data
+        //layers[0] = layers[1];//{key: "User", values: userData };
+        //layers.splice(1,1, {key: "User", values: userData });
+
+        // Since all layers have the same dimensions, using the first one to pull the dimension names is fine
+        var scoresByMetric = nest.entries(data);
+        var chartData = {};
+        for (metric in scoresByMetric) {
+            var scores = scoresByMetric[metric];
+            chartData[scores.key] = [
+                {layer: "user", start: scores.values[0].value - 0.05, end: scores.values[0].value + 0.05}, 
+                {layer: "average", start: scores.values[1].value, end: scores.values[2].value},
+                {layer: "outline", start: 0, end: 10}];
+        }
+        //var dimensions = _.pluck(layers[0].values, "key");
+
+        var angle = d3.scale.linear().domain([0,10]).range([-Math.PI / 2.0, Math.PI / 2.0]);
+
+        //var stack = d3
+        var arc = d3.svg.arc()
+            .innerRadius(width / 4.0)
+            .outerRadius(radius)
+            .startAngle(function(d, i){ return angle(d.start); })
+            .endAngle(function(d, i){return angle(d.end); });
+
+        var chart = d3.select("#radial_chart").append("svg:svg")
+            .attr("class", "chart")
+            .attr("width", width)
+            .attr("height", width * 1.5);
+
+        // Draw the charts    
+        var offset = 1;
+        for (metric in chartData) {
+            var metricData = chartData[metric];
+            var metricChart = chart.append("svg:g")
+                .attr("transform", "translate("+center.x+","+center.y*offset+")");
+            var fontSize = width / 15.0;
+            // average / user layers
+            metricChart.selectAll("path")
+                .data(metricData)
+                .enter().append("svg:path")  
+                .attr("class", function(d, i){
+                    return d.layer;
+                })   
+                .attr("d", arc);
+            // label
+            chart.append("svg:text")
+                .attr("x", center.x)
+                .attr("y", center.y*offset-fontSize/2.0)
+                .attr("text-anchor", "middle")
+                .text(metric)
+                .attr("font-size", fontSize + "px");
+            // ticks
+            for (i = 0; i <= 10; i += 5) {
+                var correctedAngle = 1.57 - angle(i);
+                var coords = { x: center.x + Math.cos(correctedAngle)*radius*0.9, y: center.y*offset - Math.sin(correctedAngle)*radius*0.9};
+                chart.append("svg:text")
+                    .attr("x", coords.x)
+                    .attr("y", coords.y)
+                    .attr("dy", -fontSize / 4.0)
+                    .attr("text-anchor", "middle")
+                    .text(i)
+                    .style("font-size", fontSize / 2 + "px");
+            }
+            offset += 1;
+        }
+        this.graph = chart;
+        return $(this.el);
+    }
+});
+
 window.SocialHealthRadialView = Backbone.View.extend({
 	el: "#triangle",
 	
@@ -58,8 +164,8 @@ window.SocialHealthRadialView = Backbone.View.extend({
 		
 		// Now that we got the stacking out of the way, we know the inner and outer radius for the average layer
 		// To simplify things (and optimize a bit), let's throw out the averageLow and replace it with the user data
-		layers[0] = {key: "User", values: userData };
-		//layers = layers.splice(1,1);
+		layers[0] = layers[1];//{key: "User", values: userData };
+		layers.splice(1,1, {key: "User", values: userData });
 
 		// Since all layers have the same dimensions, using the first one to pull the dimension names is fine
 		var dimensions = _.pluck(layers[0].values, "key");
@@ -130,14 +236,14 @@ window.SocialHealthRadialView = Backbone.View.extend({
 			.attr("transform", "translate("+chartCenter[0]+","+chartCenter[1]+")");
 	
 		// Draw the layers
+        // Note: styles (color / fill / stroke) are handled by the style on the class, not in js
 		chartSvg.selectAll(".layer")
 			.data(layers)
 			.enter().append("path")
-			.attr("class", "layer")
-			.attr("d", function(d) { return area(d.values); })
-			.style("fill",
-		        function(d, i) { return (d.key == "User")? pink:lightblue; })
-			.style("opacity", 0.6);
+			.attr("class", function (d) { 
+                return (d.key == "User")? "user-layer":"layer"; })
+			.attr("d", function(d) { 
+                return (d.key == "User")? line(d.values):area(d.values); });
 			
 		// create Axis		
 		chartSvg.selectAll(".axis")

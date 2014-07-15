@@ -1,0 +1,26 @@
+{% extends "backboneLayout.html" %}
+
+{% block title %}
+Recent Probe Counts
+{% endblock %}
+
+{% block more_scripts %}
+<script>
+    ANSWER_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answer" %}";
+</script>
+
+<script src="{{ STATIC_URL}}js/answer.js"></script>
+<script src="{{ STATIC_URL}}js/simpleAnswerTextView.js"></script>
+<script>
+$(function () {
+    window.probeCounts = new SimpleAnswerTextView("RecentProbeCounts");
+    $(".answerContent").append(probeCounts.render());
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="answerContent">
+</div>
+{% endblock %}
+

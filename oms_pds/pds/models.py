@@ -7,7 +7,10 @@ connect(settings.MONGODB_DATABASE)
 
 class Profile(models.Model):
     uuid = models.CharField(max_length=36, unique=True, blank = False, null = False, db_index = True)
-    
+
+    def getDBName(self):
+        return "User_" + str(self.uuid).replace("-", "_")
+   
     def __unicode__(self):
         return self.uuid
 

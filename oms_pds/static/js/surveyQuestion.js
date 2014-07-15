@@ -73,11 +73,23 @@ window.SurveyQuestionDropDownView = Backbone.View.extend({
             answerModel.get("value")[0].value = answer;
         }
         
-        answerModel.save();
+        var me = this;
 
-        if (typeof(android) !== "undefined" && android.markQuestionAsAnswered) {
-            android.markQuestionAsAnswered(this.answerKey);
-        }
+        // NOTE: we want to mark the question as answered regardless of if the save succeeds
+        // We've disabled the back button in the android app, so we need to give control back to the user
+        // even if their connection (or our server) is having issues.
+        answerModel.save({}, { 
+            success: function () {
+                if (typeof(android) !== "undefined" && android.markQuestionAsAnswered) {
+                    android.markQuestionAsAnswered(me.answerKey);
+                }
+            },
+            error: function () {
+                if (typeof(android) !== "undefined" && android.markQuestionAsAnswered) {
+                    android.markQuestionAsAnswered(me.answerKey);
+                }
+            }
+        });
     },
 
     selectedValue: function () {
@@ -119,10 +131,47 @@ window.SurveyQuestionStarView = SurveyQuestionDropDownView.extend({
     }
 });
 
+window.SurveyQuestionButtonView = SurveyQuestionDropDownView.extend({
+    el: "<div>",
+    selectedAnswer: 0,   
+
+    bindAll: function () {
+        _.bindAll(this, "render");
+    },
+    
+    render: function () {
+        var $el = $(this.el);
+        var me = this;
+
+        $el.empty();
+        $el.append("<h2>" + this.questionText + "</h2>");
+        var answers = $("<div data-role='controlgroup'>");
+
+        $.each(this.surveyQuestion, function () {
+            var answerValue = this.attributes.survey_answer.value;
+            var answerButton = $("<button type='button'>" + this.attributes.survey_answer.description + "</button>");
+            answerButton.click(function () { me.selectedAnswer = answerValue; me.saveAnswer(); });
+            answers.append(answerButton); 
+            answerButton.buttonMarkup();
+        });
+        $el.append(answers);
+        answers.controlgroup();
+        answers.controlgroup("refresh");
+        return $el
+    },
+    
+    selectedValue: function () {
+        return this.selectedAnswer;
+    }
+});
+
 window.SurveyQuestionView = function (surveyQuestion) {
     switch (surveyQuestion[0].attributes.survey_question.answer_type) {
         case 1:
             surveyQuestionView = new SurveyQuestionStarView(surveyQuestions[question]);
+            break;
+        case 3:
+            surveyQuestionView = new SurveyQuestionButtonView(surveyQuestions[question]);
             break;
         default:
             surveyQuestionView = new SurveyQuestionDropDownView(surveyQuestions[question]);

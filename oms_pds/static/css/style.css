@@ -1,3 +1,43 @@
 div.answer-rating {
 	text-align: center;
 }
+      
+.user-layer {
+    fill: none;
+    stroke-width: 5px;
+    stroke: rgb(238,98,226);    
+}
+
+.layer {
+    fill: rgb(122,205,247);
+    opacity: 0.6;
+}
+
+.axis line {
+    stroke: black;
+}
+
+.axis path {
+    fill:none;
+    stroke: black;
+}
+
+.ui-btn {
+    text-overflow: inherit;
+}
+
+.user {
+    fill: rgb(0,0,255);
+    opacity: 0.6;
+}
+
+.average {
+    fill: rgb(0,255,0);
+    opacity: 0.3;
+}
+
+.outline {
+    fill: none;
+    stroke: black;
+    stroke-width: 1px;
+}

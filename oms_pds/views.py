@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 import json
 from django.template import RequestContext
 from django.shortcuts import render_to_response
@@ -12,6 +12,8 @@ from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel, Profile, Reso
 from pymongo import Connection
 import pdb
 from fourstore.views import sparql_proxy
+import logging
+logger = logging.getLogger(__name__)
 
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
