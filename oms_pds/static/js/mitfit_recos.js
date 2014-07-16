@@ -3,10 +3,9 @@ window.MITFITEventModel = Backbone.Model.extend({
     event_name: "Event Name",
     min_activity_level: 0,
     max_activity_level: 1,
-    location_value: "42.358280, -71.096107",
+    //location_value: "42.358280, -71.096107",
     timestamp: "Timestamp",
-    description: "Description",
-    url_value: "URL"
+    description: "Description"
 });
 
 window.MITFITEventList = Backbone.Collection.extend({
@@ -42,100 +41,63 @@ window.AnswerListMap = Backbone.View.extend({
     },
     
     render: function () {
-	var myLatlng = new google.maps.LatLng(42.359779, -71.093373);
-        var myOptions = {
-          zoom: 15,
-          center: myLatlng,
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
-          disableDefaultUI: false,
-          scrollwheel: true,
-          draggable: true,
-          navigationControl: true,
-          mapTypeControl: false,
-          scaleControl: true,
-          disableDoubleClickZoom: false
-        };
-        this.map = new google.maps.Map(document.getElementById("answerListMapContainer"), myOptions);
    },
 
     renderRecos: function () {
 	var activityEntries = (this.activityAnswerLists && this.activityAnswerLists.length > 0)? this.activityAnswerLists.at(0).get("value"):[];
 	//console.log(activityEntries);
 
-	var display_flag = false;
-	var locationArray = [];
+	var events = [];
 
         for(var i = 0; i < this.mitfit_events.length; i++){
+	    var event_item = [];
 	    events_object = this.mitfit_events.at(i).get("value");
+	    //console.log(events_object);
 	    for(index in events_object){
 		if(activityEntries.length > 0){
+			//console.log("comparing");
+			console.log("average: " + activityEntries[0]["average_activity_rate"]);
+			console.log("min: " + activityEntries[0]["min_low_activity_rate"]);
+			console.log("max: " + activityEntries[0]["max_high_activity_rate"]);
 			if(activityEntries[0]["average_activity_rate"] >= events_object[index]["min-activity-level"] && activityEntries[0]["max_high_activity_rate"] <= events_object[index]["max-activity-level"]){
+			//if(activityEntries[0]["min_low_activity_rate"] >= events_object[index]["min-activity-level"] && activityEntries[0]["max_high_activity_rate"] <= events_object[index]["max-activity-level"]){
 			    var time_string = new Date(events_object[index]["timestamp"]*1000);
-			    var location_coords = events_object[index]["location"].split(",");
-		  	    var lat = parseFloat(location_coords[0].trim());
-		  	    var lng = parseFloat(location_coords[1].trim());
-			    var marker = new google.maps.Marker({
-                	        position: new google.maps.LatLng(lat,lng),
-                	    	map: this.map
-            		    });
-
-			    var locationPoint = [];
-			    locationPoint.push(lat);
-			    locationPoint.push(lng);
-			
-			    locationArray.push(locationPoint);
-			    display_flag = true;
+			    console.log(formattedDate(time_string));
 			    //this.element.append("Event: " + events_object[index]["event-name"] + ", Location: " + events_object[index]["location"] + ", Time: " + events_object[index]["timestamp"] + ", Description: " + events_object[index]["description"] + ", URL: " + events_object[index]["url"]);
+			    event_item.push(events_object[index]["event-name"]);
+			    //event_item.push(events_object[index]["location"]);
+			    //event_item.push(events_object[index]["timestamp"]);
+			    event_item.push(formattedDate(time_string));
+			    //event_item.push(events_object[index]["description"]);
+
+			    events.push(event_item);
+			    //console.log(event_item);
 			}
 		}	
 	    }
 	
         }
-
-
-	// this is important, because if you set the data set too early, the latlng/pixel projection doesn't work
-
-/*	var beachMarker = new google.maps.Marker({
-     	    position: new google.maps.LatLng(42.359779, -71.093373),
-      	    map: this.map,
-  	});
-*/
-
-	//console.log(locationArray);
-        google.maps.event.addListener(this.map, "idle", function(){
-
-
-	    console.log("map loaded");
-	    console.log(locationArray);
-	    for(locationIndex in locationArray){
-		console.log(locationIndex);
-		console.log(locationArray[locationIndex][0]);
-
-		var marker = new google.maps.Marker({
-                    position: new google.maps.LatLng(locationArray[locationIndex][0], locationArray[locationIndex][1]),
-                    map: this.map
-            	});
-		var infowindow = new google.maps.InfoWindow({
-      		    content: "test"
-  		});
-
-		google.maps.event.addListener(marker, 'click', function() {
-    		    infowindow.open(this.map,marker);
-  		});
-	    }
-
-                            //marker.info = new google.maps.InfoWindow({
-                            //  content: '<b>Test:</b> text'
-                            //});
-
-        });
-
-/*
-	google.maps.event.addListener(this.map, 'click', function() {
-	    marker.info.open(this.map, marker);
-	});
-*/
+	//console.log(events);
+	$('#answerListMapContainer')
+		.TidyTable({
+			columnTitles : ['Event Name','Time'],
+			columnValues : events
+		});
     },
 
 });
 
+//source: http://stackoverflow.com/questions/6348431/best-way-to-remove-edt-from-a-date-returned-via-javascript-with-tolocalestring
+function padZ(num, n) {
+    n = n || 1; // Default assume 10^1
+    return num < Math.pow(10, n) ? "0" + num : num;
+}
+
+function formattedDate(d) {
+    var day = d.getDate();
+    var month = d.getMonth() + 1; // Note the `+ 1` -- months start at zero.
+    var year = d.getFullYear();
+    var hour = d.getHours();
+    var min = d.getMinutes();
+    return month+"/"+day+"/"+year+" "+hour+":"+padZ(min);
+}

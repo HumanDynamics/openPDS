@@ -34,3 +34,12 @@ class Settings(models.Model):
 
 	class Meta:
     		unique_together = ('datastore_owner', 'app_id', 'lab_id')
+
+class Optin(models.Model):
+	datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="datastore_owner_optin")
+        app_id = models.CharField(max_length=120)
+        lab_id = models.CharField(max_length=120)
+	data_aggregation = models.BooleanField(default=False)
+
+	class Meta:
+                unique_together = ('datastore_owner', 'app_id', 'lab_id')

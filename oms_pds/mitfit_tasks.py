@@ -20,6 +20,8 @@ import places_tasks
 import sys
 import bisect
 from operator import itemgetter, attrgetter
+import datetime
+import random
 
 class LeaderboardRanking():
     def __init__(self, user_entry):
@@ -85,8 +87,10 @@ def leaderboardComputationTask():
 
     unsorted_dict = {}
     for profile in profiles:
-	token = socialhealth_tasks.getToken(profile, "app-uuid")
-	internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+#	token = socialhealth_tasks.getToken(profile, "app-uuid")
+#	internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
 	
 	values = aggregateLeaderboardComputation(internalDataStore, "activityStats", leaderboardComputation, False)
         unsorted_dict[profile.uuid] = LeaderboardRanking({ "average_activity_rate": values[0]["average_activity_rate"], "max_high_activity_rate": values[0]["max_high_activity_rate"], "min_low_activity_rate": values[0]["min_low_activity_rate"]})
@@ -100,8 +104,10 @@ def leaderboardComputationTask():
    
     for uuid in sorted_dict:
         profile = Profile.objects.get(uuid=uuid)
-        token = socialhealth_tasks.getToken(profile, "app-uuid")
-        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+#        token = socialhealth_tasks.getToken(profile, "app-uuid")
+#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
 
 	percentileValue = calculatePercentile(average_activity_rates_list, unsorted_dict[uuid].get_average_activity_rate())	
 
@@ -120,11 +126,12 @@ def activeLocationsComputation(internalDataStore):
     activityAnswerList = activityAnswerList[0]["value"] if activityAnswerList.count() > 0 else []
     locationPoints = []
     for activityAnswer in activityAnswerList:
-        activity_rate = (500*(activityAnswer["high"] + activityAnswer["low"]))/activityAnswer["total"]
+#        activity_rate = (500*(activityAnswer["high"] + activityAnswer["low"]))/activityAnswer["total"]
         start_time = activityAnswer["start"]
 	end_time = activityAnswer["end"]
 	#print activity_rate
-	if activity_rate > 1:
+#	if activity_rate > 1:
+	if activityAnswer["high"] > 0:
 	    locationAnswerList = internalDataStore.getAnswerList("recentSimpleLocationProbeByHour")
 	    locationAnswerList = locationAnswerList[0]["value"] if locationAnswerList.count() > 0 else []
 	    for locationAnswer in locationAnswerList:
@@ -144,12 +151,14 @@ def findActiveLocationsTask():
 
     location_frequencies = {}
     for profile in profiles:
-        token = socialhealth_tasks.getToken(profile, "app-uuid")
-        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+#        token = socialhealth_tasks.getToken(profile, "app-uuid")
+#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
 
         values = activeLocationsComputation(internalDataStore)
-	print profile.uuid
-	print values
+	#print profile.uuid
+	#print values
 	
 	for value in values:
 		location_value = tuple((round(value[0],4), round(value[1],4)))
@@ -158,18 +167,208 @@ def findActiveLocationsTask():
 		else:
 			location_frequencies[location_value] = 1
 
-    print location_frequencies
+    #print location_frequencies
 
     location_frequencies_list = []
     for key  in location_frequencies:
-	print key 
+	#print key 
 	location_value = { "lat": key[0], "lng": key[1], "count": location_frequencies[key]}	
 	location_frequencies_list.append(location_value)
 
-    print location_frequencies_list
+    #print location_frequencies_list
 
     for profile in profiles:
-        token = socialhealth_tasks.getToken(profile, "app-uuid")
-        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+#        token = socialhealth_tasks.getToken(profile, "app-uuid")
+#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
 	
 	internalDataStore.saveAnswer("activeLocations", location_frequencies_list)	
+
+
+###################
+# Active Times #
+###################
+
+def activeTimesComputation(internalDataStore):
+    activityAnswerList = internalDataStore.getAnswerList("recentActivityProbeByHour")
+    activityAnswerList = activityAnswerList[0]["value"] if activityAnswerList.count() > 0 else []
+    time_counts = [0] * 24
+    for activityAnswer in activityAnswerList:
+#        activity_rate = (500*(activityAnswer["high"] + activityAnswer["low"]))/activityAnswer["total"]
+        start_time = activityAnswer["start"]
+        end_time = activityAnswer["end"]
+        #print activity_rate
+#        if activity_rate > 1:
+	if activityAnswer["high"] > 0:
+	    start_hours = datetime.datetime.fromtimestamp(start_time).hour
+	    time_counts[start_hours] += 1
+
+    return time_counts
+
+@task()
+def findActiveTimesTask():
+    profiles = Profile.objects.all()
+
+    time_averages = [0] * 24
+    num_users = 0
+    
+    for profile in profiles:
+	num_users += 1
+#        token = socialhealth_tasks.getToken(profile, "app-uuid")
+#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
+
+        user_time_averages = activeTimesComputation(internalDataStore)
+
+        for i in range(len(time_averages)):
+	    time_averages[i] += user_time_averages[i]
+
+    #print num_users
+    #print time_averages 
+    for i in range(len(time_averages)):
+	time_averages[i] = time_averages[i] // num_users
+
+    for profile in profiles:
+#        token = socialhealth_tasks.getToken(profile, "app-uuid")
+#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
+
+        internalDataStore.saveAnswer("activeTimes", time_averages)
+
+
+###########################
+# Testing Recommendations #
+###########################
+
+data = [
+{'name': 'Running 101', 'type': 'running', 'id': 1},
+{'name': 'Running 102', 'type': 'running', 'id': 2},
+{'name': 'Learn to love running', 'type': 'running', 'id': 3},
+{'name': 'Running Intermediate', 'type': 'running', 'id': 4},
+{'name': 'Running Advanced', 'type': 'running', 'id': 5},
+{'name': 'Squash 101', 'type': 'squash', 'id': 6},
+{'name': 'Squash 102', 'type': 'squash', 'id': 7},
+{'name': 'Learn to love squash', 'type': 'squash', 'id': 8},
+{'name': 'Squash Intermediate', 'type': 'squash', 'id': 9},
+{'name': 'Squash Advanced', 'type': 'squash', 'id': 10},
+{'name': 'Swimming 101', 'type': 'swimming', 'id': 11},
+{'name': 'Swimming 102', 'type': 'swimming', 'id': 12},
+{'name': 'Learn to love swimming', 'type': 'swimming', 'id': 13},
+{'name': 'Swimming Intermediate', 'type': 'swimming', 'id': 14},
+{'name': 'Swimming Advanced', 'type': 'swimming', 'id': 15},
+{'name': 'Bootcamp Fitness 101', 'type': 'bootcamp-fitness', 'id': 16},
+{'name': 'Bootcamp Fitness 102', 'type': 'bootcamp-fitness', 'id': 17},
+{'name': 'Learn to love bootcamp fitness', 'type': 'bootcamp-fitness', 'id': 18},
+{'name': 'Bootcamp Fitness Intermediate', 'type': 'bootcamp-fitness', 'id': 19},
+{'name': 'Bootcamp Fitness Advanced', 'type': 'bootcamp-fitness', 'id': 20},
+{'name': 'Tennis 101', 'type': 'tennis', 'id': 21},
+{'name': 'Tennis 102', 'type': 'tennis', 'id': 22},
+{'name': 'Learn to love tennis', 'type': 'tennis', 'id': 23},
+{'name': 'Tennis Intermediate', 'type': 'tennis', 'id': 24},
+{'name': 'Tennis Advanced', 'type': 'tennis', 'id': 25}
+]
+
+
+def populateEventsForUsers():
+    profiles = Profile.objects.all()
+    for profile in profiles:
+#        token = socialhealth_tasks.getToken(profile, "app-uuid")
+#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
+
+	events = []
+        random_numbers = random.sample(range(25), 7)
+        for random_number in random_numbers:
+            events.append(data[random_number])
+        #print events
+        internalDataStore.saveAnswer("mitfitEventRegistrations", events)
+
+
+def eventRecommendationComputation(internalDataStore, eventRegistrations, profile):
+    eventRegistrationAnswerList = internalDataStore.getAnswerList("mitfitEventRegistrations")
+    eventRegistrationAnswerList = eventRegistrationAnswerList[0]["value"] if eventRegistrationAnswerList.count() > 0 else []
+    userEventRegistrations = set()
+    for eventRegistrationAnswer in eventRegistrationAnswerList:
+	#print eventRegistrationAnswer[u'id']
+	eventRegistrationAnswerFrozenset = frozenset(eventRegistrationAnswer.items())
+	#print eventRegistrationAnswerFrozenset
+	userEventRegistrations.add(eventRegistrationAnswerFrozenset)
+	if eventRegistrationAnswerFrozenset in eventRegistrations.keys():
+	    eventRegistrations[eventRegistrationAnswerFrozenset].append(profile)
+	else:
+	    tempEventRegistrations = []
+	    tempEventRegistrations.append(profile)
+	    eventRegistrations[eventRegistrationAnswerFrozenset] = tempEventRegistrations
+	#print eventRegistrations
+    return eventRegistrations, userEventRegistrations
+
+@task()
+def recommendEvents():
+    profiles = Profile.objects.all()
+    eventRegistrations = {}
+    userRegistrations = {}
+    for profile in profiles:
+	#print profile.uuid
+#        token = socialhealth_tasks.getToken(profile, "app-uuid")
+#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
+
+        eventRegistrations, userEventRegistrations = eventRecommendationComputation(internalDataStore, eventRegistrations, profile.uuid)
+	userRegistrations[profile.uuid] = userEventRegistrations
+    #print eventRegistrations
+   
+    eventSet = set()
+    jaccardCoefficientDict = {}
+    for event1 in eventRegistrations.keys():
+	for event2 in eventRegistrations.keys():
+	    if event1 != event2:
+		usersEvent1 = eventRegistrations[event1]
+		usersEvent2 = eventRegistrations[event2]
+		intersectUsers = list(set(usersEvent1) & set(usersEvent2))
+		unionUsers = list(set(usersEvent1) | set(usersEvent2))
+		jaccardCoefficientKey = (event1, event2)
+		eventSet.add(event1)
+		eventSet.add(event2)
+		if len(unionUsers) > 0:
+		    jaccardCoefficientDict[jaccardCoefficientKey] = len(intersectUsers)/len(unionUsers)
+		else:
+		    jaccardCoefficientDict[jaccardCoefficientKey] = 0
+    #print jaccardCoefficientDict
+
+    for profile in profiles:
+        print profile.uuid
+	recommendedEvents = {}
+	for userRegisteredEvent in userRegistrations[profile.uuid]:
+	    for event in eventSet:
+		if userRegisteredEvent != event:
+			if event in recommendedEvents:
+			    if jaccardCoefficientDict[(userRegisteredEvent, event)] > recommendedEvents[event]:
+			        recommendedEvents[event] = jaccardCoefficientDict[(userRegisteredEvent, event)]
+			else:
+			    recommendedEvents[event] = jaccardCoefficientDict[(userRegisteredEvent, event)]
+        #print recommendedEvents
+	sortedRecommendedEvents = sorted(recommendedEvents.items(), key = lambda recommendedEvent: recommendedEvent[1], reverse=True)
+	#print sortedRecommendedEvents
+	for event in sortedRecommendedEvents[:3]:
+	    for eventDetails in event[0]:
+		if u'name' in eventDetails[0]:
+	            print eventDetails[1] + ", " ,
+	print 
+
+def testGetData():
+    profiles = Profile.objects.all()
+    #print profiles[17].uuid
+#    token = socialhealth_tasks.getToken(profiles[17], "app-uuid")
+#    internalDataStore = socialhealth_tasks.getInternalDataStore(profiles[17], "Living Lab", "Social Health Tracker", token)
+
+    internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
+
+    probes = ["LocationProbe", "ActivityProbe", "SmsProbe", "CallLogProbe", "BluetoothProbe", "WifiProbe", "ScreenProbe"]
+    startTime = 1403136000
+    endTime = 1403222400
+    internalDataStore.getData(probes[1], startTime, endTime)

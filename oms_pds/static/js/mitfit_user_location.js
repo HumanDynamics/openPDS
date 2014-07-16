@@ -1,7 +1,7 @@
 window.AnswerListMap = Backbone.View.extend({
     el: "#answerListMapContainer",
     
-    initialize: function (locationAnswerKey, activityAnswerKey, center, mapContainerId, autoResize) {
+    initialize: function (locationAnswerKey, activityAnswerKey, mapContainerId, autoResize, entity) {
         _.bindAll(this, "render", "renderPlaces");
 
         if (mapContainerId) {
@@ -11,8 +11,8 @@ window.AnswerListMap = Backbone.View.extend({
             this.mapContainerId = "answerListMapContainer";
         }
 
+	this.entity = entity;
         this.autoResize = autoResize;
-        this.center = center;
         this.render();
         this.locationAnswerLists = new AnswerListCollection([],{ "key": locationAnswerKey });
         this.activityAnswerLists = new AnswerListCollection([],{ "key": activityAnswerKey });
@@ -26,7 +26,7 @@ window.AnswerListMap = Backbone.View.extend({
     render: function () {
 	var myLatlng = new google.maps.LatLng(42.361794,-71.090804);
 	var myOptions = {
-	  zoom: 15,
+	  zoom: 13,
 	  center: myLatlng,
 	  mapTypeId: google.maps.MapTypeId.ROADMAP,
 	  disableDefaultUI: false,
@@ -43,42 +43,64 @@ window.AnswerListMap = Backbone.View.extend({
    },
 
     renderPlaces: function () {
-        var locationEntries = (this.locationAnswerLists && this.locationAnswerLists.length > 0)? this.locationAnswerLists.at(0).get("value"):[];
-        var activityEntries = (this.activityAnswerLists && this.activityAnswerLists.length > 0)? this.activityAnswerLists.at(0).get("value"):[];
-        var highActivityLocations = [];
-
 	var locationPoints = [];
-	var max = 0;
-        for (i in locationEntries){
-            var locationEntry = locationEntries[i];
-            var centroid = locationEntry["centroid"];
+//	console.log(this.entity);
+	if(this.entity == "user"){
+            var locationEntries = (this.locationAnswerLists && this.locationAnswerLists.length > 0)? this.locationAnswerLists.at(0).get("value"):[];
+            var activityEntries = (this.activityAnswerLists && this.activityAnswerLists.length > 0)? this.activityAnswerLists.at(0).get("value"):[];
+	
+	    console.log(locationEntries);
+	    console.log(activityEntries);
 
-            if(activityEntries[i] != undefined && centroid[0] != undefined){
-                var high = activityEntries[i]["high"];
-                var low = activityEntries[i]["low"];
-		var total = activityEntries[i]["total"];
-                if ( high + low > 0 ){
-                    var normalizedActivity = Math.round((high + low)*500/(total)); //500 for testing. Need to look at various datasets to figure out formula.
-		    if(max < normalizedActivity){
-			max = normalizedActivity;
-		    }
-                    if (normalizedActivity > 1){
-                        repeatLocation = false;
-                        for (highActivityLocation in highActivityLocations){
-                            if (centroid[0][0] == highActivityLocation[0] && centroid[0][1] == highActivityLocation[1]){
-                                repeatLocation = true;
-                                break;
+            var highActivityLocations = [];
+
+	    var max = 0;
+            for (i in locationEntries){
+                var locationEntry = locationEntries[i];
+                var centroid = locationEntry["centroid"];
+
+                if(activityEntries[i] != undefined && centroid[0] != undefined){
+                    var high = activityEntries[i]["high"];
+                    var low = activityEntries[i]["low"];
+		    var total = activityEntries[i]["total"];
+//                    if ( high + low > 0 ){
+//                        var normalizedActivity = Math.round((high + low)*500/(total)); //500 for testing. Need to look at various datasets to figure out formula.
+//		        if(max < normalizedActivity){
+//			    max = normalizedActivity;
+//		        }
+			if(max < high){
+			    max = high;
+			}
+//                        if (normalizedActivity > 1){
+			if(high > 0){
+                            repeatLocation = false;
+                            for (highActivityLocation in highActivityLocations){
+                                if (centroid[0][0] == highActivityLocation[0] && centroid[0][1] == highActivityLocation[1]){
+                                    repeatLocation = true;
+                                    break;
+                                }
                             }
-                        }
-                        if(repeatLocation == false){
-                            highActivityLocations.push(centroid[0]);
-			    locationPoints.push({lat: centroid[0][0], lng: centroid[0][1], count: normalizedActivity});
-                        }
+                            if(repeatLocation == false){
+                                highActivityLocations.push(centroid[0]);
+//			        locationPoints.push({lat: centroid[0][0], lng: centroid[0][1], count: normalizedActivity});
+			        locationPoints.push({lat: centroid[0][0], lng: centroid[0][1], count: high});
+                            }
 
-                    }
+                        }
+//                    } //high+low 
                 }
             }
-        }
+	} else if(this.entity == "average"){
+	    var activityEntries = (this.activityAnswerLists && this.activityAnswerLists.length > 0)? this.activityAnswerLists.at(0).get("value"):[];
+            locationPoints = (this.locationAnswerLists && this.locationAnswerLists.length > 0)? this.locationAnswerLists.at(0).get("value"):[];
+
+            var max = 0;
+            for (locationIndex in locationPoints){
+                if(locationPoints[locationIndex]["count"] > max){
+                    max = locationPoints[locationIndex]["count"]
+                }
+            }
+	}
 	
 
 	var testData = {

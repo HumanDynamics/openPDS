@@ -25,6 +25,7 @@ def probeForTimeRange(probe, internalDataStore, start, end, includeBlanks = Fals
     probeEntries = internalDataStore.getData(probe, start, end)
     if probeEntries is not None and (includeBlanks or probeEntries.count() > 0):
 	values = [data["value"] for data in probeEntries]
+	#print values
         if probe == 'LocationProbe':
 	    #Commented out next line because locations obtained through wifi have maccuracy > 30.
 #	    values = [value for value in values if float(value["maccuracy"]) < 30]
@@ -79,10 +80,12 @@ def recentProbeDataScores():
                        'recentAppUsageProbeByHour': 'AppUsageProbe'}
 
 #        print profile
-        token = socialhealth_tasks.getToken(profile, "app-uuid")
-        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+#        token = socialhealth_tasks.getToken(profile, "app-uuid")
+#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+        internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
+
+	#for testing, currently use the following user
+	#if profile.uuid == "341cc5cd-0f42-45f1-9f66-273ac3ed8b2e":
 
         for probeAnswerKey, probe in probeAnswerKeys.iteritems():
-#            print probe
 	    probeLevels = aggregateForUser(probe, internalDataStore, probeAnswerKey, timeRanges, probeForTimeRange, False)
-#	    print probeLevels

@@ -1,0 +1,61 @@
+{% extends "backboneLayout.html" %}
+
+{% block title %}
+Recent Places
+{% endblock %}
+
+{% block more_scripts %}
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script>
+    ANSWERLIST_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answerlist" %}";
+</script>
+
+<script src="{{ STATIC_URL}}js/answerList.js"></script>
+<script src="{{ STATIC_URL }}js/mitfit_recos.js"></script>
+<script src="{{ STATIC_URL }}js/urlEncode.js"></script>
+<script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
+
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}css/jquery.tidy.table.min.css">
+<script src="{{ STATIC_URL}}/js/jquery.tidy.table.min.js"></script>
+   
+<script>
+$(function () {
+   console.log("test"); 
+    window.answerListMap = new AnswerListMap("activityStats", "answerListContainer", true);
+    $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
+    $("#plus").live('click', answerListMap.zoomIn);
+    $("#minus").live('click', answerListMap.zoomOut);
+    
+});
+</script>
+
+    <style type="text/css">
+        #answerListMapContainer {
+            width: 375px;
+            height: 100px;
+        }
+    </style>
+
+
+{% endblock %}
+
+{% block content %}
+
+<div>
+<b>Activities</b><br/><br/>The MIT RecSports recommends the following activities based on your activity levels.
+</div>
+<div id="answerListMapContainer"></div>
+<!--<br/><br/>
+<div>
+<b>Relationships</b><br/><br/>You usually talk with Alice before participating in high-activity events. However, you have not talked with Alice in the last four day(s). Call <a href>Alice</a>?
+</div>
+<br/><br/>
+<div>
+<b>Places</b><br/><br/>You are highly active in <a href>MIT Z-Center</a>. However, you have not been there in the last two week(s).
+</div>
+-->
+
+<div id="footer" data-role="footer">
+</div>
+
+{% endblock %}
