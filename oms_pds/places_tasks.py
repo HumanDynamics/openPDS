@@ -101,7 +101,7 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges, numPlaces=1, answerKey="Re
         #pdb.set_trace()
         for timeRange in timeRanges:
             # NOTE: is a limit on the number of entries still necessary, if we're choosing the timeRanges carefully?
-            values = [entry["value"] for entry in internalDataStore.getData("LocationProbe", timeRange[0], timeRange[1])]
+            values = [entry["value"] for entry in internalDataStore.getData("LocationProbe", timeRange[0], timeRange[1]) or []]
             # Use all locations except the most gratuitously inaccurate ones
             values = [value for value in values if float(value["maccuracy"]) < 100]
             clusters = clusterFunfLocations(values, 100)
