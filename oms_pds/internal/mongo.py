@@ -16,7 +16,7 @@ class InternalDataStore(AccessControlledInternalDataStore):
     	"""
     	Initialize an InternalDataStore holding the user's data specified by profile, with authorization provided via token. 
    	 """
-        super(InternalDataStore, self).__init__(profile, app_id, lab_id, token)
+        super(InternalDataStore, self).__init__(profile, app_id, lab_id)
         # This should check the token and pull down approved scopes for it
         self.profile = profile
         self.db = connection[profile.getDBName()]

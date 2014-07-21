@@ -11,7 +11,7 @@ import math
 import cluster
 from gcm import GCM
 from oms_pds.pds.models import Profile
-from oms_pds.pds.internal import getInternalDataStore
+from oms_pds.internal.dual import getInternalDataStore
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3
@@ -126,22 +126,18 @@ def activityForTimeRange(internalDataStore, start, end, includeBlanks = False, i
     return None
 
 def focusForTimeRange(internalDataStore, start, end, includeBlanks = False, includeSelfAssessed = False):
-    screenOnCount = 0
-    hours = float((end - start)) / 3600.0
+    apsForNow = internalDataStore.getData("WifiProbe", start, end) or []
+    apsForLastWeek = internalDataStore.getData("WifiProbe", start - 24*3600*7 - 900, end - 24*3600*7 + 900) or []
 
-    screenOnEntries = internalDataStore.getData("ScreenProbe", start, end)
-    if screenOnEntries is not None and (includeBlanks or screenOnEntries.count() > 0):
-        for data in screenOnEntries:
-            dataValue = data["value"]
-            screenOnCount += 1 if dataValue["screen_on"] else 0
-        normalized = float(screenOnCount) / hours
+    apsForNow = set([ap["value"]["bssid"] for ap in apsForNow]) 
+    apsForLastWeek = set([ap["value"]["bssid"] for ap in apsForLastWeek])
 
-        focus =  { "start": start, "end": end, "focus": normalized }
+    if includeBlanks or (len(apsForNow) > 0 and len(apsForLastWeek) > 0):
+        union = len(apsForNow.union(apsForLastWeek))
+        focus = { "start": start, "end": end, "focus": 10*float(len(apsForNow.intersection(apsForLastWeek))) / union if union > 0 else 0 }
 
-        if includeSelfAssessed:
-            selfAssessed = selfAssessedScoreForTimeRange(internalDataStore, start, end, "Focus")
-            focus["selfAssessed"] = selfAssessed["value"]
         return focus
+
     return None
 
 def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, includeSelfAssessed = False):
@@ -250,18 +246,6 @@ def getStartTime(daysAgo, startAtMidnight):
     currentTime = time.time()
     return time.mktime((date.fromtimestamp(currentTime) - timedelta(days=daysAgo)).timetuple()) if startAtMidnight else currentTime - daysAgo * 24 * 3600
 
-def sumActivityLevels(ids):
-    start = getStartTime(28, False)
-    activity = ids.getData("ActivityProbe", start, None)
-    levels = [a["value"] for a in activity]
-    for a in levels:
-        if "low_activity_levels" not in a: 
-            print a
-    lows = [a["low_activity_intervals"] for a in levels]
-    highs = [a["high_activity_intervals"] for a in levels]
-    totals = [a["total_intervals"] for a in levels]
-
-    return lows, highs, totals
 def recentActivityLevels(includeBlanks = False):
     startTime = getStartTime(6, True)
     endTime = time.time()
@@ -277,26 +261,7 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
     today = date.fromtimestamp(currentTime)
     startTime = time.mktime((today - timedelta(days=6)).timetuple())
     timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
-    data = aggregateForAllUsers(None, timeRanges, focusForTimeRange, "Focus", includeBlanks)
- 
-    for uuid, focusList in data.iteritems():
-        if len(focusList) > 0:
-            data[uuid] = []
-            if means is not None and devs is not None and uuid in means and uuid in devs:
-                mean = means[uuid] if means[uuid] > 0 else 1
-                dev = devs[uuid] if devs[uuid] > 0 else 1
-                for f in focusList:
-                    f["focus"] = 10.0*(1.0 - CDF(f["focus"], mean, dev))
-                    data[uuid].append(f)                
-            else:
-                for f in focusList:
-                    f["focus"] = int(f["focus"])
-                    data[uuid].append(f)               
-            profile = Profile.objects.get(uuid = uuid)
-            # TODO: get a token here to run internal queries against...
-            ids = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "")
-            ids.saveAnswer(answerKey, data[uuid]) 
-    return data
+    return aggregateForAllUsers(answerKey, timeRanges, focusForTimeRange, "Focus", includeBlanks)
 
 def recentSocialLevels(includeBlanks = False):
     answerKey = "RecentSocialByHour"
@@ -334,11 +299,7 @@ def recentFocusScore():
     #currentTime = time.time()
     #data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 7, currentTime)], focusForTimeRange, False)
     score = {}
-
-    screenOnAverages = { uuid: float(sum([f["focus"] for f in focusList])) / len(focusList) if len(focusList) > 0 else 0  for uuid, focusList in data.iteritems()}
-    screenOnStdDevs = { uuid: math.sqrt(sum([(f["focus"] - screenOnAverages[uuid])**2 for f in focusList]) / len(focusList)) if len(focusList) > 0 else 0 for uuid, focusList in data.iteritems()}
-    data = recentFocusLevels(True, screenOnAverages, screenOnStdDevs)
-    
+   
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
             score[uuid] = computeFocusScore(focusList)
