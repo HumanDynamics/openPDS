@@ -146,7 +146,7 @@ legend: {position: 'none'}
         //$('#chart_div').highcharts({
 	chart = new Highcharts.Chart({
             chart: {
-                type: 'column',
+                type: 'area',
 		renderTo: 'chart_div'
             },
             title: {

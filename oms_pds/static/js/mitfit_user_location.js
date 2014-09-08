@@ -44,13 +44,9 @@ window.AnswerListMap = Backbone.View.extend({
 
     renderPlaces: function () {
 	var locationPoints = [];
-//	console.log(this.entity);
 	if(this.entity == "user"){
             var locationEntries = (this.locationAnswerLists && this.locationAnswerLists.length > 0)? this.locationAnswerLists.at(0).get("value"):[];
             var activityEntries = (this.activityAnswerLists && this.activityAnswerLists.length > 0)? this.activityAnswerLists.at(0).get("value"):[];
-	
-	    console.log(locationEntries);
-	    console.log(activityEntries);
 
             var highActivityLocations = [];
 
@@ -63,15 +59,9 @@ window.AnswerListMap = Backbone.View.extend({
                     var high = activityEntries[i]["high"];
                     var low = activityEntries[i]["low"];
 		    var total = activityEntries[i]["total"];
-//                    if ( high + low > 0 ){
-//                        var normalizedActivity = Math.round((high + low)*500/(total)); //500 for testing. Need to look at various datasets to figure out formula.
-//		        if(max < normalizedActivity){
-//			    max = normalizedActivity;
-//		        }
 			if(max < high){
 			    max = high;
 			}
-//                        if (normalizedActivity > 1){
 			if(high > 0){
                             repeatLocation = false;
                             for (highActivityLocation in highActivityLocations){
@@ -82,12 +72,10 @@ window.AnswerListMap = Backbone.View.extend({
                             }
                             if(repeatLocation == false){
                                 highActivityLocations.push(centroid[0]);
-//			        locationPoints.push({lat: centroid[0][0], lng: centroid[0][1], count: normalizedActivity});
 			        locationPoints.push({lat: centroid[0][0], lng: centroid[0][1], count: high});
                             }
 
                         }
-//                    } //high+low 
                 }
             }
 	} else if(this.entity == "average"){

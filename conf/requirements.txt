@@ -1,13 +1,13 @@
 # XXX add specific version numbers once we can confirm the latest stable versions all work
 # XXX need to confirm that the Registry and Resource Servers have the same dependencies?
-django==1.4.2
+django==1.4.13
 django-tastypie==0.9.11
 mongoengine
 django-celery-with-mongodb
 pymongo
 requests
 # XXX - re-enable once we make postgresql / mysql an developer-defined detail
-#psycopg2
+psycopg2
 django-extensions
 django-uni-form
 cluster
@@ -16,3 +16,4 @@ SparqlWrapper
 django-4store
 pycrypto
 django-crocodile
+

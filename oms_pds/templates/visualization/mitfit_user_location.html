@@ -1,7 +1,7 @@
 {% extends "backboneLayout.html" %}
 
 {% block title %}
-Recent Places
+MIT-FIT
 {% endblock %}
 
 {% block more_scripts %}
@@ -21,8 +21,23 @@ Recent Places
    
 <script>
 $(function () {
-    
-    window.answerListMap = new AnswerListMap("recentSimpleLocationProbeByHour", "recentActivityProbeByHour", {% if lat %}[{{ lat }}, {{ long }}]{% else %}null{% endif %},"answerListMapContainer", true);
+
+    $("input[name=entity]:radio").change(function () {
+        if ($("#user").attr("checked")) {
+    	    window.answerListMap = new AnswerListMap("recentSimpleLocationProbeByHour", "recentActivityProbeByHour", "answerListMapContainer", true, "user");
+    $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
+    $("#plus").live('click', answerListMap.zoomIn);
+    $("#minus").live('click', answerListMap.zoomOut);
+        }
+        else {
+	    window.answerListMap = new AnswerListMap("activeLocations", "activityStats", "answerListMapContainer", true, "average");
+    $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
+    $("#plus").live('click', answerListMap.zoomIn);
+    $("#minus").live('click', answerListMap.zoomOut);
+        }
+    });    
+
+    window.answerListMap = new AnswerListMap("recentSimpleLocationProbeByHour", "recentActivityProbeByHour", "answerListMapContainer", true, "user");
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
     $("#plus").live('click', answerListMap.zoomIn);
     $("#minus").live('click', answerListMap.zoomOut);
@@ -43,8 +58,15 @@ $(function () {
 {% block content %}
 
 <div id="answerListMapContainer"></div>
-
-
+<!--<label>Render map for</label>-->  
+<center>
+ <fieldset data-role="controlgroup" data-type="horizontal">     
+ <input data-mini="true" type="radio" name="entity" id="user" value="" checked="checked"/>
+ <label for="user">Me</label>
+ <input data-mini="true"  type="radio" name="entity" id="average" value="choice-1"  />
+ <label for="average">Everyone</label>
+</fieldset>
+</center>
 
 <div id="footer" data-role="footer">
 </div>

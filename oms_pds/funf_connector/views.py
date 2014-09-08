@@ -11,7 +11,7 @@ import json, ast
 from oms_pds import settings
 from oms_pds.authorization import PDSAuthorization
 from oms_pds.pds.models import Profile
-from oms_pds.pds.internal import getInternalDataStore, InternalDataStore
+from oms_pds.internal.mongo import getInternalDataStore, InternalDataStore
 import pdb
 
 upload_dir = settings.SERVER_UPLOAD_DIR
@@ -53,7 +53,7 @@ def data(request):
         return HttpResponse("File not found", status=404)
     pds = None
     #scope = AccessRange.objects.get(key="funf_write")
-    authorization = PDSAuthorization("funf_write", audit_enabled=True)
+    authorization = PDSAuthorization("funf_write", audit_enabled=False)
     if (not authorization.is_authorized(request)):
         return HttpResponse("Unauthorized", status=401)
 

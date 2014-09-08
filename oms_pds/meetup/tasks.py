@@ -66,7 +66,7 @@ def initiateMeetupScheduling(owner_uuid, meetup_uuid, token):
     internalDataStore = getInternalDataStore(owner, "Living Lab", "Meetup", token)
     meetup_request = internalDataStore.getMeetupRequest(meetup_uuid)
 
-    owner_places = internalDataStore.getAnswerList("RecentPlaces")[0]["value"]
+    owner_places = internalDataStore.getAnswerList("HourlyPlaces")[0]["value"]
 
     answer = []
     
@@ -92,7 +92,7 @@ def helpScheduleMeetup(owner_uuid, meetup_uuid, running_totals, token):
     participant_uuids = meetup_request["participants"]
     my_index = len(participant_uuids) if owner_uuid == requester_uuid else participant_uuids.index(owner_uuid)
   
-    owner_places = internalDataStore.getAnswerList("RecentPlaces")[0]["value"]
+    owner_places = internalDataStore.getAnswerList("HourlyPlaces")[0]["value"]
     answer = []
     for scores in running_totals:
         key = scores["key"]

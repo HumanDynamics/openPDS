@@ -1,7 +1,7 @@
 {% extends "backboneLayout.html" %}
 
 {% block title %}
-Recent Places
+MIT-FIT
 {% endblock %}
 
 {% block more_scripts %}
@@ -15,17 +15,17 @@ Recent Places
 <script src="{{ STATIC_URL }}js/urlEncode.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
 
-<script type="text/javascript" src="http://sharonmyrtle.com/Heatmaps/heatmap.js"></script>
-<script type="text/javascript" src="http://sharonmyrtle.com/Heatmaps/heatmap-gmaps.js"></script>
+<!--<script type="text/javascript" src="https://www.google.com/jsapi"></script>-->
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
 
-   
 <script>
-$(function () {
-    
-    window.answerListMap = new AnswerListMap("recentSimpleLocationProbeByHour", "recentActivityProbeByHour", {% if lat %}[{{ lat }}, {{ long }}]{% else %}null{% endif %}, "answerListTimesContainer", true);
+$(window).load(function(){  
+    window.answerListMap = new AnswerListMap("activeTimes", "recentActivityProbeByHour", {% if lat %}[{{ lat }}, {{ long }}]{% else %}null{% endif %}, "answerListTimesContainer", true);
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
-    $("#plus").live('click', answerListMap.zoomIn);
-    $("#minus").live('click', answerListMap.zoomOut);
+    //$("#plus").live('click', answerListMap.zoomIn);
+    //$("#minus").live('click', answerListMap.zoomOut);
     
 });
 </script>
@@ -42,8 +42,7 @@ $(function () {
 
 {% block content %}
 
-<div id="answerListTimesContainer"></div>
-
+<div id="chart_div" style="width: 350px; height: 500px;"></div>
 
 
 <div id="footer" data-role="footer">

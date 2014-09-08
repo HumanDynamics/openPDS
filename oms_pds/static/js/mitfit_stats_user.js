@@ -39,7 +39,7 @@ window.AnswerListMap = Backbone.View.extend({
 	console.log(max);
 	
 	if(statEntries[0] != undefined){
-            this.statsElement.replaceWith("You are in the following percentile: " + statEntries[0]["rank"]["percentile"] + ", with a rank of  " + statEntries[0]["rank"]["own"] + " out of " + statEntries[0]["rank"]["total"] + "<br/>");
+            this.statsElement.replaceWith("Based on your activity <br/><br/> You are in the following percentile: " + statEntries[0]["rank"]["percentile"] + "<br/> with a rank of  " + statEntries[0]["rank"]["own"] + " out of " + statEntries[0]["rank"]["total"] + "<br/>");
 	}
 
     },

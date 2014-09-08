@@ -39,7 +39,7 @@ class MeetupRequestResource(MongoDBResource):
         meetup=None
 
         if "uuid" in bundle.data:
-            ids = getInternalDataStore(profile, token)
+            ids = getInternalDataStore(profile, "Living Lab", "Meetup", token)
             meetup = ids.getMeetupRequest(bundle.data["uuid"])
         else:
             bundle.data["uuid"] = str(uuid.uuid4())

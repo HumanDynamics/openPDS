@@ -11,7 +11,7 @@ Recent Places
 </script>
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>
-<script src="{{ STATIC_URL }}js/mitfit_stats_aggregate.js"></script>
+<script src="{{ STATIC_URL }}js/mitfit_location.js"></script>
 <script src="{{ STATIC_URL }}js/urlEncode.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
 
@@ -43,10 +43,6 @@ $(function () {
 {% block content %}
 
     <div id="answerListMapContainer"></div>
-<form>
-<label for='me'>Me</label><input type='radio' data-mini='true' name='me' value='me' id='me' />
-<label for='everyone'>Everyone</label><input type='radio' data-mini='true' name='everyone' value='everyone' id='everyone' />
-</form>
 
 
 <div id="footer" data-role="footer">

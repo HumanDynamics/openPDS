@@ -20,11 +20,6 @@ urlpatterns = patterns('oms_pds.visualization.views',
 #    (r"^places", direct_to_template, { "template" : "visualization/locationMap.html" })
     (r'^mitfit/userlocation$', direct_to_template, { 'template' : 'visualization/mitfit_user_location.html' }),
     (r'^mitfit/usertime$', direct_to_template, { 'template' : 'visualization/mitfit_user_time.html' }),
-    (r'^mitfit/usertimedemo$', direct_to_template, { 'template' : 'visualization/mitfit_user_time_demo.html' }),
-    (r'^mitfit/statsuser$', direct_to_template, { 'template' : 'visualization/mitfit_stats_user.html' }),
-    (r'^mitfit/statsuserdemo$', direct_to_template, { 'template' : 'visualization/mitfit_stats_user_demo.html' }),
-    (r'^mitfit/statsaggregate$', direct_to_template, { 'template' : 'visualization/mitfit_stats_aggregate.html' }),
     (r'^mitfit/recos$', direct_to_template, { 'template' : 'visualization/mitfit_recos.html' }),
-    (r'^mitfit/recosdemo$', direct_to_template, { 'template' : 'visualization/mitfit_recos_demo.html' }),
-    (r'^mitfit/recosactivities$', direct_to_template, { 'template' : 'visualization/mitfit_recos_activities.html' }),
+    (r'^hotspots$', direct_to_template, { 'template' : 'visualization/hotspots.html' }),
 )

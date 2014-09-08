@@ -11,18 +11,17 @@ Recent Places
 </script>
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>
-<script src="{{ STATIC_URL }}js/mitfit_stats_aggregate.js"></script>
+<script src="{{ STATIC_URL }}js/mitfit_recos_activities.js"></script>
 <script src="{{ STATIC_URL }}js/urlEncode.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
 
-<script type="text/javascript" src="http://sharonmyrtle.com/Heatmaps/heatmap.js"></script>
-<script type="text/javascript" src="http://sharonmyrtle.com/Heatmaps/heatmap-gmaps.js"></script>
-
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}css/jquery.tidy.table.min.css">
+<script src="{{ STATIC_URL}}/js/jquery.tidy.table.min.js"></script>
    
 <script>
 $(function () {
    console.log("test"); 
-    window.answerListMap = new AnswerListMap("activityStats", "activeLocations", "answerListStatsContainer", "answerListMapContainer", true);
+    window.answerListMap = new AnswerListMap("activityStats", "answerListContainer", true);
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
     $("#plus").live('click', answerListMap.zoomIn);
     $("#minus").live('click', answerListMap.zoomOut);
@@ -32,8 +31,8 @@ $(function () {
 
     <style type="text/css">
         #answerListMapContainer {
-            width: 575px;
-            height: 350px;
+            width: 375px;
+            height: 300px;
         }
     </style>
 
@@ -42,11 +41,10 @@ $(function () {
 
 {% block content %}
 
-    <div id="answerListMapContainer"></div>
-<form>
-<label for='me'>Me</label><input type='radio' data-mini='true' name='me' value='me' id='me' />
-<label for='everyone'>Everyone</label><input type='radio' data-mini='true' name='everyone' value='everyone' id='everyone' />
-</form>
+<div>
+<b>Activities</b><br/><br/>The MIT RecSports recommends the following activities based on your activity levels.
+</div>
+<div id="answerListMapContainer"></div>
 
 
 <div id="footer" data-role="footer">

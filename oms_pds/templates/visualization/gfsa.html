@@ -1,0 +1,29 @@
+{% extends "backboneLayout.html" %}
+
+
+{% block more_scripts %}
+<script>
+    ANSWER_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="answer" %}";
+</script>
+
+<script src="{{ STATIC_URL}}js/answer.js"></script>
+<script src="{{ STATIC_URL}}js/simpleAnswerTextView.js"></script>
+<script>
+$(function () {
+    window.probeCounts = new SimpleAnswerTextView("recentGfsaScores");
+    $(".answerContent").append(probeCounts.render());
+});
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div style='margin-left: 10px;'>
+	<h3> Welcome! </h3>
+</div>
+
+<div class="answerContent">
+Retrieving your data, please wait... (this may take several seconds) <br/>
+</div>
+{% endblock %}
+

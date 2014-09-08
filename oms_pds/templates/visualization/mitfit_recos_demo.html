@@ -21,20 +21,13 @@ Recent Places
 <script>
 $(function () {
    console.log("test"); 
-    window.answerListMap = new AnswerListMap("activityStats", "answerListContainer", true);
+    window.answerListMap = new AnswerListMap("recentActivityProbeByHour", "answerListContainer", true);
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
     $("#plus").live('click', answerListMap.zoomIn);
     $("#minus").live('click', answerListMap.zoomOut);
     
 });
 </script>
-
-    <style type="text/css">
-        #answerListMapContainer {
-            width: 375px;
-            height: 100px;
-        }
-    </style>
 
 
 {% endblock %}

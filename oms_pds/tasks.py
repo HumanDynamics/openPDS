@@ -36,12 +36,13 @@ def ensureFunfIndexes():
 @task()
 def deleteUnusedProfiles():
     profiles = Profile.objects.all()
+    start = getStartTime(60, False)
 
     for profile in profiles:
         dbName = profile.getDBName()
         collection = connection[dbName]["funf"]
         
-        if collection.find().count() == 0:
+        if collection.find({"time": { "$gte": start}}).count() == 0:
             connection.drop_database(dbName)
             profile.delete()
 

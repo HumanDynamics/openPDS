@@ -11,7 +11,7 @@ import math
 import cluster
 from gcm import GCM
 from oms_pds.pds.models import Profile
-from oms_pds.pds.internal import getInternalDataStore
+from oms_pds.internal.mongo import getInternalDataStore
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3
@@ -79,13 +79,9 @@ def recentProbeDataScores():
                        'recentRunningApplicationsProbeByHour': 'RunningApplicationsProbe', 'recentHardwareInfoProbeByHour': 'HardwareInfoProbe', 
                        'recentAppUsageProbeByHour': 'AppUsageProbe'}
 
-#        print profile
-#        token = socialhealth_tasks.getToken(profile, "app-uuid")
-#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
         internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
 
 	#for testing, currently use the following user
 	#if profile.uuid == "341cc5cd-0f42-45f1-9f66-273ac3ed8b2e":
-
-        for probeAnswerKey, probe in probeAnswerKeys.iteritems():
+	for probeAnswerKey, probe in probeAnswerKeys.iteritems():
 	    probeLevels = aggregateForUser(probe, internalDataStore, probeAnswerKey, timeRanges, probeForTimeRange, False)

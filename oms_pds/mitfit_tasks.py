@@ -12,7 +12,7 @@ import math
 import cluster
 from gcm import GCM
 from oms_pds.pds.models import Profile
-from oms_pds.pds.internal import getInternalDataStore
+from oms_pds.internal.mongo import getInternalDataStore
 from collections import Counter
 import sqlite3
 import socialhealth_tasks
@@ -22,6 +22,7 @@ import bisect
 from operator import itemgetter, attrgetter
 import datetime
 import random
+from oms_pds.accesscontrol.models import Optin
 
 class LeaderboardRanking():
     def __init__(self, user_entry):
@@ -55,8 +56,12 @@ def leaderboardComputation(internalDataStore):
     min_low_activity_rate = sys.float_info.max
     for activityAnswer in answer:
 	#print activityAnswer
-        high_activity_rate = activityAnswer["high"]/activityAnswer["total"]
-        low_activity_rate = activityAnswer["low"]/activityAnswer["total"]
+	if activityAnswer["total"] > 0:
+            high_activity_rate = activityAnswer["high"]/activityAnswer["total"]
+            low_activity_rate = activityAnswer["low"]/activityAnswer["total"]
+	else:
+	    high_activity_rate = 0 
+            low_activity_rate = 0
         activity_rate = activity_rate + ((0.7*high_activity_rate) + (0.3*low_activity_rate))
         #print "activity_rate: " + str(activity_rate) + ", high_activity_rate: " + str(high_activity_rate) + ", low_activity_rate: " + str(low_activity_rate)  
         if high_activity_rate > max_high_activity_rate:
@@ -126,24 +131,17 @@ def activeLocationsComputation(internalDataStore):
     activityAnswerList = activityAnswerList[0]["value"] if activityAnswerList.count() > 0 else []
     locationPoints = []
     for activityAnswer in activityAnswerList:
-#        activity_rate = (500*(activityAnswer["high"] + activityAnswer["low"]))/activityAnswer["total"]
         start_time = activityAnswer["start"]
 	end_time = activityAnswer["end"]
-	#print activity_rate
-#	if activity_rate > 1:
 	if activityAnswer["high"] > 0:
 	    locationAnswerList = internalDataStore.getAnswerList("recentSimpleLocationProbeByHour")
 	    locationAnswerList = locationAnswerList[0]["value"] if locationAnswerList.count() > 0 else []
 	    for locationAnswer in locationAnswerList:
-		#print locationAnswer
 		if start_time == locationAnswer["start"] and end_time == locationAnswer["end"]:
-		    #print locationAnswer["centroid"]
 		    if locationAnswer["centroid"]:
 		        locationPoints.append(locationAnswer["centroid"][0])
 
     return locationPoints
-
-#    return user_activity
 
 @task()
 def findActiveLocationsTask():
@@ -151,15 +149,20 @@ def findActiveLocationsTask():
 
     location_frequencies = {}
     for profile in profiles:
-#        token = socialhealth_tasks.getToken(profile, "app-uuid")
-#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+
+        try:
+            optin_object = Optin.objects.get(datastore_owner = profile, app_id = "Living Lab", lab_id = "MIT-FIT")
+        except Optin.DoesNotExist:
+            optin_object = None
+
+	if optin_object:
+	    if optin_object.data_aggregation == 0:
+		continue
+	
+	#print profile.id
 
 	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
-
         values = activeLocationsComputation(internalDataStore)
-	#print profile.uuid
-	#print values
-	
 	for value in values:
 		location_value = tuple((round(value[0],4), round(value[1],4)))
 		if location_value in location_frequencies:
@@ -167,22 +170,13 @@ def findActiveLocationsTask():
 		else:
 			location_frequencies[location_value] = 1
 
-    #print location_frequencies
-
     location_frequencies_list = []
     for key  in location_frequencies:
-	#print key 
 	location_value = { "lat": key[0], "lng": key[1], "count": location_frequencies[key]}	
 	location_frequencies_list.append(location_value)
 
-    #print location_frequencies_list
-
     for profile in profiles:
-#        token = socialhealth_tasks.getToken(profile, "app-uuid")
-#        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
-
 	internalDataStore = getInternalDataStore(profile, "Living Lab", "MIT-FIT", "")
-	
 	internalDataStore.saveAnswer("activeLocations", location_frequencies_list)	
 
 
@@ -341,7 +335,7 @@ def recommendEvents():
     #print jaccardCoefficientDict
 
     for profile in profiles:
-        print profile.uuid
+        #print profile.uuid
 	recommendedEvents = {}
 	for userRegisteredEvent in userRegistrations[profile.uuid]:
 	    for event in eventSet:
@@ -354,11 +348,12 @@ def recommendEvents():
         #print recommendedEvents
 	sortedRecommendedEvents = sorted(recommendedEvents.items(), key = lambda recommendedEvent: recommendedEvent[1], reverse=True)
 	#print sortedRecommendedEvents
-	for event in sortedRecommendedEvents[:3]:
-	    for eventDetails in event[0]:
-		if u'name' in eventDetails[0]:
-	            print eventDetails[1] + ", " ,
-	print 
+
+#	for event in sortedRecommendedEvents[:3]:
+#	    for eventDetails in event[0]:
+#		if u'name' in eventDetails[0]:
+#	            print eventDetails[1] + ", " ,
+#	print 
 
 def testGetData():
     profiles = Profile.objects.all()

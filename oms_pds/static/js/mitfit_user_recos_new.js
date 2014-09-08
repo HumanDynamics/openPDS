@@ -48,62 +48,41 @@ window.AnswerListMap = Backbone.View.extend({
 	//console.log(activityEntries);
 
 	var events = [];
-	var days_times = [];
 
-	for(var i=0; i<activityEntries.length; i++){
-		//console.log(activityEntries[i]);
-		var start_date = new Date(activityEntries[i]["start"]*1000);
-		var start_day = start_date.getDay(); //0-6, Sunday = 0
-		var start_hour = start_date.getHours(); //0-23
-		var count = activityEntries[i]["high"]
-		for(var j=0; j<days_times.length; j++) {
-			var days_times_obj = days_times[j];
-			var present_flag = false;
-			if(start_day == days_times_obj.day && start_hour == days_times_obj.hour){
-				days_times_obj.count += count;
-				present_flag =true;
-				break;
+        for(var i = 0; i < this.mitfit_events.length; i++){
+	    var event_item = [];
+	    events_object = this.mitfit_events.at(i).get("value");
+	    //console.log(events_object);
+	    for(index in events_object){
+		if(activityEntries.length > 0){
+			//console.log("comparing");
+			console.log("average: " + activityEntries[0]["average_activity_rate"]);
+			console.log("min: " + activityEntries[0]["min_low_activity_rate"]);
+			console.log("max: " + activityEntries[0]["max_high_activity_rate"]);
+			if(activityEntries[0]["average_activity_rate"] >= events_object[index]["min-activity-level"] && activityEntries[0]["max_high_activity_rate"] <= events_object[index]["max-activity-level"]){
+			//if(activityEntries[0]["min_low_activity_rate"] >= events_object[index]["min-activity-level"] && activityEntries[0]["max_high_activity_rate"] <= events_object[index]["max-activity-level"]){
+			    var time_string = new Date(events_object[index]["timestamp"]*1000);
+			    console.log(formattedDate(time_string));
+			    //this.element.append("Event: " + events_object[index]["event-name"] + ", Location: " + events_object[index]["location"] + ", Time: " + events_object[index]["timestamp"] + ", Description: " + events_object[index]["description"] + ", URL: " + events_object[index]["url"]);
+			    event_item.push(events_object[index]["event-name"]);
+			    //event_item.push(events_object[index]["location"]);
+			    //event_item.push(events_object[index]["timestamp"]);
+			    event_item.push(formattedDate(time_string));
+			    //event_item.push(events_object[index]["description"]);
+
+			    events.push(event_item);
+			    //console.log(event_item);
 			}
-		}
-		if(!present_flag){
-			days_times.push({"day": start_day, "hour": start_hour, "count": count}); 
-		}
-	}
-
-        for(var i=0; i<this.mitfit_events.length; i++){
-                event_object = this.mitfit_events.at(i).get("value");
-		var event_date = new Date(event_object.timestamp*1000);
-                var event_day = event_date.getDay(); //0-6, Sunday = 0
-                var event_hour = event_date.getHours(); //0-23
-
-		var count = 0;
-		for(var j=0; j<days_times.length; j++){
-			if(event_day == days_times[j].day && event_hour == days_times[j].hour){
-				count = days_times[j].count;
-			}
-		}
-		events.push({"name": event_object.name, "timestamp": event_object.timestamp, "description": event_object.description, "count": count});		
-        }
-	console.log(events);
-	sorted_events = events.sort(function(a,b) { return parseInt(a.count) - parseInt(b.count) } ).reverse();
-	console.log(sorted_events);
-
-
-	var html_string = "";
-	for(var i=0; i<sorted_events.length; i++){
-		html_string += "<b>Name: </b>" + sorted_events[i].name + "<br/>" + 
-				"Time: " + new Date(sorted_events[i].timestamp*1000).toString().replace(/GMT.+/,"") + "<br/>" +
-				"Description: " + sorted_events[i].description + "<br/><br/>";
-	}
+		}	
+	    }
 	
-
-	$('#answerListMapContainer').html(html_string);
-/*	$('#answerListMapContainer')
+        }
+	//console.log(events);
+	$('#answerListMapContainer')
 		.TidyTable({
 			columnTitles : ['Event Name','Time'],
 			columnValues : events
 		});
-*/
     },
 
 });

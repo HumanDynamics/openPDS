@@ -29,6 +29,9 @@ def storeAccessControl(request):
 
 	profile = Profile.objects.get(uuid = datastore_owner)
 	
+	print profile
+	print app_id
+	print lab_id
 	optin, created = Optin.objects.get_or_create(datastore_owner = profile, app_id = app_id, lab_id = lab_id)
 	optin.app_id = app_id
 	optin.lab_id = lab_id
@@ -123,7 +126,7 @@ def loadAccessControl(request):
                   'screen_probe': False, 'running_applications_probe': False, 
 		  'hardware_info_probe': False, 'app_usage_probe': False}
 
-	for probe_object in Settings.objects.all():
+	for probe_object in Settings.objects.filter(datastore_owner = profile):
 	    probes['activity_probe'] = probes['activity_probe'] or probe_object.activity_probe
 	    probes['sms_probe'] = probes['sms_probe'] or probe_object.sms_probe
 	    probes['call_log_probe'] = probes['call_log_probe'] or probe_object.call_log_probe
@@ -134,6 +137,7 @@ def loadAccessControl(request):
 	    probes['running_applications_probe'] = probes['running_applications_probe'] or probe_object.running_applications_probe
 	    probes['hardware_info_probe'] = probes['hardware_info_probe'] or probe_object.hardware_info_probe
 	    probes['app_usage_probe'] = probes['app_usage_probe'] or probe_object.app_usage_probe
+	    print probes
 	
 	settings = []
 	try:

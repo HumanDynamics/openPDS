@@ -1,7 +1,7 @@
 {% extends "backboneLayout.html" %}
 
 {% block title %}
-MIT-FIT
+Hotspots of MIT community
 {% endblock %}
 
 {% block more_scripts %}
@@ -11,16 +11,15 @@ MIT-FIT
 </script>
 
 <script src="{{ STATIC_URL}}js/answerList.js"></script>
-<script src="{{ STATIC_URL }}js/mitfit_recos.js"></script>
+<script src="{{ STATIC_URL }}js/hotspots.js"></script>
 <script src="{{ STATIC_URL }}js/urlEncode.js"></script>
 <script src="{{ STATIC_URL }}js/jquery.sparql.js"></script>
-
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}css/jquery.tidy.table.min.css">
-<script src="{{ STATIC_URL}}/js/jquery.tidy.table.min.js"></script>
+<script src="{{ STATIC_URL }}js/heatmaps/heatmap.js"></script>
+<script src="{{ STATIC_URL }}js/heatmaps/heatmap-gmaps.js"></script>
    
 <script>
 $(function () {
-    window.answerListMap = new AnswerListMap("recentActivityProbeByHour", "answerListContainer", true);
+    window.answerListMap = new AnswerListMap("hotspots", "answerListMapContainer");
     $(window).bind("orientationchange resize pageshow", answerListMap.updateSize);
     $("#plus").live('click', answerListMap.zoomIn);
     $("#minus").live('click', answerListMap.zoomOut);
@@ -28,18 +27,17 @@ $(function () {
 });
 </script>
 
+<style type="text/css">
+    #answerListMapContainer {
+        width: 575px;
+        height: 350px;
+    }
+</style>
+
 
 {% endblock %}
 
 {% block content %}
 
-<div>
-The MIT Recreational Sports Department recommends the following activities based on your activity levels.
-<br/><br/>
-</div>
 <div id="answerListMapContainer"></div>
-
-<div id="footer" data-role="footer">
-</div>
-
 {% endblock %}

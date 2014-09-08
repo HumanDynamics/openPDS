@@ -1,0 +1,46 @@
+{% extends "backboneLayout.html" %}
+
+{% load straight_include %}
+
+{% block title %}
+Audit Logs
+{% endblock %}
+
+
+{% block more_scripts %}
+    
+   <!-- <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.9.1/themes/base/jquery-ui.css" />
+-->
+  <script src="{{ STATIC_URL }}js/jQuery.ui.datepicker.js"></script>
+     <link rel="stylesheet" href="{{ STATIC_URL}}css/jquery.ui.datepicker.mobile.css" /> 
+  <script src="{{ STATIC_URL }}js/jquery.ui.datepicker.mobile.js"></script>
+      
+<script src="http://d3js.org/d3.v2.js"></script>
+
+<script>
+    AUDIT_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="auditentry" %}";
+    AUDIT_COUNT_API_URL = "{% url api_dispatch_list api_name="personal_data" resource_name="auditentrycount" %}";
+</script>
+
+<script>
+$(function () {
+console.log("Test");
+console.log({{ probe }});
+});
+</script>
+
+<script type="text/html" id="auditEntryTemplate">
+{% straight_include "auditEntryTemplate.mustache" %}
+</script>
+
+<link rel="stylesheet" href="{{ STATIC_URL }}css/audit.css" /> 
+<script src="{{ STATIC_URL }}js/audit.js"></script>
+
+{% endblock %}
+
+{% block content %}
+<div>test</div>
+<div style="clear: both;">
+</div>
+{% endblock %}

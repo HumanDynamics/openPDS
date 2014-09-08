@@ -14,7 +14,7 @@ from gcm import GCM
 from oms_pds.pds.models import Profile
 from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
-from oms_pds.pds.internal import getInternalDataStore
+from oms_pds.internal.dual import getInternalDataStore
 import sqlite3
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
@@ -65,6 +65,61 @@ def centroid(points):
         return (0,0)
     sums = reduce(lambda p1,p2: (p1[0] + p2[0], p1[1] + p2[1]), points, (0,0))
     return (sums[0] / len(points), sums[1] / len(points))
+
+def findTopBoundingRegion(internalDataStore, timeRanges, numPlaces=1):
+    locations = []
+    # An explanation for why we're doing things the way we are below 
+    # (there are a few obvious strategies for finding places in location data):
+    # 1)  Naive approach - take all location samples in all time ranges, find clusters within them, 
+    #     take the one with the most points in it.
+    # 2)  Faster, but more complicated - do 1) for each time range individually to get candidate regions. 
+    #     Loop over candidate regions, collapsing and "voting" for those that overlap. Take the one with the most votes.
+    #     Notes: This is essentially 2-levels of clustering with the simplification that overlapping regions would 
+    #     have been clustered together anyway (ie; bounding boxes should be similar, but not the same, as strategy 1)
+    #     Pros: Faster - each clustering is limited to 100 entries. In practice, this is more than enough. 
+    #         If this poses an issue, time ranges can be chosen more carefully (more / shorter time ranges)
+    #     Cons: Bounding boxes aren't the same as 1). In particular, two candidate boxes may not overlap, but should 
+    #         have been clustered together anyway.
+    # 3)  Binning pre-process - Same as 1), but perform a binning pre-process on the location data, collapsing multiple 
+    #     samples into single entries, with associaated weights.
+    #     Notes: This is essentially a lower-resolution version of strategy 1. Bounding boxes should be lower-resolution
+    #     versions of those from strategy 1. 
+    #     Pros: Bounding boxes should be the same as #1. Takes into account all entries when clustering. 
+    #     Cons: Less fine-grained control over the number of entries per cluster than #2. In particular, for sparse 
+    #         location data, this may not reduce the number of entries we must cluster.
+    # The following is an implementation of method #2:
+    potentialRegions = []
+    mostVoted = None
+    #pdb.set_trace()
+    for timeRange in timeRanges:
+        # NOTE: is a limit on the number of entries still necessary, if we're choosing the timeRanges carefully?
+        values = [entry["value"] for entry in internalDataStore.getData("LocationProbe", timeRange[0], timeRange[1]) or []]
+        # Use all locations except the most gratuitously inaccurate ones
+        values = [value for value in values if float(value["maccuracy"]) < 100]
+        clusters = clusterFunfLocations(values, 100)
+        if (len(clusters) > 0):
+            #clusters.sort(key = lambda cluster: -len(cluster))
+            #topClusters = clusters[:min(len(clusters), numPlaces)]
+            clusterLocations = max(clusters, key= lambda cluster: len(cluster))
+            if isinstance(clusterLocations, list):
+                lats = [loc[0] for loc in clusterLocations]
+                longs = [loc[1] for loc in clusterLocations]
+                if min(lats) != max(lats) and min(longs) != max(longs):
+                    #Only add regions that aren't degenerate (single points)
+                    potentialRegions.append([min(lats), min(longs), max(lats), max(longs)])
+    if len(potentialRegions) > 0: 
+        overlaps = [{ "region": r1, "overlapList": [r2 for r2 in potentialRegions if r2 is not r1 and boundsOverlap(r1, r2)]} for r1 in potentialRegions]
+        reduced = [{ "region": reduce(lambda r1, r2: mergeBoxes(r1,r2), r["overlapList"], r["region"]), "votes": len(r["overlapList"])} for r in overlaps]
+        reduced.sort(key = lambda r: -r["votes"])
+        final = []
+        for r in reduced:
+            if not listContainsOverlap([f["region"] for f in final], r["region"]):
+                final.append(r)
+        mostOverlap = final[:min(len(final), numPlaces)]
+        mostVoted = [r["region"] for r in mostOverlap]
+        if numPlaces == 1: 
+            mostVoted = mostVoted[0]
+    return mostVoted
 
 def findRecentPlaceBounds(recentPlaceKey, timeRanges, numPlaces=1, answerKey="RecentPlaces"):
     profiles = Profile.objects.all()
@@ -186,22 +241,30 @@ def findRecentPlaces():
     currentTime = time.time()
     today = date.fromtimestamp(currentTime)
     startTime = time.mktime((today - timedelta(days=14)).timetuple())
-
-    profiles = Profile.objects.all()
-    for profile in profiles:
-        ids = getInternalDataStore(profile, "Living Lab", "My Places", "")
-        ids.saveAnswer("RecentPlaces", [])
-
     # Note: we're not taking the full 9-5 sampling. Clustering is expensive, so anything we can leave out helps...
     # Combined with the fact that "lunch" time might not be indicative of work locations, this might be more accurate anyway       
     nineToFives = [(nine, nine + 3600*8) for nine in range(int(startTime + 3600*9), int(currentTime), 3600*24)]
     #nineToFives.extend([(two, two + 3600*2) for two in range(int(startTime + 3600*14), int(currentTime), 3600*24)])    
-    #print "Finding work locations..."       
-    data = findRecentPlaceBounds("work", nineToFives)
-
     midnightToSixes = [(midnight, midnight + 3600*6) for midnight in range(int(startTime), int(currentTime), 3600* 24)]
+    data = {}
+    profiles = Profile.objects.all()
+    for profile in profiles:
+        ids = getInternalDataStore(profile, "Living Lab", "My Places", "")
+        #ids.saveAnswer("RecentPlaces", [])
+        work = findTopBoundingRegion(ids, nineToFives)
+        home = findTopBoundingRegion(ids, midnightToSixes)
+        data[profile.uuid] = []
+        if work is not None:
+            data[profile.uuid].append({ "key": "work", "bounds": work})
+        if home is not None: 
+            data[profile.uuid].append({ "key": "home", "bounds": home})
+        ids.saveAnswer("RecentPlaces", data[profile.uuid])
+
+    #print "Finding work locations..."       
+    #data = findRecentPlaceBounds("work", nineToFives)
+
     #print "Finding home locations..."
-    data = findRecentPlaceBounds("home", midnightToSixes)
+    #data = findRecentPlaceBounds("home", midnightToSixes)
 
     print "... done with RecentPlaces"
     return data

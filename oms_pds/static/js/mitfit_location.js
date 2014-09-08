@@ -24,7 +24,7 @@ window.AnswerListMap = Backbone.View.extend({
     render: function () {
         var myLatlng = new google.maps.LatLng(42.361794,-71.090804);
         var myOptions = {
-          zoom: 13,
+          zoom: 15,
           center: myLatlng,
           mapTypeId: google.maps.MapTypeId.ROADMAP,
           disableDefaultUI: false,
@@ -43,7 +43,6 @@ window.AnswerListMap = Backbone.View.extend({
     renderStats: function () {
         var statEntries = (this.statsAnswerLists && this.statsAnswerLists.length > 0)? this.statsAnswerLists.at(0).get("value"):[];
 	var locationEntries = (this.locationAnswerLists && this.locationAnswerLists.length > 0)? this.locationAnswerLists.at(0).get("value"):[];
-	alert("test");
 
 	//console.log(locationEntries);
 	var max = 0;
