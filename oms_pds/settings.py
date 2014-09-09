@@ -7,10 +7,10 @@ TEMPLATE_DEBUG = DEBUG
 MONGODB_HOST = None
 MONGODB_PORT = None
 MONGODB_DATABASE = 'pds'
-SERVER_OMS_REGISTRY='working-title.media.mit.edu:8003'
-DEFAULT_PDS_URL = 'http://working-title.media.mit.edu:8004'
+SERVER_OMS_REGISTRY='mgh.media.mit.edu:80'
+DEFAULT_PDS_URL = 'http://mgh.media.mit.edu:8080'
 
-SERVER_UPLOAD_DIR="/var/www/trustframework/fieldTrialPDS/"
+SERVER_UPLOAD_DIR="/var/www/pds/"
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -20,15 +20,14 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/trustframework/fieldTrialPDS/openPDS/oms_pds/test.db',                      # Or path to database file if using sqlite3.
-        #'NAME': 'test.db',
-        'USER': 'test',                      # Not used with sqlite3.
-        'PASSWORD': 'test',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'openpdsdb',
+        'USER': 'djangoapp',
+        'PASSWORD': 'humanadmin',
+        'HOST': ''
     }
 }
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -195,4 +194,5 @@ logger.addHandler(handler)
 
 
 
-GCM_API_KEY = "AIzaSyBTGmBjzM9_CETLxU3YEbtWIS_OUGWHr0s"
+#GCM_API_KEY = "AIzaSyBTGmBjzM9_CETLxU3YEbtWIS_OUGWHr0s"
+GCM_API_KEY = "AIzaSyDxs99qrUdlimSdHrNBC8Aa5cw_Co_5wHY"

@@ -68,4 +68,6 @@ urlpatterns = patterns('oms_pds.views',
     #(r'^funfSetting/', 'funfSetting'),
     (r"accesscontrol/", include("oms_pds.accesscontrol.urls")),
     (r'^checkboxes/', direct_to_template, { 'template' : 'multiplecheckboxes.html' }),
+    (r'^trynotif/', 'trynotif'),
+
 )

@@ -8,10 +8,11 @@ import httplib
 from django import forms
 import json
 from oms_pds.forms.settingsforms import PermissionsForm, Purpose_Form
-from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel, Profile, ResourceKey
+from oms_pds.pds.models import Scope, Purpose, Role, SharingLevel, Profile, ResourceKey, Device, Notification
 from pymongo import Connection
 import pdb
 from fourstore.views import sparql_proxy
+from gcm import GCM
 import logging
 logger = logging.getLogger(__name__)
 
@@ -141,10 +142,55 @@ def home(request):
         template,
         RequestContext(request))
 
+def addNotification(profile, notificationType, title, content, uri):
+    notification, created = Notification.objects.get_or_create(datastore_owner=profile, type=notificationType)
+    notification.title = title
+    notification.content = content
+    notification.datastore_owner = profile
+    if uri is not None:
+        notification.uri = uri
+    notification.save()
+
+
+# formats a notification the way the SmartCATCH client understands it
+def formatNotification(question, type="Picker", description="", items=[], **kwargs):
+    s1 = "<startTitle>" + question + "<endTitle><startType>" + type + "<endType><startDescription>" + description + "<endDescription>"
+    s2 = "<startNumItems>%d<endNumItems>" % len(items) + ''.join(["<startI%d>%s<endI%d>" % (i+1,items[i],i+1) for i in xrange(len(items))])
+    s3 = "<startNegButton>Delay<endNegButton><startPosButton>Submit<endPosButton><startNumRepeats>3<endNumRepeats><startTimeRepeat>5000<endTimeRepeat>" # TODO: format this. Unclear about this params    
+    
+    return json.dumps({ 's1': s1, 's2': s2, 's3': s3 })
+#    return s1, s2, s3 # TODO: JSONfy
+
+def trynotif(request):
+    if request.GET.get('datastore_owner') == None:
+        raise Exception('missing datastore_owner')
+    datastore_owner = request.GET.get('datastore_owner')
+    profile = Profile.objects.get( device_owner = datastore_owner )
+
+    if Device.objects.filter(datastore_owner = profile).count() > 0:
+        gcm = GCM(settings.GCM_API_KEY)
+        for device in Device.objects.filter(datastore_owner = profile):
+            try:
+                # add the notification to the DB
+		q = 'How are you today?'
+		js = formatNotification(q, description='A query about your emotional state', items=['Low','Medium','High'])
+                addNotification(profile, 2, 'SmartCATCH', q, js)
+                # send an alert that a notification is ready (app will call back to fetch the notification data)
+                print "id=%s, uuid=%s, device=%s" % (profile.id, profile.uuid,device.gcm_reg_id)
+                gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})
+            except Exception as e:
+                print "Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
+                print e
+
+    template = {}
+    return render_to_response('home.html',
+        template,
+        RequestContext(request))
 
 def get_datastore_owner(template, request):
     if request.GET.get('datastore_owner') == None:
         raise Exception('missing datastore_owner')
     template['datastore_owner']=request.GET.get('datastore_owner')
     return template
+
 
