@@ -4,8 +4,1109 @@
 smartCATCH
 {% endblock %}
 
+{% block scripts %}
+  <script src="/static/mgh/components/platform/platform.js"></script>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <link rel="import" href="/static/mgh/contents/graph.html">
+  <link rel="import" href="/static/mgh/contents/line_graph.html">
+  <link type="text/css" rel="stylesheet" href="/static/mgh/contents/stylesheet.css">
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <link rel="import" href="/static/mgh/components/font-roboto/roboto.html">
+  <link rel='import' href="/static/mgh/components/core-icon-button/core-icon-button.html">
+  <link rel="import" href="/static/mgh/components/core-header-panel/core-header-panel.html">
+  <link rel="import" href="/static/mgh/components/core-toolbar/core-toolbar.html">
+  <link rel="import" href="/static/mgh/components/paper-tabs/paper-tabs.html">
+  
+  <style>
+	html{
+		height:1280px;
+		width:720px;
+		border: 3px solid black;
+	}
+	html,body {
+		background-color:#f6f6f6
+		font-family: 'RobotoDraft', sans-serif;
+	  }
+	  core-header-panel {
+		height: 100%;
+	  }
+	  core-toolbar {
+		background: #03a9f4;
+		color: white;
+	  }
+	  paper-tabs {
+		width: 100%;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	  }
+	  .container {
+		width: 80%;
+		margin: 50px auto;
+	  }
+	  @media (min-width: 481px) {
+		paper-tabs {
+		  width: 45em;
+		}
+		.container {
+		  width: 400px;
+		}
+	  }
+	</style>
+{% endblock %}
+
 {% block content %}
-    <div>
-	testing
-    </div>
+<div id="splash">
+	<center><img id="splashHeart"/></center>
+	<center><div class="splashText" id="splashEncourage1"></div></center>
+	<center><div class="splashText" id="splashEncourage2"></div></center>
+	<center><div class="splashText">-</div></center>
+	<center>	
+		<div id="rectContainer">
+			<img class='splashRect' id="bar5" src="/static/mgh/SmartCatch_design_app/Img/splashscreen/emptybar.png"/>
+			<br>
+			<img class='splashRect' id="bar4" src="/static/mgh/SmartCatch_design_app/Img/splashscreen/emptybar.png"/>
+			<br>
+			<img class='splashRect' id='bar3' src="/static/mgh/SmartCatch_design_app/Img/splashscreen/emptybar.png"/>
+			<br>
+			<img class='splashRect' id='bar2' src="/static/mgh/SmartCatch_design_app/Img/splashscreen/emptybar.png"/>
+			<br>
+			<img class='splashRect' id='bar1' src="/static/mgh/SmartCatch_design_app/Img/splashscreen/emptybar.png"/>
+		</div>
+	</center>
+	
+	<div id="splashFooter"></div>
+	
+</div>
+
+<div id="mainPage">
+	<div id="topBlack"></div>
+	<div id="middleWhite"><img id="Logo" src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/></div>
+	
+		<core-icon-button class="sButton"> 
+			<svg>
+				<rect width="25" height="3"></rect>
+				<rect x='0' y="11" width="25" height="3"></rect>
+				<rect x='0' y="22" width="25" height="3"></rect>
+			</svg> 
+		</core-icon-button>
+	 <div class="date mainDate"></div>
+	 <div class="navigation">
+		<div class="navTab" id="results"><img id="resultImg" src="/static/mgh/SmartCatch_design_app/Img/menu/Mydata_01.png"/>RESULTS</div>
+		<div class="navTab" id="history"><img id="historyImg" src="/static/mgh/SmartCatch_design_app/Img/menu/history_02.png"/>HISTORY</div>
+		<div class="navTab" id='question'><img id="questionImg" src="/static/mgh/SmartCatch_design_app/Img/menu/questions_02.png"/>QUESTION</div>
+		<div class="navTab" id="settings"><img id="settingImg" src="/static/mgh/SmartCatch_design_app/Img/menu/settings_02.png"/>SETTINGS</div>
+	 </div>
+	 <div id="dividerContainer">
+		<img id="shadowBar" src="/static/mgh/SmartCatch_design_app/Img/other/shadow_line.png"/>
+		 <center><div class="divider">
+			<span style="background-color: #f6f6f6; position: relative; top: -0.5em;">
+				YOUR GOAL
+			</span>
+		 </div></center>
+		 <center><div id="botDiv" class="divider">
+			<span style="background-color: #f6f6f6; position: relative;top: -0.5em;">
+				YOUR GENERAL RESULTS
+			</span>
+		 </div></center>
+	 </div>
+	<div id="content">
+	<div id="gButtonText">Group</div>
+	<div class="onoffswitch">
+				<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoffswitchg" >
+				<label class="onoffswitch-label" for="onoffswitchg" id="gButton" >
+				  <div class="onoffswitch-inner">
+					<span class="onoffswitch-active"><span class="onoffswitch-switch">ON</span></span>
+					<span class="onoffswitch-inactive"><span class="onoffswitch-switch">OFF</span></span>
+				  </div>
+					
+				</label>
+			</div>
+	 <div  class='container'>
+		<div class='bar'>
+	
+		
+			<div class=" card goalCard">
+				<graph>
+					<div class="goalBox">
+					<div class="boxPad">
+					<img id="goalImg" src=""/>
+					   <h1 id='goalTitle'></h1>
+					  	<br> 
+					   <div class="label">Weekly<div class="scoreText" id="goalWeekScore"></div><div class="howWell"></div></div>
+					   <div class="goalBackground recent"><div class="chart goalBars week" id="goal"></div></div>
+					   
+						<div class="label">Average<span class="scoreText" id="goalAvgScore"></span></div>
+						<div class="goalBackground average"><div class="chart goalBars" id="goalAvg"></div></div>
+					</div>
+					</div>
+				</graph>
+			</div>
+		
+		
+		<div id="socCard" class="card">
+			<graph>
+				<div class="box social">
+				<div class="boxPad">
+				   <div><img src="/static/mgh/SmartCatch_design_app/Img/category_icons/interactions_01.png" /><h1>Social</h1></div>
+				   	<br>
+				<div style="transform:translate(0px,-20px)">
+				   <div class="label">Weekly<div class="scoreText" id="socWeekScore"></div><div class="howWell"></div></div>
+				   <div class="background recent"><div class="chart socialBars week" id="soc"></div></div>
+				   
+					<div class="label">Average<span class="scoreText" id="socAvgScore"></span></div>
+					<div class="background average"><div class="chart socialBars" id="socAvg"></div></div>
+
+					<div class="groupText">Group<span class="groupScore" id="socGroupScore"></span></div>
+					<div class="background groupBackground"><div class="chart group" id="socGAvg"></div></div>
+				  </div>
+				  </div>
+				</div>
+			</graph>
+		</div>
+	
+		<div id="actCard"class="card">
+			<graph>
+				<div class="box activity" >
+					<div class="boxPad">
+					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/activity_01.png" /><h1>Activity</h1>
+						<br>
+						<div class="label ">Weekly<div class="scoreText" id="actWeekScore"></div><div class="howWell"></div></div>
+						<div class="background recent"><div class="chart activityBars week" id="act"></div></div>
+					   
+						<div class="label">Average<span class="scoreText" id="actAvgScore"></span></div>
+						<div class="background average"><div class="chart activityBars" id="actAvg"></div></div>
+					
+						<div class="groupText">Group<span class="groupScore" id="actGroupScore" ></span></div>
+						<div class="background groupBackground"><div class="chart group" id="actGAvg"></div></div>
+					</div>
+				</div>
+			</graph>
+		</div>
+	
+		<div id="regCard" class="card">
+			<graph>
+				<div class="box regularity">
+					<div class="boxPad">
+					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/regularity_01.png" /><h1>Regularity</h1>
+					   <br>
+					   <div class="label">Weekly<div class="scoreText" id="regWeekScore"></div><div class="howWell"></div></div>
+					   <div class="background recent"><div class="chart regularityBars week" id="reg"></div></div>
+					   
+					   <div class="label">Average<span class="scoreText" id="regAvgScore"></span></div>
+					   <div class="background average"><div class="chart regularityBars" id="regAvg"></div></div>
+				
+					   <div class="groupText">Group<span class="groupScore" id="regGroupScore" ></span></div>
+					   <div class="background groupBackground"><div class="chart group" id="regGAvg"></div></div>
+					</div>
+				</div>
+			</graph>
+		</div>
+		
+		<div id="gluCard" class="card">
+			<graph>
+				<div class="box glucose">
+					<div class="boxPad">  
+					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/blood_01.png" /><h1>Glucose</h1>
+						<br>
+					   <div class="label">Weekly<div class="scoreText" id="gluWeekScore"></div><div class="howWell"></div></div>
+					   <div class="background recent"><div class="chart glucoseBars week" id="glu"></div></div>
+					   
+					   <div class="label">Average<span class="scoreText" id="gluAvgScore"></span></div>
+					   <div class="background average"><div class="chart glucoseBars" id="gluAvg"></div></div>
+				
+					   <div class="groupText">Group<span class="groupScore" id="gluGroupScore" ></span></div>
+					   <div class="background groupBackground"><div class="chart group" id="gluGAvg"></div></div>
+					</div>
+				</div>
+			</graph>
+		</div>
+		
+		<div id="medCard" class="card">
+			<graph>
+				<div class="box medication">
+					<div class="boxPad">
+					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/drugs_01.png" /><h1>Medication Adherence</h1>
+						<br>
+					   <div class="label">Weekly<div class="scoreText" id="medWeekScore"></div><div class="howWell"></div></div>
+					   <div class="background recent"><div class="chart medicationBars week" id="med"></div></div>
+					   
+					   <div class="label">Average<span class="scoreText" id="medAvgScore"></span></div>
+					   <div class="background average"><div class="chart medicationBars" id="medAvg"></div></div>
+				
+					   <div class="groupText">Group<span class="groupScore" id="medGroupScore" ></span></div>
+					   <div class="background groupBackground"><div class="chart group" id="medGAvg"></div></div>
+					</div>
+				</div>
+			</graph>
+		</div>
+	
+		<div id="slpCard" class="card">
+			<graph>
+				<div class="box sleep">
+					<div class="boxPad">
+					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/sleep_01.png" /><h1>Sleep</h1>
+						<br>
+					   <div class="label">Weekly<div class="scoreText" id="slpWeekScore"></div><div class="howWell"></div></div>
+					   <div class="background recent"><div class="chart sleepBars week" id="slp"></div></div>
+					   
+					   <div class="label">Average<span class="scoreText" id="slpAvgScore"></span></div>
+					   <div class="background average"><div class="chart sleepBars" id="slpAvg"></div></div>
+				
+					   <div class="groupText">Group<span class="groupScore" id="slpGroupScore" ></span></div>
+					   <div class="background groupBackground"><div class="chart group" id="slpGAvg"></div></div>
+					</div>
+				</div>
+			</graph>
+		</div>
+	
+		</div>
+			<div id="socCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/interactions_01.png" />Social</div>
+			  <div class="lineBack"></div><div id="socLine" class="Graph"></div>
+			</div>
+			
+			<div id="actCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/activity_01.png" />Activity</div>
+			  <div class="lineBack"></div><div id="actLine" class="Graph"></div>
+			</div>
+			
+			<div id="regCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/regularity_01.png" />Regularity</div>
+			  <div class="lineBack"></div><div id="regLine" class="Graph"></div>
+			</div>
+			
+			<div id="slpCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/sleep_01.png" />Sleep</div>
+			  <div class="lineBack"></div><div id="slpLine" class="Graph"></div>
+			</div>
+		
+			<div id="gluCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/blood_01.png" />Glucose</div>
+			  <div class="lineBack"></div><div id="gluLine" class="Graph"></div>
+			</div>
+		
+			<div id="medCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/drugs_01.png" />Medication</div>
+			  <div class="lineBack"></div><div id="medLine" class="Graph"></div>
+			</div>
+		
+	</div>
+		<div id="questionPage">
+			<form id="questions" name="input" method='get' >
+				<div class="qNum glucoseQNum" ></div><div class="questionText glucoseQ"></div><br>
+				<input class="glucoseQ" type="radio" name="gluQ" value="yes" id="gluY">
+				<label for="gluY" class="glucoseQ"><div class="qButton gluButton">Yes</div></label>
+				<input class="glucoseQ" type="radio" name="gluQ" value="no" id="gluN">
+				<label for="gluN" class="glucoseQ"><div class="qButton gluButton">No</div><br>
+				
+				<div class="qNum medicationQNum" ></div><div class="questionText medicationQ"></div><br>
+				<input class="medicationQ" type="radio" name="medQ" value="all" id="gluAll">
+					<label for="gluAll" class="glucoseQ"><div class="qButton">Yes,all doses</div>
+				<input class="medicationQ" type="radio" name="medQ" value="most" id="gluMost">
+					<label for="gluMost" class="glucoseQ"><div class="qButton">Yes, most doses</div>
+				<input class="medicationQ" type="radio" name="medQ" value="some" id="gluSome">
+					<label for='gluSome' class="glucoseQ"><div class="qButton">Yes, some doses</div>
+				<input class="medicationQ" type="radio" name="medQ" value="none" id="gluNone">
+					<label for="gluNone" class="glucoseQ"><div class="qButton">No </div><br>
+				
+				<div class="qNum sleepQNum" ></div><div class="questionText sleepQ"></div>
+				<input class="sleepQ" type="range" data-show-value="true" min="0" max="24"></br>
+
+				<div class="qNum stressQNum" ></div><div class="questionText stressQ"></div>			
+				<input class="stressQ" type="range" data-show-value="true" min="0" max="10"></br>
+				
+				<div class="qNum goalQNum" ></div><div class="questionText goalQ"></div>			
+				<div class="goalQ goalOptions"></div><br>
+		
+<input type="submit" value="Submit">
+			
+			</form>
+			<div id="questionsAnswered">
+				<center><img src="/static/mgh/SmartCatch_design_app/Img/other/goodjob_icon.png"/>
+				<center><div>Good Job,</div></center>
+				<center><div>you have already answered</div></center>
+				<center><div>your questions this week.</div></center>
+				<center><div>-</div></center>
+				<center><div>See you next week</div></center>
+			</div>
+		</div>
+		<div id="settingsPage">
+		<div id="settingsheader"></div>
+		<div id="localization" class="setting">Localization<div class="explain" id="local">Explanation</div>
+				<div class="settingButton">
+					<div class="onoffswitch">
+						<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoffswitch1" checked >
+						<label class="onoffswitch-label" for="onoffswitch1" id="localButton" >
+						  <div class="onoffswitch-inner">
+							<span class="onoffswitch-active"><span class="onoffswitch-switch">ON</span></span>
+							<span class="onoffswitch-inactive"><span class="onoffswitch-switch">OFF</span></span>
+						  </div>
+							
+						</label>
+					</div>
+				</div>
+			</div>
+		<div id="onOffScreen" class="setting">On/Off Screen<div class="explain" id="onOff">Explanation</div>
+				<div class="settingButton">
+					<div class="onoffswitch">
+						<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoffswitch2" checked>
+						<label class="onoffswitch-label " for="onoffswitch2" id="onOffButton" >
+						  <div class="onoffswitch-inner">
+							<span class="onoffswitch-active"><span class="onoffswitch-switch">ON</span></span>
+							<span class="onoffswitch-inactive"><span class="onoffswitch-switch">OFF</span></span>
+						  </div>
+		
+						</label>
+					</div>
+				</div>
+			</div>
+		<div id="moveSensor" class="setting">Movement Sensors<div class="explain" id="sense">Explanation</div>
+			<div class="settingButton">
+					<div class="onoffswitch">
+					<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoffswitch3" checked>
+					<label class="onoffswitch-label" for="onoffswitch3" style="display: block;">
+					  <div class="onoffswitch-inner">
+						<span class="onoffswitch-active"><span class="onoffswitch-switch">ON</span></span>
+						<span class="onoffswitch-inactive"><span class="onoffswitch-switch">OFF</span></span>
+					  </div>
+					
+				</label>
+			</div>
+				</div>
+			</div>
+		<div id="dataSent" class="setting"><img src=""/><div>Last time data sent:</div><div id="sentTime"></div></div>
+		
+		<div id="settingContact" class="setting"><div>Do you need help,</div><div>send us Questions.</div>
+			
+			</div>
+		
+		<div id="settingQuestion" class="setting"><div></div><div></div><div class="settingButton"></div></div>
+		
+		<div id="toResults" class="setting"><div></div><div class="settingButton"></div></div>
+		</div>
+	</div>
+	<div id="footer"></div>
+</div>
+
+<script>
+var goalD=[20,100,100,100,74];//data for goal //data inputs here
+var goalAvgD=[32,30];//goal average
+var socD=[20,100,100,50,74];//data for social
+var socAvgD=[32,30];//for social average
+var actD=[42,54,50,80];//for activity
+var actAvgD=[42,54,74,80];//for activity average
+var slpD=[100,100,50,80];//for sleep
+var slpAvgD=[42,54,74,80];//for sleep average
+var regD=[12,14,52,57];//for regularity
+var regAvgD=[123,12,23,84];//for regularity average
+var gluD=[1,2,3,4,5];// glucose
+var gluAvgD=[23,75,78,90,82];//glucose average
+var medD=[95,85,24,67,98,70];// medication
+var medAvgD=[23,90,32,32,97];//medication average
+var gluGAvgD=[98,90,29,87,54]
+var medGAvgD= [76,89,95,86,45]
+var socGAvgD=[70,32,30];//for social average
+var actGAvgD=[13,14,74,89];//for activity average
+var regGAvgD=[123,12,23,84];//for regularity average
+var slpGAvgD=[12,96,24,91];
+
+
+// date
+var d = new Date();
+var day = d.getDate();
+var month = d.getMonth();
+var dayOfWeek= d.getDay();
+var weeks=1;
+var months=["Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Oct"," Nov","Dec"];
+if(dayOfWeek==0){
+	weeks++};
+	
+$(".date").text(months[month]+" "+day + " / week " + weeks);
+//averages data
+var Avg=function(data){
+	var sum=0;
+	for(var x = 0; x<data.length;x++)
+		{sum+=data[x]};
+	var avg=sum/data.length;
+	return Math.round(avg);
+	};
+
+var numCompare= function(present, average){
+	var diff= Avg(present)-Avg(average);
+	var percentChange=((diff/Avg(average))*100);
+	return percentChange
+};
+//sorts bars
+var barsAvg=[Avg(socD),Avg(actD),Avg(regD), Avg(slpD), Avg(gluD), Avg(medD)];
+var bars=['soc','act','reg', 'slp', 'glu', 'med'];
+var sortedBars=[];
+barsAvg.sort(function(a,b){return a-b});
+for(sort1=0;sort1<bars.length;sort1++){
+	for(sort=0;sort<bars.length;sort++){
+		if(barsAvg[sort1]==(Avg(eval(bars[sort]+"D")))){
+			sortedBars.push(bars[sort]+"Card");	
+			console.log(sort);
+			}
+		}
+	}
+console.log(sortedBars);
+for(move=0;move<sortedBars.length;move++){
+	$("#"+sortedBars[move]).css("transform","translate(30px, " + (370+ 330*move)+"px");
+	$("#"+sortedBars[move]+"Line").css("transform","translate(0px, " + (450*move)+"px");
+
+	};
+
+//person goal stuff
+var goal="stress level";
+var goalImage="";
+var goalQuestion="";
+var goalOptions="";
+$('#goalTitle').text(goal);
+switch(goal.toUpperCase()){
+	case "FEET CARE":
+		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/feet_01.png";
+		console.log(goal+ "1");
+		goalQuestion="Have you checked your feet today?";
+		goalOptions='<div class="qNum feetQNum" ></div><div class="questionText feetQ"></div><br><input class="feetQ" type="radio" name="feetQ" value="yes" id="feetY"><label for="feetY" class="feetQ"><div class="qButton feetButton">Yes</div></label><input class="feetQ" type="radio" name="feetQ" value="no" id="feetN"><label for="feetN" class="feetQ"><div class="qButton feetButton">No</div><br>'
+		break;
+	case "SMOKING":
+		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/smoking_01.png";
+		console.log(goal+ "2");
+		goalQuestion="Rate how many less cigarettes you smoked today compared to yesterday on a scale of 0 ( I smoked the same or more today) to 40 less than yesterday. "
+		goalOption='<input class="smokingQ" type="range" data-show-value="true" min="0" max="40"></br>'
+		break;
+	case "EATING HEALTHY":
+		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/eathealthy_01.png";
+		console.log(goal+ "3");
+		goalQuestion="Rate your eating today on a scale of 1  (I really made bad food choices today)  to 10 (I ate really healthy-today)"
+		goalOption='<input class="eatingQ" type="range" data-show-value="true" min="0" max="10"></br>'
+		break;
+	case "STRESS LEVEL":
+		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/stress_01.png";
+		console.log(goal+ "4");
+		goalQuestion="Rate your stress reduction techniques today on a scale of 1 (I practiced very good techniques to reduce my feelings of stress today) to 10 ( I was very stressed out and I did nothing to help myself calm down). "
+		goalOption='<input class="stressQ" type="range" data-show-value="true" min="0" max="10"></br>'
+		break;
+	}
+$('#goalImg').attr('src',goalImage);
+//bar charts
+d3.select("#act")
+		.data([Avg(actD)])
+		.style("width",function(d) {return d +"%";});
+		
+		
+d3.select("#actAvg")
+		.data([Avg(actAvgD)])
+		.style("width",function(d) {return d +"%";});
+		
+d3.select("#goal")
+		.data([Avg(goalD)])
+		.style("width",function(d) {return d +"%";});
+		
+		
+d3.select("#goalAvg")
+		.data([Avg(goalAvgD)])
+		.style("width",function(d) {return d +"%";});
+		
+		
+d3.select("#soc")
+		.data([Avg(socD)])
+		.style("width",function(d) {return d +"%";});
+		
+		
+d3.select("#socAvg")
+		.data([Avg(socAvgD)])
+		.style("width",function(d) {return d +"%";});
+
+		
+d3.select("#reg")
+		.data([Avg(regD)])
+		.style("width",function(d) {return d +"%";});
+		
+		
+d3.select("#regAvg")
+		.data([Avg(regAvgD)])
+		.style("width",function(d) {return d +"%";});
+		
+d3.select("#slp")
+		.data([Avg(slpD)])
+		.style("width",function(d) {return d +"%";});
+		
+		
+d3.select("#slpAvg")
+		.data([Avg(slpAvgD)])
+		.style("width",function(d) {return d +"%";});
+		
+d3.select("#slp")
+		.data([Avg(slpD)])
+		.style("width",function(d) {return d +"%";});
+		
+		
+d3.select("#slpAvg")
+		.data([Avg(slpAvgD)])
+		.style("width",function(d) {return d +"%";});
+
+d3.select("#glu")
+		.data([Avg(gluD)])
+		.style("width",function(d) {return d +"%";});
+
+d3.select("#gluAvg")
+		.data([Avg(gluAvgD)])
+		.style("width",function(d) {return d +"%";});
+		
+		
+d3.select("#med")
+		.data([Avg(medD)])
+		.style("width",function(d) {return d +"%";});
+		
+d3.select("#medAvg")
+		.data([Avg(medAvgD)])
+		.style("width",function(d) {return d +"%";});
+		
+d3.select("#actGAvg")
+		.data([Avg(actGAvgD)])
+		.style("width",function(d) {return d +"%";});
+		
+
+d3.select("#socGAvg")
+		.data([Avg(socGAvgD)])
+		.style("width",function(d) {return d +"%";});
+		
+d3.select("#regGAvg")
+		.data([Avg(regGAvgD)])
+		.style("width",function(d) {return d +"%";});
+
+d3.select("#medGAvg")
+		.data([Avg(medGAvgD)])
+		.style("width",function(d) {return d +"%";});
+
+d3.select("#gluGAvg")
+		.data([Avg(gluGAvgD)])
+		.style("width",function(d) {return d +"%";});
+
+d3.select("#slpGAvg")
+		.data([Avg(slpGAvgD)])
+		.style("width",function(d) {return d +"%";});
+//how well text
+var doingWell="You are doing well / ";
+var doingokay="You can do better / ";
+var doingPoor="Not that great / ";
+//color change for bars
+var socialColor= 'white';
+var activityColor='white';
+var regularityColor='white';
+var goalColor='white';
+var sleepColor="white";
+var glucoseColor='white';
+var medicationColor="white";
+
+if(Avg(socD)<=50){
+	socialColor='#Fc4c4c';
+	$('#socAvg').addClass('stripe-r');
+	}
+else if(Avg(socD)>=70){
+	socialColor='#27dc84';
+	$('#socAvg').addClass('stripe-g');}
+else{
+	socialColor='#f9ce20';
+	$('#socAvg').addClass('stripe-y');};
+	
+if(Avg(actD)<=50){
+	activityColor='#Fc4c4c';
+	$('#actAvg').addClass('stripe-r');}
+else if(Avg(actD)>=70){
+	activityColor='#27dc84';
+	$('#actAvg').addClass('stripe-g');}
+else{
+	activityColor='#f9ce20';
+	$('#actAvg').addClass('stripe-y');};
+	
+if(Avg(regD)<=50){
+	regularityColor='#Fc4c4c';
+	$('#regAvg').addClass('stripe-r');}
+else if(Avg(regD)>=70){
+	regularityColor='#27dc84';
+	$('#regAvg').addClass('stripe-g');}
+else{
+	regularityColor='#f9ce20';
+	$('#regAvg').addClass('stripe-y');};
+	
+if(Avg(slpD)<=50){
+	sleepColor='#fc4c4c';
+	$('#slpAvg').addClass('stripe-r');}
+else if(Avg(slpD)>=70){
+	sleepColor='#27dc84';
+	$('#slpAvg').addClass('stripe-g');}
+else{
+	sleepColor='#f9ce20';
+	$('#slpAvg').addClass('stripe-y');};
+
+if(Avg(gluD)<=50){
+	glucoseColor='#Fc4c4c';
+	$('#gluAvg').addClass('stripe-r');}
+else if(Avg(gluD)>=70){
+	glucoseColor='#27dc84';
+	$('#gluAvg').addClass('stripe-g');}
+else{
+	glucoseColor='#f9ce20';
+	$('#gluAvg').addClass('stripe-y');};
+	
+if(Avg(medD)<=50){
+	medicationColor='#Fc4c4c';
+	$('#medAvg').addClass('stripe-r');}
+else if(Avg(medD)>=70){
+	medicationColor='#27dc84';
+	$('#medAvg').addClass('stripe-g');}
+else{
+	medicationColor='#f9ce20';
+	$('#medAvg').addClass('stripe-y');};
+	
+if(Avg(goalD)<=50){
+	goalColor='#Fc4c4c';
+	$('#goalAvg').addClass('stripe-r');}
+else if(Avg(slpD)>=70){
+	goalColor='#27dc84';
+	$('#goalAvg').addClass('stripe-g');}
+else{
+	goalColor='#f9ce20';
+	$('#goalAvg').addClass('stripe-y');};
+	
+$('#socWeekScore').text(Avg(socD)).css('color',socialColor);
+$('#actWeekScore').text(Avg(actD)).css('color',activityColor);
+$('#regWeekScore').text(Avg(regD)).css('color',regularityColor);
+$('#slpWeekScore').text(Avg(slpD)).css('color',sleepColor);
+$('#goalWeekScore').text(Avg(goalD)).css('color',goalColor);
+$('#medWeekScore').text(Avg(medD)).css('color',medicationColor);
+$('#gluWeekScore').text(Avg(gluD)).css('color',glucoseColor);
+$('#regAvgScore').text(Avg(regAvgD)).css('color',regularityColor);
+$('#goalAvgScore').text(Avg(goalAvgD)).css('color',goalColor);
+$('#socAvgScore').text(Avg(socAvgD)).css('color',socialColor);
+$('#actAvgScore').text(Avg(actAvgD)).css('color',activityColor);
+$('#slpAvgScore').text(Avg(slpAvgD)).css('color',sleepColor);
+$('#medAvgScore').text(Avg(medAvgD)).css('color',medicationColor);
+$('#gluAvgScore').text(Avg(gluAvgD)).css('color', glucoseColor);
+$('#actGroupScore').text(Avg(actGAvgD));
+$('#regGroupScore').text(Avg(regGAvgD));
+$('#socGroupScore').text(Avg(socGAvgD));
+$('#slpGroupScore').text(Avg(slpGAvgD));
+$('#medGroupScore').text(Avg(medGAvgD));
+$('#gluGroupScore').text(Avg(gluGAvgD));
+
+$('.socialBars').css('background-color',socialColor);
+$('.activityBars').css('background-color',activityColor);
+$('.regularityBars').css('background-color',regularityColor);
+$('.sleepBars').css('background-color',sleepColor)
+$('.medicationBars').css('background-color',medicationColor)
+$('.glucoseBars').css('background-color',glucoseColor)
+$('.goalBars').css('background-color',goalColor)
+		
+// line graphs
+var margin=[50,20,50,20];
+var wid=500-margin[1]-margin[3];
+var height=400-margin[0]-margin[2];
+var socData = [20,74,66,86,66,82,65,67];//data entered here, must have at least 7 in one of them
+var actData = [13,57,75,16,97,58];//or it will show decimals
+var regData = [67,88,78,38,59,77];
+var slpData = [100,56,76,23,100];
+var gluData = [12,79,98,92,34];
+var medData = [87,9,78,67,43];
+var socGData = [100,56,76,23,100];
+var actGData = [100,56,76,23,100];
+var regGData = [100,56,76,23,100];
+var slpGData = [10,86,72,46,70];
+var gluGData = [19,97,87,95,35,78];
+var medGData = [97,67,83,45,78,12];
+
+var x = d3.scale.linear().domain([0,8]).range([0,wid]);
+var y = d3.scale.linear().domain([0,100]).range([height,0]);
+
+var Line=d3.svg.line()
+	.x(function(d, i){return x(i);})
+	.y(function(d, i){return y(d);});
+
+var graphSoc=d3.select("#socLine").append("svg:svg")
+	.attr("width", wid+margin[1]+margin[3])
+	.attr("height",height+margin[0]+margin[2])
+   .append("svg:g")
+    .attr("transform", "translate("+margin[0]+","+margin[1]+")");
+	
+var graphAct=d3.select("#actLine").append("svg:svg")
+	.attr("width", wid+margin[1]+margin[3])
+	.attr("height",height+margin[0]+margin[2])
+   .append("svg:g")
+    .attr("transform", "translate("+margin[0]+","+margin[1]+")");
+	
+var graphReg=d3.select("#regLine").append("svg:svg")
+	.attr("width", wid+margin[1]+margin[3])
+	.attr("height",height+margin[0]+margin[2])
+   .append("svg:g")
+    .attr("transform", "translate("+margin[0]+","+margin[1]+")");
+	
+var graphSlp=d3.select("#slpLine").append("svg:svg")
+	.attr("width", wid+margin[1]+margin[3])
+	.attr("height",height+margin[0]+margin[2])
+   .append("svg:g")
+    .attr("transform", "translate("+margin[0]+","+margin[1]+")");
+	
+var graphGlu=d3.select("#gluLine").append("svg:svg")
+	.attr("width", wid+margin[1]+margin[3])
+	.attr("height",height+margin[0]+margin[2])
+   .append("svg:g")
+    .attr("transform", "translate("+margin[0]+","+margin[1]+")");
+	
+var graphMed=d3.select("#medLine").append("svg:svg")
+	.attr("width", wid+margin[1]+margin[3])
+	.attr("height",height+margin[0]+margin[2])
+   .append("svg:g")
+    .attr("transform", "translate("+margin[0]+","+margin[1]+")");
+	
+var xAxis = d3.svg.axis().scale(x).tickSize(-height);
+
+graphSoc.append("svg:g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(15," + height + ")")
+	  .call(xAxis);
+				  
+graphReg.append("svg:g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(15," + height + ")")
+	  .call(xAxis);
+
+graphAct.append("svg:g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(15," + height + ")")
+	  .call(xAxis);
+
+graphSlp.append("svg:g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(15," + height + ")")
+	  .call(xAxis);
+ 
+graphMed.append("svg:g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(15," + height + ")")
+	  .call(xAxis);
+ 
+graphGlu.append("svg:g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(15," + height + ")")
+	  .call(xAxis);
+ 
+var yAxisRight = d3.svg.axis().scale(y).ticks(4).orient("right");
+			
+graphSoc.append("svg:g")
+	.attr("class","y axis")
+	.attr("transform","translate(515,0)")
+	.attr('stroke','none')
+	.call(yAxisRight);
+	
+graphAct.append("svg:g")
+	.attr("class","y axis")
+	.attr("transform","translate(515,0)")
+	.attr('stroke','none')
+	.call(yAxisRight);
+	
+graphReg.append("svg:g")
+	.attr("class","y axis")
+	.attr("transform","translate(515,0)")
+	.attr('stroke','none')
+	.call(yAxisRight);
+
+graphSlp.append("svg:g")
+	.attr("class","y axis")
+	.attr("transform","translate(515,0)")
+	.attr('stroke','none')
+	.call(yAxisRight);
+
+graphMed.append("svg:g")
+	.attr("class","y axis")
+	.attr("transform","translate(515,0)")
+	.attr('stroke','none')
+	.call(yAxisRight);
+
+graphGlu.append("svg:g")
+	.attr("class","y axis")
+	.attr("transform","translate(515,0)")
+	.attr('stroke','none')
+	.call(yAxisRight);
+
+graphSoc.selectAll("line.x")
+  .data(x.ticks(10))
+  .enter().append("line")
+  .attr("class", "x")
+  .attr("x1", x)
+  .attr("x2", x)
+  .attr("y1", 0)
+  .attr("y2", 300)
+  .attr('transform',"translate(15,0)")
+  .style("stroke", "#ccc");
+
+graphReg.selectAll("line.x")
+  .data(x.ticks(10))
+  .enter().append("line")
+  .attr("class", "x")
+  .attr("x1", x)
+  .attr("x2", x)
+  .attr("y1", 0)
+  .attr("y2", 300)
+  .attr('transform',"translate(15,0)")
+  .style("stroke", "#ccc");
+  
+graphAct.selectAll("line.x")
+  .data(x.ticks(10))
+  .enter().append("line")
+  .attr("class", "x")
+  .attr("x1", x)
+  .attr("x2", x)
+  .attr("y1", 0)
+  .attr("y2", 300)
+  .attr('transform',"translate(15,0)")
+  .style("stroke", "#ccc");
+  
+graphSlp.selectAll("line.x")
+  .data(x.ticks(10))
+  .enter().append("line")
+  .attr("class", "x")
+  .attr("x1", x)
+  .attr("x2", x)
+  .attr("y1", 0)
+  .attr("y2", 300)
+  .attr('transform',"translate(15,0)")
+  .style("stroke", "#ccc");
+
+graphMed.selectAll("line.x")
+  .data(x.ticks(10))
+  .enter().append("line")
+  .attr("class", "x")
+  .attr("x1", x)
+  .attr("x2", x)
+  .attr("y1", 0)
+  .attr("y2", 300)
+  .attr('transform',"translate(15,0)")
+  .style("stroke", "#ccc");
+
+graphGlu.selectAll("line.x")
+  .data(x.ticks(10))
+  .enter().append("line")
+  .attr("class", "x")
+  .attr("x1", x)
+  .attr("x2", x)
+  .attr("y1", 0)
+  .attr("y2", 300)
+  .attr('transform',"translate(15,0)")
+  .style("stroke", "#ccc");
+  
+	
+graphSoc.append("svg:path").attr("d",Line(socData)).attr('stroke',socialColor).attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','social');
+	graphSoc.append("svg:path").attr("d",Line(socGData)).attr('stroke','black').attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','social').attr('class','group');
+graphAct.append("svg:path").attr("d",Line(actData)).attr('stroke',activityColor).attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','activity');
+	graphAct.append("svg:path").attr("d",Line(actGData)).attr('stroke','black').attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','activity').attr('class','group');
+graphReg.append("svg:path").attr("d",Line(regData)).attr('stroke',regularityColor).attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','regularity');
+	graphReg.append("svg:path").attr("d",Line(regGData)).attr('stroke','black').attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','regularity').attr('class','group');
+graphSlp.append("svg:path").attr("d",Line(slpData)).attr('stroke',sleepColor).attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','sleep');
+	graphSlp.append("svg:path").attr("d",Line(slpGData)).attr('stroke','black').attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','sleep').attr('class','group');
+graphGlu.append("svg:path").attr("d",Line(gluData)).attr('stroke',glucoseColor).attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','medication');
+	graphGlu.append("svg:path").attr("d",Line(gluGData)).attr('stroke','black').attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','medication').attr('class','group');
+graphMed.append("svg:path").attr("d",Line(medData)).attr('stroke',medicationColor).attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','glucose');
+	graphMed.append("svg:path").attr("d",Line(medGData)).attr('stroke','black').attr('stroke-width',5).attr('transform','translate(15,10)').attr('class','glucose').attr('class','group');
+//questions
+var questions=['.glucoseQ', '.medicationQ','.sleepQ','.stressQ','.goalQ'];
+var questionBoxes=['#glucoseQuestionBox','#medicationQuestionBox','#sleepQuestionBox','#stressQuestionBox','#goalQuestionBoxes'];
+var questionsOn=[true,false,true,true,true];
+var questionText=['Did you check your morning glucose level?','Did you take your medication?','When did you go to bed last night?','How stressed do you feel?',goalQuestion];
+var unansweredQ=0
+var number=1
+for(q=0;q<questions.length;q++){
+	if(questionsOn[q]){
+		$(questions[q]+"Num").text(number+". ");
+		$("div"+questions[q]).text(questionText[q]);
+		console.log(number+". "+ questionText[q]);
+		number++;
+		unansweredQ++
+	}
+	else{
+		$(questions[q]).hide();
+		$(questionBoxes[q]).hide();
+		console.log("hiding"+ questionBoxes[q]);
+	}
+}
+if(questionsOn[4]){
+	$('.goalOptions').append(goalOptions);
+}
+//button click stuff
+$(window).bind('load',function(){		
+	$('.social').show();	});
+
+$('.sButton').click(function(){//show side bar
+	$('.navigation').toggle('fast');
+	$("#content").toggleClass('sideOut','fast');
+	$("#middleWhite").toggleClass('sideOut','fast');
+	$(".sButton").toggleClass('sideOut','fast');
+	$(".date").toggleClass('sideOut','fast');
+	$(".divider").toggleClass('sideOut','0');
+	$(".dividerText").toggleClass('sideOut','0');
+	$("#shadowBar").toggleClass('sideOut','0');
+	});
+
+$('#gButton').click(function(){//show group
+	$('.group').toggle('fast');
+	$('.groupText').toggle('fast');
+	$(".groupBackground").toggle('fast');
+	$(".groupScore").toggle('fast');
+	});
+//questions
+
+if (unansweredQ==0){
+	$('#questions').hide();
+	$('#questionsAnswered').show();
+	}
+	else{
+	$('#questionsAnswered').hide();
+	$('#questions').show();
+	}
+	
+// side tab workings
+$('.navTab').click(function(){
+	if($(this).is('#results')){
+		console.log('results');
+		$('.bar').show("fast");
+		$('.Graph').hide("fast");
+		$('.lineLabel').hide("fast");
+		$('.lineBack').hide("fast");
+		$('#gButton').show("fast");
+		$('#gButtonText').show("fast");
+		$('#questionPage').hide("fast");
+		$('.tab').show("fast");
+		$('.border').show('fast');
+		$('.divider').show('fast');
+		$('.lineGraph').hide('fast');
+		$('#settingsPage').hide("fast");
+		$('#resultImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/Mydata_01.png");
+		$('#historyImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/history_02.png");
+		$('#questionImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/questions_02.png");
+		$('#settingImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/settings_02.png");}
+	else if($(this).is('#history')){
+		console.log('history');
+		$('.bar').hide("fast");
+		$('.Graph').show("fast");
+		$('.lineLabel').show("fast");
+		$('.lineBack').show("fast");
+		$('#gButton').show("fast");
+		$('#gButtonText').show("fast");
+		$('#questionPage').hide("fast");
+		$(".tab").show("fast");
+		$('.border').show('fast');
+		$('.divider').hide('fast');
+		$('.lineGraph').show('fast');
+		$('#settingsPage').hide("fast");
+		$('#resultImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/Mydata_02.png");
+		$('#historyImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/history_01.png");
+		$('#questionImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/questions_02.png");
+		$('#settingImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/settings_02.png");}
+	else if($(this).is('#question')){
+		$('.bar').hide("fast");
+		$('.Graph').hide("fast");
+		$('.lineLabel').hide("fast");
+		$('.lineBack').hide("fast");
+		$('#gButton').hide("fast");
+		$('#gButtonText').hide("fast");
+		$('#questionPage').show("fast");
+		$(".tab").hide("fast");
+		$('.divider').hide('fast');
+		$('.lineGraph').hide('fast');
+		$('.border').hide('fast');
+		$('#settingsPage').hide("fast");
+		$('#resultImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/Mydata_02.png");
+		$('#historyImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/history_02.png");
+		$('#questionImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/questions_01.png");
+		$('#settingImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/settings_02.png");}
+	else if($(this).is('#settings')){
+		$('.bar').hide("fast");
+		$('.Graph').hide("fast");
+		$('.lineLabel').hide("fast");
+		$('.lineBack').hide("fast");
+		$('#gButton').hide("fast");
+		$('#gButtonText').hide("fast");
+		$('#questionPage').hide("fast");
+		$('#settingsPage').show("fast");
+		$(".tab").hide("fast");
+		$('.divider').hide('fast');
+		$('.lineGraph').hide('fast');
+		$('.border').hide('fast');
+		$('#resultImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/Mydata_02.png");
+		$('#historyImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/history_02.png");
+		$('#questionImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/questions_02.png");
+		$('#settingImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/settings_01.png");};
+	
+	console.log(this);
+
+
+});	
+//splash screen
+$("#splash").click(function(){
+	$("#mainPage").show("fast");
+	$("#default").show("fast");
+	$("#splash").hide("fast");
+	$('.lineLabel').hide('fast');
+	$('.lineBack').hide('fast');
+	$('#settingsPage').hide();
+	$('#questionPage').hide();
+	;
+if(unansweredQ>0){
+	$('.bar').hide("fast");
+	$('.Graph').hide("fast");
+	$('.lineLabel').hide('fast');
+	$('.lineBack').hide('fast');
+	$('#gButton').hide("fast");
+	$('#gButtonText').hide("fast");
+	$('#questionPage').show("fast");
+	$(".tab").hide("fast");
+	$('.border').hide('fast');
+	$('#settingsPage').hide('fast');
+	$('.divider').hide('fast');
+	$('#resultImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/Mydata_02.png");
+	$('#historyImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/history_02.png");
+	$('#questionImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/questions_01.png");
+	$('#settingImg').attr('src',"/static/mgh/SmartCatch_design_app/Img/menu/settings_02.png");};
+	});
+	
+var allBarsAvg=[Avg(socD),Avg(actD),Avg(regD), Avg(slpD), Avg(goalD), Avg(gluD), Avg(medD)];
+var barFilled=Math.round((Avg(allBarsAvg)/20));
+
+if(barFilled>=4){
+	var splashColor='#27dc84';
+	$('#splashEncourage1').text('Keep going,');
+	$('#splashEncourage2').text('You are doing great!');
+	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashScreen/goodheart.png')
+	}
+else if(barFilled>=2){
+	var splashColor='#f9ce20';
+	$('#splashEncourage1').text('Almost there,');
+	$('#splashEncourage2').text('Keep working on!');
+	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashScreen/mediumheart.png')
+	}
+else{
+	var splashColor='#FF5f5f';
+	$('#splashEncourage1').text('You can do better,');
+	$('#splashEncourage2').text('Keep trying!');
+	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashScreen/badheart.png')
+};
+
+var rectColor=splashColor;
+$('#splash').css('background-color',splashColor);
+$('#splashHead').css('background-color', splashColor);
+
+for(fill=1; fill<=barFilled; fill++){
+	var barFilling= "#bar" + fill ;
+	$(barFilling).attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/fullbar.png');
+	};
+//for(notfill=5; notfill=(5-barFilled); notfill-=1){
+//	var barEmpty ="#bar" +notfill;
+//	$(barEmpty).atr
+//};
+
+</script>
 {% endblock %}
