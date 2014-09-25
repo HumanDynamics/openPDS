@@ -1,13 +1,21 @@
-# Django settings for OMS_PDS project.
+# Django settings for openPDS project.
 
 import os
 
+# Standard Django settings for turning on debug messages
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
-DATA_STORAGE_ENGINE = 'openpds.backends.mongo'
-REGISTRY_SERVER='linkedpersonaldata.org'
-DEFAULT_PDS_URL = 'http://celldata.media.mit.edu:8007'
 
+# Specifies the backend storage database for personal data
+DATA_STORAGE_ENGINE = 'openpds.backends.mongo'
+
+# Used to specify the registry server to use for authorization
+REGISTRY_SERVER='myregistryserver.com'
+
+# Deprecated: Used to specify the default PDS url for aggregate computation
+DEFAULT_PDS_URL = 'pds.mine.com'
+
+# Specifies where files posted to connectors will be placed while inserting into the PDS
 SERVER_UPLOAD_DIR="/var/www/trustframework/simplePdsEnv"
 
 ADMINS = (
@@ -16,11 +24,11 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+# Standard Django database specification. See Django docs for further information.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/var/www/trustframework/simplePdsEnv/openPDS/openpds/test.db',                      # Or path to database file if using sqlite3.
-        #'NAME': 'test.db',
+        'NAME': '/path/to/main.db',                      # Or path to database file if using sqlite3.
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
