@@ -16,7 +16,7 @@ urlpatterns = patterns('openpds.visualization.views',
     (r'^focus', direct_to_template, { 'template' : 'visualization/focus.html' }),
     (r'^meetup_home', meetup_home),
     (r'^probe_counts', direct_to_template, { 'template': 'visualization/probeCounts.html'}),
-    (r"^places", direct_to_template, { "template" : "visualization/locationMap.html" })
+    (r"^places", direct_to_template, { "template" : "visualization/locationMap.html" }),
     (r'^mitfit/userlocation$', direct_to_template, { 'template' : 'visualization/mitfit_user_location.html' }),
     (r'^mitfit/usertime$', direct_to_template, { 'template' : 'visualization/mitfit_user_time.html' }),
     (r'^mitfit/recos$', direct_to_template, { 'template' : 'visualization/mitfit_recos.html' }),

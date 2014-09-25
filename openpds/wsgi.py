@@ -19,13 +19,13 @@ import sys
 import djcelery
 import django.conf
 
-activate_this = os.path.expanduser("/var/www/trustframework/pdsEnv/bin/activate_this.py")
+activate_this = os.path.expanduser("/var/www/trustframework/simplePdsEnv/bin/activate_this.py")
 execfile(activate_this, dict(__file__=activate_this))
 
 djcelery.setup_loader()
-django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
-sys.path.append('/var/www/trustframework/pdsEnv/openPDS')
-os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "openpds.settings")
+django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE2"
+sys.path.append('/var/www/trustframework/simplePdsEnv/openPDS')
+os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE2", "openpds.settings")
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION

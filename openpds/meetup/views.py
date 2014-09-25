@@ -21,13 +21,13 @@ def get_parameters(request, params):
 
 def meetup_home(request):
     params = get_parameters(request, ["bearer_token", "datastore_owner"]);
-    profile_api_url = "http://%s/account/api/v1/profile/"%settings.SERVER_OMS_REGISTRY
+    profile_api_url = "http://%s/account/api/v1/profile/"%settings.REGISTRY_SERVER
     template = { "PROFILE_API_URL": profile_api_url, "STATIC_URL": settings.STATIC_URL}
     return render_to_response("meetup/meetup_home.html", template)
 
 def create_request(request):
     params = get_parameters(request, ["bearer_token", "datastore_owner"])
-    profile_api_url = "http://%s/account/api/v1/profile/"%settings.SERVER_OMS_REGISTRY
+    profile_api_url = "http://%s/account/api/v1/profile/"%settings.REGISTRY_SERVER
     template = { "PROFILE_API_URL": profile_api_url, "STATIC_URL": settings.STATIC_URL}
     return render_to_response("meetup/create_meetup_request.html", template)
 

@@ -1,3 +1,4 @@
 *.out
 *.pyc
-oms_pds/settings.py
+*.db
+openpds/settings.py

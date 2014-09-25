@@ -11,7 +11,7 @@ class OAuth2Authentication(Authentication):
         #print "get_userinfo_from_token"
         userinfo = {}
         try:
-            conn = httplib.HTTPConnection(settings.SERVER_OMS_REGISTRY, timeout=100)
+            conn = httplib.HTTPConnection(settings.REGISTRY_SERVER, timeout=100)
             request_path="/get_key_from_token?bearer_token="+str(token)+"&scope="+str(scope)
             conn.request("GET",str(request_path))
             r1 = conn.getresponse()

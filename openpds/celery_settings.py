@@ -3,7 +3,7 @@ from celery.schedules import crontab
 CELERY_ACKS_LATE = True
 CELERYD_PREFETCH_MULTIPLIER = 1
 
-CELERY_IMPORTS = ('openpds.questions.tasks',"openpds.questions.socialhealth_tasks", "openpds.questions.places_tasks", "openpds.questions.meetup.tasks", "openpds.questions.probedatavisualization_tasks", "openpds.questions.mitfit_tasks", "openpds.questions.gfsa_tasks", "openpds.questions.auth_tasks", "openpds.questions.hotspots_tasks")
+CELERY_IMPORTS = ('openpds.questions.tasks',"openpds.questions.socialhealth_tasks", "openpds.questions.places_tasks", "openpds.meetup.tasks", "openpds.questions.probedatavisualization_tasks", "openpds.questions.mitfit_tasks", "openpds.questions.gfsa_tasks", "openpds.questions.auth_tasks", "openpds.questions.hotspots_tasks")
 BROKER_URL = "mongodb://celery:celery@localhost:27017/lpd_celery_broker"
 CELERYBEAT_SCHEDULE = {
 #    "check-data-and-notify": {

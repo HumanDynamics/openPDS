@@ -13,7 +13,7 @@ import cluster
 from gcm import GCM
 from openpds.core.models import Profile
 from openpds import getInternalDataStore
-from openpds.socialhealth_tasks import getStartTime
+from openpds.questions.socialhealth_tasks import getStartTime
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3

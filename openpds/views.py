@@ -7,7 +7,6 @@ import settings
 import httplib
 from django import forms
 import json
-from openpds.forms.settingsforms import PermissionsForm, Purpose_Form
 from openpds.core.models import Scope, Purpose, Role, SharingLevel, Profile, ResourceKey
 from pymongo import Connection
 import pdb
