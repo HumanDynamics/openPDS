@@ -7,13 +7,19 @@ DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 # Specifies the backend storage database for personal data
-DATA_STORAGE_ENGINE = 'openpds.backends.mongo'
+STORAGE_BACKEND = {
+    "ENGINE": 'openpds.backends.mongo',
+    "USER": "",
+    "PASSWORD": "",
+    "HOST": "",
+    "PORT": ""
+}
 
 # Used to specify the registry server to use for authorization
 REGISTRY_SERVER='myregistryserver.com'
 
 # Deprecated: Used to specify the default PDS url for aggregate computation
-DEFAULT_PDS_URL = 'pds.mine.com'
+DEFAULT_PDS_URL = 'my.pds.com'
 
 # Specifies where files posted to connectors will be placed while inserting into the PDS
 SERVER_UPLOAD_DIR="/var/www/trustframework/simplePdsEnv"

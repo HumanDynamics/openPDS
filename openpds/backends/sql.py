@@ -3,29 +3,12 @@ import sqlite3
 import os
 import stat
 import threading
-import psycopg2
-import psycopg2.extras
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from pymongo import Connection
 from openpds.core.models import Profile
 from openpds.accesscontrol.models import Settings
 from openpds.accesscontrol.internal import AccessControlledInternalDataStore, getAccessControlledInternalDataStore
 from openpds import settings
 
-connection = Connection(
-    host=getattr(settings, "MONGODB_HOST", None),
-    port=getattr(settings, "MONGODB_PORT", None)
-)
-
 INTERNAL_DATA_STORE_INSTANCES = {}
-
-def getInternalDataStore(profile, app_id, lab_id, token):
-    try:
-        internalDataStore = DualInternalDataStore(profile, app_id, lab_id, token)
-    except Exception as e:
-        print str(e)
-        internalDataStore = InternalDataStore(profile, app_id, lab_id, token)
-    return internalDataStore
 
 def dict_factory(cursor, row):
     dataRow = False
@@ -244,86 +227,3 @@ class SQLInternalDataStore(AccessControlledInternalDataStore):
     def getVariablePlaceholder(self):
         raise NotImplementedError("Subclasses must specify a variable placeholder.")
 
-class SQLiteInternalDataStore(SQLInternalDataStore):
-    SQLITE_DB_LOCATION = settings.SERVER_UPLOAD_DIR + "dataStores/"
-    
-    INITIALIZED_DATASTORES = []
-
-    def __init__(self, profile, app_id, lab_id, token):
-        super(SQLiteInternalDataStore, self).__init__(profile, app_id, lab_id)
-        self.profile = profile
-        #print profile.uuid
-        fileName = SQLiteInternalDataStore.SQLITE_DB_LOCATION + profile.getDBName() + ".db"
-        self.db = sqlite3.connect(fileName)
-        self.db.row_factory = dict_factory
-        self.source = "sql"
-
-        #Not perfect, since we're still initializing the DBs once per run, it's still better than running the following every time
-        if profile not in SQLiteInternalDataStore.INITIALIZED_DATASTORES:
-            SQLiteInternalDataStore.INITIALIZED_DATASTORES.append(profile)
-            try:
-                os.chmod(fileName, stat.S_IREAD | stat.S_IWRITE | stat.S_IEXEC | stat.S_IRWXO | stat.S_IRWXU | stat.S_IRWXG)
-            except:
-                #this is expected if the user accessing the db isn't the one who owns the file
-                pass
-            c = self.db.cursor()
-            # We probably don't want to run the table creation every time (even if we're checking for existence). 
-            # Make this a setup / initialization method that we run once when a PDS is set up
-            for table in SQLInternalDataStore.DATA_TABLE_LIST:
-                if next((c for c in table["columns"] if c[0] == "time"), None) is None:
-                    table["columns"].append(("time", "DOUBLE PRECISION PRIMARY KEY"))
-                createStatement = getCreateStatementForTable(table)
-                c.execute(createStatement)
-    
-            for table in SQLInternalDataStore.ANSWER_TABLE_LIST:
-                c.execute(getCreateStatementForTable(table))
-            self.db.commit()
-
-    def getCursor(self):
-        return self.db.cursor()
-
-    def getVariablePlaceholder(self):
-        return "?"
-
-class PostgresInternalDataStore(SQLInternalDataStore):
-    INITIALIZED_DATASTORES = []
-
-    def __init__(self, profile, token):
-        self.profile = profile
-        self.token = token
-        self.source = "sql"
-
-        if profile not in PostgresInternalDataStore.INITIALIZED_DATASTORES:            
-            PostgresInternalDataStore.INITIALIZED_DATASTORES.append(profile)
-            try:
-                init_conn = psycopg2.connect(user="postgres", password="p0stgre5", database=profile.getDBName().lower())
-            except psycopg2.OperationalError:
-                init_conn = psycopg2.connect(user="postgres", password="p0stgre5")
-                init_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-                init_cur = init_conn.cursor()
-                init_cur.execute("create database %s;"%profile.getDBName())
-                init_cur.close()
-                init_conn.close()
-                init_conn = psycopg2.connect(user="postgres", password="p0stgre5", database=profile.getDBName().lower())
-
-            init_cur = init_conn.cursor()
-            # We probably don't want to run the table creation every time (even if we're checking for existence). 
-            # Make this a setup / initialization method that we run once when a PDS is set up
-            for table in SQLInternalDataStore.DATA_TABLE_LIST:
-                if next((c for c in table["columns"] if c[0] == "time"), None) is None:
-                    table["columns"].append(("time", "DOUBLE PRECISION PRIMARY KEY"))
-                createStatement = getCreateStatementForTable(table)
-                init_cur.execute(createStatement)
-
-            for table in SQLInternalDataStore.ANSWER_TABLE_LIST:
-                init_cur.execute(getCreateStatementForTable(table))
-            init_conn.commit()
-            init_cur.close()
-            init_conn.close()
-        self.db = psycopg2.connect(user="postgres", password="p0stgre5", database=profile.getDBName().lower())
-    
-    def getCursor(self):
-        return self.db.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
-    def getVariablePlaceholder(self):
-        return "%s" 

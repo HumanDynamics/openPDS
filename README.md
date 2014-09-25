@@ -12,6 +12,8 @@ Please note: openPDS requires a separate registry server for account management 
     >apt-get install python-virtualenv
     
     >apt-get install mongodb mongodb-server
+
+    >apt-get install python-dev libpq-dev
     
     >service mongodb start
 

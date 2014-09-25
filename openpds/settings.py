@@ -4,11 +4,22 @@ import os
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
-DATA_STORAGE_ENGINE = 'openpds.backends.mongo'
+
+# Specifies the backend storage database for personal data
+PDS_BACKEND = {
+    "ENGINE": 'openpds.backends.mongo',
+    "USER": "",
+    "PASSWORD": "",
+    "HOST": "",
+    "PORT": ""
+}
+
+
+
 REGISTRY_SERVER='linkedpersonaldata.org'
 DEFAULT_PDS_URL = 'http://celldata.media.mit.edu:8007'
 
-SERVER_UPLOAD_DIR="/var/www/trustframework/simplePdsEnv"
+SERVER_UPLOAD_DIR="/var/www/trustframework/pdsEnv"
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),

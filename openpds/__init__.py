@@ -10,7 +10,7 @@ def class_for_name(module_name, class_name):
     return c
 
 def getInternalDataStore(profile, app_id, lab_id, token):
-    module = settings.DATA_STORAGE_ENGINE
+    module = settings.PDS_BACKEND["ENGINE"]
     c = class_for_name(module, "getInternalDataStore")
     return c(profile, app_id, lab_id, token)
 

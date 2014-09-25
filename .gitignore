@@ -1,4 +1,6 @@
 *.out
 *.pyc
 *.db
+celerybeat-schedule
 openpds/settings.py
+
