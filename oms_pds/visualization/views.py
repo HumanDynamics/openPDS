@@ -1,9 +1,12 @@
 from django.shortcuts import render_to_response
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from rdflib import Graph
 from SPARQLWrapper import SPARQLWrapper, JSON
 import rdflib
-import pdb
+import pdb, datetime, re
+from oms_pds.pds.models import Profile, QuestionInstance, QuestionType
+from django.core.urlresolvers import reverse
 
 def places(request):
     template = {}
@@ -40,3 +43,39 @@ def places(request):
     
     return render_to_response("visualization/locationMap.html", template, RequestContext(request))
 
+def questionsPage(request):
+    token = request.GET['bearer_token']
+    datastore_owner_uuid = request.GET["datastore_owner"]
+    datastore_owner, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
+    #TODO need to check that the token is in scope
+    
+    refresh = False
+    for key in request.GET:
+        if re.search('^q_', key) != None:
+            pk = int(re.sub(r'^q_', '', key))
+            value = request.GET[key]
+            q = QuestionInstance.objects.filter(pk=pk)
+            if value != "" and q.count() > 0 and q[0].expired == False:
+                q = q[0]
+                q.answer = value
+                q.expired = True
+                q.save()
+            refresh = True
+    if refresh:
+        return HttpResponseRedirect(reverse(questionsPage) +"?bearer_token="+token+"&datastore_owner="+datastore_owner_uuid)
+        
+    questions = QuestionInstance.objects.filter(expired=False, profile=datastore_owner).order_by("-datetime")
+    questionsRemainingList = []
+    for q in questions:
+        expiry = q.datetime + datetime.timedelta(minutes=q.question_type.expiry)
+        if q.answer != None or expiry.replace(tzinfo=None) < datetime.datetime.now():
+            q.expired = True
+            q.save()
+        else:
+            questionsRemainingList.append((q, q.question_type.optionList()))
+    
+    return render_to_response("visualization/smartcatch_questions.html", {
+        "questions": questionsRemainingList,
+        "bearer_token": token,
+        "datastore_owner": datastore_owner_uuid,
+    }, context_instance=RequestContext(request))

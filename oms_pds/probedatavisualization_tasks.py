@@ -80,7 +80,7 @@ def recentProbeDataScores():
 
 #        print profile
         token = socialhealth_tasks.getToken(profile, "app-uuid")
-        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
 
         for probeAnswerKey, probe in probeAnswerKeys.iteritems():
 #            print probe

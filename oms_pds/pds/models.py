@@ -1,18 +1,55 @@
 from django.conf import settings
 from django.db import models
 from mongoengine import *
+from django.utils import simplejson
 
 connect(settings.MONGODB_DATABASE)
 
 
 class Profile(models.Model):
     uuid = models.CharField(max_length=36, unique=True, blank = False, null = False, db_index = True)
+    wake = models.TimeField(default="8:00")
+    sleep = models.TimeField(default="23:00")
 
     def getDBName(self):
         return "User_" + str(self.uuid).replace("-", "_")
    
     def __unicode__(self):
         return self.uuid
+    
+class QuestionType(models.Model):
+    UI_CHOICES = (
+        ('s', 'Slider'),
+        ('b', 'Binary (Yes/No)'),
+        ('m', 'Multiple Choice'),
+    )
+    
+    text = models.TextField() #What was your morning Glucose level?
+    ui_type = models.CharField(max_length=1, choices=UI_CHOICES)
+    params = models.TextField(default="[]", help_text="this column must be coded in JSON and is specific to the uitype - for YES/NO params=[], for slider params='[ min, max ]' ie '[ 0, 10 ]', Multiple Choice '[ [0, \"Never\"], [1, \"Some\"], [2, \"All\" ]]'")
+    frequency_interval = models.IntegerField(default=1440, blank=True, null=True, help_text="minutes between the next time the question is asked. set as null if the question isn't set on a schedule directly.")
+    resend_quantity = models.IntegerField(default=0, help_text="Number of times to resend this question until it's answered.")
+    followup_key = models.IntegerField(blank=True, null=True, help_text="If this question result in a followup question, select the answer that results in a follow up. If not, or if any answer creates a follow up, leave blank")
+    followup_question = models.ForeignKey('QuestionType', blank=True, null=True, help_text="If this question should result in a followup question, select the follow-up question. If not, leave blank") 
+    expiry = models.IntegerField(default=1440, help_text="minutes until the question expires")
+    
+    def __unicode__(self):
+        return str(self.pk) + ": " + self.text
+        
+    def optionList(self):
+        return simplejson.loads(self.params)
+        
+
+class QuestionInstance(models.Model):
+    question_type = models.ForeignKey('QuestionType')
+    profile = models.ForeignKey('Profile')
+    datetime = models.DateTimeField(auto_now_add=True)
+    answer = models.IntegerField(blank=True, null=True)
+    expired = models.BooleanField(default=False, help_text="Once an answer either expires past a certain time or is completed, this is checked off. This is for the efficiency of only querying the database on expired and profile.")
+    notification_counter = models.IntegerField(default=0, help_text="How many times was a notification sent out for this Question Instance?")
+    
+    def __unicode__(self):
+        return str(self.datetime) + ": " +self.profile.__unicode__() + " (" +str(self.question_type.pk)+ ")"
 
 class ResourceKey(models.Model):
     ''' A way of controlling sharing within a collection.  Maps to any key within a collection.  For example, funf probes and individual answers to questions'''
@@ -93,9 +130,12 @@ class Notification(models.Model):
     datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="notification_owner")
     title = models.CharField(max_length = 64, blank = False, null = False)
     content = models.CharField(max_length = 1024, blank = False, null = False)
+#    content = models.TextField() # For SmartCATCH - use the content as a serialized json object
     type = models.IntegerField(blank = False, null = False)
     timestamp = models.DateTimeField(auto_now_add = True)
-    uri = models.URLField(blank = True, null = True)
+#    uri = models.URLField(blank = True, null = True)
+    uri = models.TextField() # For SmartCATCH - use the uri as a serialized json object
+#    json_content = models.TextField()
     
     def __unicode__(self):
         self.pk

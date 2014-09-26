@@ -5,7 +5,6 @@ smartCATCH
 {% endblock %}
 
 {% block scripts %}
-  <script src="/static/mgh/components/platform/platform.js"></script>
   <script src="http://d3js.org/d3.v3.min.js"></script>
   <link rel="import" href="/static/mgh/contents/graph.html">
   <link rel="import" href="/static/mgh/contents/line_graph.html">
@@ -42,7 +41,7 @@ smartCATCH
 		-ms-user-select: none;
 		user-select: none;
 	  }
-	  .container {
+	  .scontainer {
 		width: 80%;
 		margin: 50px auto;
 	  }
@@ -50,7 +49,7 @@ smartCATCH
 		paper-tabs {
 		  width: 45em;
 		}
-		.container {
+		.scontainer {
 		  width: 400px;
 		}
 	  }
@@ -59,10 +58,13 @@ smartCATCH
 
 {% block content %}
 <div id="splash">
+	<div id="logo-border-white">
+		<img id="Logo" src="/static/mgh/SmartCatch_design_app/Img/general/Logo_white.png"/>
+	</div>
 	<center><img id="splashHeart"/></center>
 	<center><div class="splashText" id="splashEncourage1"></div></center>
 	<center><div class="splashText" id="splashEncourage2"></div></center>
-	<center><div class="splashText">-</div></center>
+	<center><div class="splashText" id="splashUnderscore">_</div></center>
 	<center>	
 		<div id="rectContainer">
 			<img class='splashRect' id="bar5" src="/static/mgh/SmartCatch_design_app/Img/splashscreen/emptybar.png"/>
@@ -770,19 +772,19 @@ if(barFilled>=4){
 	var splashColor='#27dc84';
 	$('#splashEncourage1').text('Keep going,');
 	$('#splashEncourage2').text('You are doing great!');
-	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashScreen/goodheart.png')
+	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/goodheart.png')
 	}
 else if(barFilled>=2){
 	var splashColor='#f9ce20';
 	$('#splashEncourage1').text('Almost there,');
 	$('#splashEncourage2').text('Keep working on!');
-	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashScreen/mediumheart.png')
+	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/mediumheart.png')
 	}
 else{
 	var splashColor='#FF5f5f';
 	$('#splashEncourage1').text('You can do better,');
 	$('#splashEncourage2').text('Keep trying!');
-	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashScreen/badheart.png')
+	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/badheart.png')
 };
 
 var rectColor=splashColor;

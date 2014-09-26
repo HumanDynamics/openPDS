@@ -72,7 +72,7 @@ def findRecentPlaceBounds(recentPlaceKey, timeRanges, numPlaces=1):
     
     for profile in profiles:
         # TODO: figure out how to get at a token here...
-        internalDataStore = getInternalDataStore(profile, "Living Lab", "My Places", "")
+        internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "My Places", "")
         #dbName = profile.getDBName()
         #collection = connection[dbName]["funf"]
         locations = []

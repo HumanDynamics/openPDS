@@ -86,7 +86,7 @@ def leaderboardComputationTask():
     unsorted_dict = {}
     for profile in profiles:
 	token = socialhealth_tasks.getToken(profile, "app-uuid")
-	internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+	internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
 	
 	values = aggregateLeaderboardComputation(internalDataStore, "activityStats", leaderboardComputation, False)
         unsorted_dict[profile.uuid] = LeaderboardRanking({ "average_activity_rate": values[0]["average_activity_rate"], "max_high_activity_rate": values[0]["max_high_activity_rate"], "min_low_activity_rate": values[0]["min_low_activity_rate"]})
@@ -101,7 +101,7 @@ def leaderboardComputationTask():
     for uuid in sorted_dict:
         profile = Profile.objects.get(uuid=uuid)
         token = socialhealth_tasks.getToken(profile, "app-uuid")
-        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
 
 	percentileValue = calculatePercentile(average_activity_rates_list, unsorted_dict[uuid].get_average_activity_rate())	
 
@@ -145,7 +145,7 @@ def findActiveLocationsTask():
     location_frequencies = {}
     for profile in profiles:
         token = socialhealth_tasks.getToken(profile, "app-uuid")
-        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
 
         values = activeLocationsComputation(internalDataStore)
 	print profile.uuid
@@ -170,6 +170,6 @@ def findActiveLocationsTask():
 
     for profile in profiles:
         token = socialhealth_tasks.getToken(profile, "app-uuid")
-        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+        internalDataStore = socialhealth_tasks.getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
 	
 	internalDataStore.saveAnswer("activeLocations", location_frequencies_list)	

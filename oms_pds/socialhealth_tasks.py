@@ -217,7 +217,7 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, serviceId, includeBl
 
     for profile in profiles:
         # NOTE: need a means of getting at a token for authorizing this task to run. For now, we're not checking anyway, so it's blank
-        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "")
+        internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
 #        if mean is None or dev is None:
         data = aggregateForUser(internalDataStore, answerKey, timeRanges, aggregator, includeBlanks)
 #        else:
@@ -276,7 +276,7 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
                     data[uuid].append(f)               
             profile = Profile.objects.get(uuid = uuid)
             # TODO: get a token here to run internal queries against...
-            ids = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "")
+            ids = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
             ids.saveAnswer(answerKey, data[uuid]) 
     return data
 
@@ -339,6 +339,48 @@ def recentSocialScore():
     
     return score
 
+
+def addNotification(profile, notificationType, title, content, uri):
+    notification, created = Notification.objects.get_or_create(datastore_owner=profile, type=notificationType)
+    notification.title = title
+    notification.content = content
+    notification.datastore_owner = profile
+    if uri is not None:
+        notification.uri = uri
+    notification.save()
+
+
+# formats a notification the way the SmartCATCH client understands it
+def formatNotification(question, type="Picker", description="", items=[], **kwargs):
+    s1 = "<startTitle>" + question + "<endTitle><startType>" + type + "<endType><startDescription>" + description + "<endDescription>"
+    s2 = "<startNumItems>%d<endNumItems>" % len(items) + ''.join(["<startI%d>%s<endI%d>" % (i+1,items[i],i+1) for i in xrange(len(items))])
+    s3 = "<startNegButton>Delay<endNegButton><startPosButton>Submit<endPosButton><startNumRepeats>3<endNumRepeats><startTimeRepeat>5000<endTimeRepeat>" # TODO: format this. Unclear about this param$
+
+    return json.dumps({ 's1': s1, 's2': s2, 's3': s3 })
+#    return s1, s2, s3 # TODO: JSONfy
+
+@task()
+def smartcatchNotifications():
+    print "Starting notifications task"
+
+    profiles = Profile.objects.all()
+    for profile in profiles:
+
+	    if Device.objects.filter(datastore_owner = profile).count() > 0:
+        	gcm = GCM(settings.GCM_API_KEY)
+	        for device in Device.objects.filter(datastore_owner = profile):
+        	    try:
+                	# add the notification to the DB
+	                q = 'How are you today?'
+        	        js = formatNotification(q, description='A query about your emotional state', items=['Low','Medium','High'])
+                	addNotification(profile, 2, 'SmartCATCH', q, js)
+	                # send an alert that a notification is ready (app will call back to fetch the notification data)
+        	        print "id=%s, uuid=%s, device=%s" % (profile.id, profile.uuid,device.gcm_reg_id)
+                	gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})
+	            except Exception as e:
+        	        print "Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
+                	print e    
+
 @task()
 def recentSocialHealthScores():
     profiles = Profile.objects.all()
@@ -367,7 +409,7 @@ def recentSocialHealthScores():
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         print "storing %s" % profile.uuid
         
-        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", "")
+        internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
  
         data[profile.uuid] = []
         #pdb.set_trace()
@@ -407,7 +449,7 @@ def recentSocialHealthScores2():
 
     for profile in profiles:
         token = getToken(profile, "app-uuid")
-        internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+        internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
 
         activityLevels = aggregateForUser(internalDataStore, "RecentActivityByHour", timeRanges, activityForTimeRange, False)
        
@@ -438,7 +480,7 @@ def recentSocialHealthScores2():
         stdDevs = { k: math.sqrt(sum(variances[k]) / len(variances[k])) for k in variances }
         for profile in activeUsers:
             token = getToken(profile, "app-uuid")
-            internalDataStore = getInternalDataStore(profile, "Living Lab", "Social Health Tracker", token)
+            internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
             data[profile.uuid]["averageLow"] = { k: max(0, averages[k] - stdDevs[k]) for k in stdDevs }
             data[profile.uuid]["averageHigh"] = { k: min(averages[k] + stdDevs[k], 10) for k in stdDevs }
             internalDataStore.saveAnswer("socialhealth", data[profile.uuid])
