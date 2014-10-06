@@ -98,6 +98,26 @@ def mostRecentLocationEntry(locations, time):
             return l
     return None
 
+def activityForTimeRange2(activityEntries, start, end, includeBlanks):
+    lowActivityIntervals = highActivityIntervals = totalIntervals = 0
+
+    if activityEntries is not None and (includeBlanks or activityEntries.count() > 0):
+        for data in activityEntries:
+            #pdb.set_trace()
+            dataValue = data["value"]
+            if ("total_intervals" in dataValue):
+                totalIntervals += dataValue["total_intervals"]
+                lowActivityIntervals += dataValue["low_activity_intervals"]
+                highActivityIntervals += dataValue["high_activity_intervals"]
+            else:
+                totalIntervals += 1
+                lowActivityIntervals += 1 if dataValue["activitylevel"] == "low" else 0
+                highActivityIntervals += 1 if dataValue["activitylevel"] == "high" else 0
+
+        activity = { "start": start, "end": end, "total": totalIntervals, "low": lowActivityIntervals, "high": highActivityIntervals }
+        return activity
+    return None
+
 def activityForTimeRange(internalDataStore, start, end, includeBlanks = False, includeSelfAssessed = False):
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
 
@@ -226,6 +246,32 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, serviceId, includeBl
 
     return aggregates
 
+def aggregateForUser2(entries, answerKey, timeRanges, aggregator, includeBlanks = False):
+    # This function does not properly handle the includeBlanks parameter
+    if entries is None or entries.count() == 0:
+        return None
+    aggregates = []
+    i = 0
+    
+    # The following is linear only in the number of entries, but only works if both entries and time ranges are sorted in ascending order
+    for timeRange in timeRanges:
+        startTime = timeRange[0]
+        endTime = timeRange[1]
+        entryTime = entries[i]["time"]
+        while entryTime < startTime:
+            i += 1
+            entryTime = entries[i]["time"]
+        startIndex = i
+        while entryTime < endTime:
+            i += 1
+            entryTime = entries[i]["time"]
+        endIndex = i
+        data = aggregator(entries[startIndex:endIndex], startTime, endTime, includeBlanks)
+        if data is not None: 
+            aggregates.append(data)
+    
+    return aggregates
+
 def aggregateForUser(internalDataStore, answerKey, timeRanges, aggregator, includeBlanks = False):
     aggregates = []
     
@@ -329,7 +375,7 @@ def recentSocialHealthScores():
 #    scoresList = [[d for d in scoreList if d > 0.0] for scoreList in scoresList]
     averages = [sum(scores) / len(scores) if len(scores) > 0 else 0 for scores in scoresList]
     variances = [map(lambda x: (x - averages[i]) * (x - averages[i]), scoresList[i]) for i in range(len(scoresList))]
-    stdDevs = [math.sqrt(sum(variances[i]) / len(scoresList[i])) for i in range(len(scoresList))]
+    stdDevs = [math.sqrt(sum(variances[i]) / len(scoresList[i])) if len(scoresList[i]) > 0 else 0 for i in range(len(scoresList))]
 
     activityStdDev = stdDevs[0]
     socialStdDev = stdDevs[1]
@@ -376,6 +422,38 @@ def recentSocialHealthScores():
 def getToken(profile, app_uuid):
     return ""
 
+@task()
+def scoresForUser(internalDataStore):
+    startTime = getStartTime(6, True)
+    currentTime = time.time()
+    timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
+
+    sums = {"activity": 0, "social": 0, "focus": 0}
+    data = {}
+    activityEntries = internalDataStore.getData("ActivityProbe", startTime, currentTime)
+
+    activityLevels = aggregateForUser2(activityEntries, "RecentActivityByHour", timeRanges, activityForTimeRange2, False)
+
+    if len(activityLevels) > 0:
+        socialLevels = aggregateForUser(internalDataStore, "RecentSocialByHour", timeRanges, socialForTimeRange, True)
+        focusLevels = aggregateForUser(internalDataStore, "RecentFocusByHour", timeRanges, focusForTimeRange, True)
+
+        activityScore = computeActivityScore(activityLevels)
+        socialScore = computeSocialScore(socialLevels)
+        focusScore = computeFocusScore(focusLevels)
+
+        sums["activity"] += activityScore
+        sums["social"] += socialScore
+        sums["focus"] += focusScore
+
+        data["user"] = {
+            "activity": activityScore,
+            "social": socialScore,
+            "focus": focusScore
+        }
+        internalDataStore.saveAnswer("RecentSocialHealth", data)
+    
+    return data    
 @task()
 def recentSocialHealthScores2():
     profiles = Profile.objects.all()

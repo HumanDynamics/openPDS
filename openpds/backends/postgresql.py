@@ -6,8 +6,7 @@ import psycopg2
 import psycopg2.extras
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from openpds.core.models import Profile
-from openpds.accesscontrol.models import Settings
-from openpds.accesscontrol.internal import AccessControlledInternalDataStore, getAccessControlledInternalDataStore
+from openpds.backends.base import InternalDataStore
 from openpds.backends.sql import dict_factory, getColumnDefForTable, getCreateStatementForTable, ListWithCount, getColumnValueFromRawData, SQLInternalDataStore
 from openpds import settings
 
@@ -18,6 +17,8 @@ class PostgresInternalDataStore(SQLInternalDataStore):
     INITIALIZED_DATASTORES = []
 
     def __init__(self, profile, app_id, lab_id, token):
+        super(PostgresInternalDataStore, self).__init__(profile, app_id, lab_id, token)
+
         self.profile = profile
         self.token = token
         self.source = "sql"

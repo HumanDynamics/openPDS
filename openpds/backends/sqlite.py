@@ -3,12 +3,8 @@ import sqlite3
 import os
 import stat
 import threading
-import psycopg2
-import psycopg2.extras
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from openpds.core.models import Profile
-from openpds.accesscontrol.models import Settings
-from openpds.accesscontrol.internal import AccessControlledInternalDataStore, getAccessControlledInternalDataStore
+from openpds.backends.base import InternalDataStore
 from openpds.backends.sql import dict_factory, getColumnDefForTable, getCreateStatementForTable, ListWithCount, getColumnValueFromRawData, SQLInternalDataStore
 from openpds import settings
 
@@ -21,7 +17,7 @@ class SQLiteInternalDataStore(SQLInternalDataStore):
     INITIALIZED_DATASTORES = []
 
     def __init__(self, profile, app_id, lab_id, token):
-        super(SQLiteInternalDataStore, self).__init__(profile, app_id, lab_id)
+        super(SQLiteInternalDataStore, self).__init__(profile, app_id, lab_id, token)
         self.profile = profile
         #print profile.uuid
         fileName = SQLiteInternalDataStore.SQLITE_DB_LOCATION + profile.getDBName() + ".db"

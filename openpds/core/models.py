@@ -10,56 +10,6 @@ class Profile(models.Model):
     def __unicode__(self):
         return self.uuid
 
-class ResourceKey(models.Model):
-    ''' A way of controlling sharing within a collection.  Maps to any key within a collection.  For example, funf probes and individual answers to questions'''
-    key = models.CharField(max_length=120)
-    issharing = models.BooleanField(default=True)
-    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name = "resourcekey_owner")
-
-class ProbeGroupSetting(models.Model):
-    ''' A way of grouping resource keys for sharing.'''
-    name = models.CharField(max_length=120)
-    issharing = models.BooleanField(default=False)
-    keys = models.ManyToManyField(ResourceKey) #a list of roles the user is currently sharing with
-
-class Purpose(models.Model):
-    name = models.CharField(max_length=120)
-    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="purpose_owner")
-    
-    def __unicode__(self):
-        return self.name + "(" + self.datastore_owner.uuid + ")"
-
-class Scope(models.Model):
-    name = models.CharField(max_length=120)
-    purpose = models.ManyToManyField(Purpose)
-    issharing = models.BooleanField(default=False)
-    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="scope_owner")
-    
-    def __unicode__(self):
-        return self.name + "(" + self.datastore_owner.uuid + ")"
-
-class Role(models.Model):
-    """ @name : The user defined name of the role
-        @purpose : A list of purposes associated with this role
-        @tokens : A list of oauth tokens of users assigned to this role """
-    name = models.CharField(max_length=120)
-    purpose = models.ManyToManyField(Purpose)
-    issharing = models.BooleanField(default=False)
-    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="role_owner")
-    
-    def __unicode__(self):
-        return self.name + "(" + self.datastore_owner.uuid + ")"
-    # TODO: fill in field for tokens (rather than ints / uuids)
-
-class SharingLevel(models.Model):
-    level = models.IntegerField()
-    purpose = models.ManyToManyField(Purpose)
-    isselected = models.BooleanField(default=False)
-    datastore_owner = models.ForeignKey(Profile, blank = False, null = False, related_name="sharinglevel_owner")
-    
-    def __unicode__(self):
-        return str(self.level) + "(" + self.datastore_owner.uuid + ")"
-
 class AuditEntry(models.Model):
     '''
     Represents an audit of a request against the PDS
@@ -97,5 +47,6 @@ class Notification(models.Model):
         self.pk
 
 class Device(models.Model):
+
     datastore_owner = models.ForeignKey(Profile, blank=False, null=False, related_name="device_owner", db_index=True)
     gcm_reg_id = models.CharField(max_length=1024, blank=False, null=False)

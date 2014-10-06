@@ -7,8 +7,8 @@ DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 # Specifies the backend storage database for personal data
-STORAGE_BACKEND = {
-    "ENGINE": 'openpds.backends.mongo',
+PDS_BACKEND = {
+    "ENGINE": '{{ PDS_BACKEND }}',
     "USER": "",
     "PASSWORD": "",
     "HOST": "",
@@ -16,13 +16,13 @@ STORAGE_BACKEND = {
 }
 
 # Used to specify the registry server to use for authorization
-REGISTRY_SERVER='myregistryserver.com'
+REGISTRY_SERVER='{{ REGISTRY_URL }}'
 
 # Deprecated: Used to specify the default PDS url for aggregate computation
 DEFAULT_PDS_URL = 'my.pds.com'
 
 # Specifies where files posted to connectors will be placed while inserting into the PDS
-SERVER_UPLOAD_DIR="/var/www/trustframework/simplePdsEnv"
+SERVER_UPLOAD_DIR="{{ PATH_TO_OPENPDS_VIRTUALENV }}"
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -34,7 +34,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '/path/to/main.db',                      # Or path to database file if using sqlite3.
+        'NAME': '{{ PATH_TO_OPENPDS_VIRTUALENV }}/openPDS/openpds/test.db',                      # Or path to database file if using sqlite3.
         'USER': 'test',                      # Not used with sqlite3.
         'PASSWORD': 'test',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.

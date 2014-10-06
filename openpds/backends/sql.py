@@ -4,8 +4,7 @@ import os
 import stat
 import threading
 from openpds.core.models import Profile
-from openpds.accesscontrol.models import Settings
-from openpds.accesscontrol.internal import AccessControlledInternalDataStore, getAccessControlledInternalDataStore
+from openpds.backends.base import InternalDataStore
 from openpds import settings
 
 INTERNAL_DATA_STORE_INSTANCES = {}
@@ -43,7 +42,7 @@ class ListWithCount(list):
 def getColumnValueFromRawData(rawData, columnName, tableDef, source="funf"):    
     return tableDef["mapping"][source][columnName](rawData) if "mapping" in tableDef and source in tableDef["mapping"] and columnName in tableDef["mapping"][source] else rawData[columnName] if columnName in rawData else None
 
-class SQLInternalDataStore(AccessControlledInternalDataStore):
+class SQLInternalDataStore(InternalDataStore):
     LOCATION_TABLE = {
         "name": "LocationProbe",
         "columns": [
@@ -159,7 +158,9 @@ class SQLInternalDataStore(AccessControlledInternalDataStore):
 
     def getAnswerFromTable(self, key, table):
         #table = "AnswerList" if isinstance(data, list) else "Answer"
-        statement = "select key,value from %s where key=%s" %(table, self.getVariablePlaceholder())
+        statement = "select key,value from %s" % table
+        if key is not None:
+            statement = statement + " where key=%s" % key
         c = self.getCursor()
         c.execute(statement, (key,))
         result = c.fetchone()
@@ -180,7 +181,7 @@ class SQLInternalDataStore(AccessControlledInternalDataStore):
         self.db.commit()
         c.close()
     
-    def getDataInternal(self, key, startTime, endTime):
+    def getData(self, key, startTime, endTime):
         table = key # A simplification for now
         statement = "select '%s' as key,* from %s" %(key,table)
         times = ()

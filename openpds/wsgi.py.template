@@ -19,12 +19,12 @@ import sys
 import djcelery
 import django.conf
 
-activate_this = os.path.expanduser("/path/to/openpds-virtualenv/bin/activate_this.py")
+activate_this = os.path.expanduser("{{ PATH_TO_OPENPDS_VIRTUALENV }}/bin/activate_this.py")
 execfile(activate_this, dict(__file__=activate_this))
 
 djcelery.setup_loader()
 django.conf.ENVIRONMENT_VARIABLE = "DJANGO_PDS_SETTINGS_MODULE"
-sys.path.append('/path/to/openpds-virtualenv/openPDS')
+sys.path.append('{{ PATH_TO_OPENPDS_VIRTUALENV }}/openPDS')
 os.environ.setdefault("DJANGO_PDS_SETTINGS_MODULE", "openpds.settings")
 
 # This application object is used by any WSGI server configured to use this

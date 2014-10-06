@@ -2,7 +2,7 @@ from tastypie.authorization import Authorization
 from tastypie.resources import ModelResource, fields, ALL_WITH_RELATIONS
 from openpds.authentication import OAuth2Authentication
 from openpds.authorization import PDSAuthorization
-#from openpds.trust.models import SharingLevel, Role, Purpose
+from openpds.tastypie_internaldatastore import IDSAnswerResource
 from openpds import settings
 import datetime
 import json, ast
@@ -11,7 +11,7 @@ from tastypie import fields
 from tastypie.authorization import Authorization
 from tastypie.validation import Validation
 from openpds.tastypie_mongodb.resources import MongoDBResource, Document
-from openpds.core.models import AuditEntry, Profile, SharingLevel, Role, Purpose, Scope, Notification, Device, ResourceKey
+from openpds.core.models import AuditEntry, Profile, Notification, Device
 from django.db import models
 
 import pdb
@@ -65,33 +65,33 @@ class FunfConfigResource(MongoDBResource):
         object_class = Document
         collection = "funfconfig" # collection name
 
-class AnswerResource(MongoDBResource):
+class AnswerResource(IDSAnswerResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
     value = fields.DictField(attribute="value", help_text='A json blob of answer data.', null=True, )
 
     class Meta:
         resource_name = "answer"
-        list_allowed_methods = ["delete", "get", "post"]
+        list_allowed_methods = ["get", "post"]
         help_text='resource help text...'
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         object_class = Document
-        collection = "answer" # collection name
-
-class AnswerListResource(MongoDBResource):
+        isList = False
+ 
+class AnswerListResource(IDSAnswerResource):
     id = fields.CharField(attribute="_id", help_text='A guid identifier for an answer entry.')
     key = fields.CharField(attribute="key", help_text='A unique string to identify each answer.', null=False, unique=True)
-    value = fields.ListField(attribute="value", help_text='A list json blob of answer data.', null=True, )
+    value = fields.ListField(attribute="value", help_text='A json blob of answer data.', null=True, )
 
     class Meta:
         resource_name = "answerlist"
-        list_allowed_methods = ["delete", "get", "post"]
+        list_allowed_methods = ["get", "post"]
         help_text='resource help text...'
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         object_class = Document
-        collection = "answerlist" # collection name
+        isList = True
 
 class ProfileResource(ModelResource):
     
@@ -100,54 +100,6 @@ class ProfileResource(ModelResource):
         authentication = OAuth2Authentication("funf_write")
         authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
         filtering = { "uuid": ["contains", "exact"]}
-
-class ResourceKeyResource(ModelResource):
-    class Meta:
-        queryset = ResourceKey.objects.all()
-        authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-        filtering = { "datastore_owner": ALL_WITH_RELATIONS }
-
-class SharingLevelResource(ModelResource):
-    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
-    
-    class Meta:
-        queryset = SharingLevel.objects.all()
-        resource_name = 'sharinglevel'
-        authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-        filtering = { "datastore_owner": ALL_WITH_RELATIONS}
-
-class RoleResource(ModelResource):
-    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
-    
-    class Meta:
-        resource_name = 'role'
-        queryset = Role.objects.all()
-        list_allowed_methods = ["delete", "get", "post"]
-        authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-        filtering = { "datastore_owner" : ALL_WITH_RELATIONS }
-
-class PurposeResource(ModelResource):
-    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
-    
-    class Meta:
-        resource_name = 'purpose'
-        queryset = Purpose.objects.all()
-        authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-        filtering = {"datastore_owner" : ALL_WITH_RELATIONS }
-
-class ScopeResource(ModelResource):
-    datastore_owner = fields.ForeignKey(ProfileResource, "datastore_owner", full=True, blank = False)
-    
-    class Meta:
-        resource_name = 'scope'
-        queryset = Scope.objects.all()
-        authentication = OAuth2Authentication("funf_write")
-        authorization = PDSAuthorization(scope = "funf_write", audit_enabled = True)
-        filtering = {"datastore_owner" : ALL_WITH_RELATIONS }
 
 class AuditEntryCountResource(ModelResource):
     def get_resource_uri(self, bundle): 
