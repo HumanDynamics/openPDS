@@ -19,7 +19,7 @@ Please note: openPDS requires a separate registry server for account management 
     
     >service mongodb start
 
-* From there, you can create a virtual environment for your openPDS install, and clone the code into it:
+* From there, you can create a virtual environment for your openPDS install, and clone the code into it. You must clone the repo into the virtualenv directory for setup.py to work:
 
     >virtualenv pdsEnv
     
@@ -28,6 +28,8 @@ Please note: openPDS requires a separate registry server for account management 
     >source bin/activate   
 
     >git clone https://github.com/HumanDynamics/openPDS.git
+
+    > cd openPDS
 
     >pip install -r conf/requirements.txt
 
