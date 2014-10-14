@@ -4,7 +4,7 @@ from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 from django.contrib import admin
 from openpds.core.tools import v1_api
-
+import json
 admin.autodiscover()
 
 urlpatterns = patterns('openpds.views',
@@ -28,4 +28,5 @@ urlpatterns = patterns('openpds.views',
     (r"accesscontrol/", include("openpds.accesscontrol.urls")),
     (r'probevisualization/', direct_to_template, { 'template' : 'probevisualization.html' }),
     (r'^checkboxes/', direct_to_template, { 'template' : 'multiplecheckboxes.html' }),
+    (r'^lab_information/', 'lab_information'),
 )
