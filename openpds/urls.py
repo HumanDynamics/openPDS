@@ -17,7 +17,7 @@ urlpatterns = patterns('openpds.views',
     (r'visualization/', include('openpds.visualization.urls')),
     (r'^funf_connector/', include('openpds.connectors.funf.urls')),
     (r'^funf_connector/', include('openpds.connectors.opensense.urls')),
-    #(r'^os_connector/', include('openpds.connectors.opensense.urls')),
+    (r'^os_connector/', include('openpds.connectors.opensense.urls')),
     (r'^survey/', direct_to_template, { 'template' : 'survey.html' }),
     (r"meetup/", include("openpds.meetup.urls")),
     # Uncomment the admin/doc line below to enable admin documentation:

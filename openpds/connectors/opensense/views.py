@@ -2,6 +2,7 @@
 import os
 import json
 import random
+import pdb
 
 from django.http import HttpResponse, HttpResponseBadRequest
 
@@ -12,6 +13,7 @@ from openpds import getInternalDataStore
 
 
 def data(request):
+    pdb.set_trace()
     print "\n\n DATA REACHED \n\n"
 
     '''parse json data and upload them to your PDS'''
