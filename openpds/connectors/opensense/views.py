@@ -17,12 +17,15 @@ def data(request):
     print "\n\n DATA REACHED \n\n"
 
     '''parse json data and upload them to your PDS'''
+    # does not allow get method when uploading json data. currently not parsing jsons correctly
     if request.method == 'GET':
         return HttpResponseBadRequest("GET requests disallowed", content_type = 'text/json')
 
     # get necessary info from outside request
     device_id = request.POST['device_id']
     # flie_hash = request.POST['file_hash']
+    # temp token to insert data
+    # 'bearer_token' = 3f4851fd8a
     token = request.POST['bearer_token']
     data = json.loads(request.POST['data'])
     result = {}
