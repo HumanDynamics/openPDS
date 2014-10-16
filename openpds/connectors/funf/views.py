@@ -17,7 +17,9 @@ import pdb
 upload_dir = settings.SERVER_UPLOAD_DIR
 
 def insert_pds(internalDataStore, token, pds_json):
-    internalDataStore.saveData(pds_json)
+    # specify funf db for mongo, the other funf specific dbs will just ignore
+    # this parameter
+    internalDataStore.saveData(pds_json, 'funf')
 
 def write_key(request):
     '''write the password used to encrypt funf database files to your PDS'''
@@ -47,6 +49,8 @@ def write_key(request):
 
 def data(request):
     '''decrypt funf database files, and upload them to your PDS'''
+    pdb.set_trace()
+
     result = {}
     if request.method == 'GET':
         template = {'token':request.GET['bearer_token']}
