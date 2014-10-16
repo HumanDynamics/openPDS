@@ -2,6 +2,7 @@ from pymongo import Connection
 from openpds.core.models import Profile
 from openpds.backends.base import InternalDataStore
 from openpds import settings
+import pdb
 
 connection = Connection(
     host=getattr(settings, "MONGODB_HOST", None),
@@ -62,10 +63,11 @@ class MongoInternalDataStore(InternalDataStore):
                 timeFilter["$lt"] = endTime
             dataFilter["time"] = timeFilter
         return self.db["funf"].find(dataFilter)
-    
-    def saveData(self, data):
+
+    # saves data to specified database
+    def saveData(self, data, database):
     	"""
     	Saves data to this InternalDataStore. Data must provide a key and time in order to be retrieved for later use. 
     	"""
-        self.db["funf"].save(data)
+        self.db[database].save(data)
 
