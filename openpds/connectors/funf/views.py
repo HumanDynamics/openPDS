@@ -49,7 +49,6 @@ def write_key(request):
 
 def data(request):
     '''decrypt funf database files, and upload them to your PDS'''
-    pdb.set_trace()
 
     result = {}
     if request.method == 'GET':
