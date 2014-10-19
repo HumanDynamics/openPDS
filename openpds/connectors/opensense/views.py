@@ -61,7 +61,6 @@ def extractAndInsertData(data, internalDataStore, token):
     try:
         #insert each json object in data list, saveData only takes one input 'data'
         for json_object in data:
-            pdb.set_trace()
             internalDataStore.saveData(json_object, 'opensense')
         result = {'status':'ok', 'entries_inserted':len(data)}
     except Exception as e:

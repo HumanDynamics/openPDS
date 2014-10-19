@@ -64,10 +64,10 @@ class MongoInternalDataStore(InternalDataStore):
             dataFilter["time"] = timeFilter
         return self.db["funf"].find(dataFilter)
 
-    # saves data to specified database
-    def saveData(self, data, database):
+    # saves data to specified database collection
+    def saveData(self, data, collectionname):
     	"""
     	Saves data to this InternalDataStore. Data must provide a key and time in order to be retrieved for later use. 
     	"""
-        self.db[database].save(data)
+        self.db[collectionname].save(data)
 
