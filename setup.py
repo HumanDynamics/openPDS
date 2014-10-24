@@ -2,6 +2,8 @@
 
 import sys
 import os
+#import pdb
+
 
 print "\n"
 print "##########################################################################"
@@ -12,22 +14,13 @@ print "if necessary, press ctrl+c to exit and then move to the correct directory
 print "##########################################################################"
 virtualEnvPath = os.path.dirname(os.getcwd())
 virtualEnvPathInput = raw_input("Enter the path to the openPDS virtual environment (or nothing for default: %s): "%virtualEnvPath)
-virtualEnvPath = virtualEnvPathInput if virtualEnvPathInput is not None and len(virtualEnvPath) > 0 else virtualEnvPath
+virtualEnvPath = virtualEnvPathInput if virtualEnvPathInput is not None and len(virtualEnvPathInput) > 0 else virtualEnvPath
 
-mitRegistryServer = "linkedpersonaldata.org"
+mitRegistryServer = "http://linkedpersonaldata.org"
 registryServerInput = raw_input("\nEnter the Registry Server domain name (or nothing for MIT default: %s): " %mitRegistryServer)
 registryServer = registryServerInput if registryServerInput is not None and len(registryServerInput) > 0 else mitRegistryServer
 
-# Create a new wsgi.py file from the template and fill in the virtual env path on it
-wsgiTemplateFile = open(os.getcwd() + "/openpds/wsgi.py.template", "r")
-wsgiContent = wsgiTemplateFile.read().replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", virtualEnvPath)
-wsgiOutputFile = open(os.getcwd() + "/openpds/wsgi.py", "w")
-wsgiOutputFile.write(wsgiContent)
-wsgiOutputFile.close()
-wsgiTemplateFile.close()
-
 # Determine the backend
-
 backends = { "1": "openpds.backends.mongo", "2": "openpds.backends.sqlite", "3": "openpds.backends.postgres" }
 
 print "\nWhich backend would you like to use for personal data storage?"
@@ -39,15 +32,52 @@ selection = "1" if selection is None or len(selection) == 0 else selection
 
 backend = backends[selection]
 
+# Ask about apache
+deployment = {"1": "local", "2": "apache"}
+
+print "\nAre you running this project..."
+print "1. Locally"
+print "2. On Apache"
+selection = raw_input("Enter 1 or 2 (default is 1): ")
+selection = "1" if selection is None or len(selection) == 0 else selection
+
+deployment = deployment[selection]
+
+
 # Create a new settings.py file from the template and fill in the virtual env / registry server on it
 settingsTemplateFile = open(os.getcwd() + "/openpds/settings.py.template", "r")
-settingsContent = settingsTemplateFile.read().replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", virtualEnvPath)
+settingsContent = settingsTemplateFile.read()
+settingsContent = settingsContent.replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", virtualEnvPath)
+
+if deployment == "apache":
+    settingsContent = settingsContent.replace("{{ RELATIVE_PATH_TO_DB }}", virtualEnvPath + "/openPDS/")
+else:
+    settingsContent = settingsContent.replace("{{ RELATIVE_PATH_TO_DB }}", "")
+
 settingsContent = settingsContent.replace("{{ REGISTRY_URL }}", registryServer)
 settingsContent = settingsContent.replace("{{ PDS_BACKEND }}", backend)
 settingsOutputFile = open(os.getcwd() + "/openpds/settings.py", "w")
 settingsOutputFile.write(settingsContent)
 settingsTemplateFile.close()
 settingsOutputFile.close()
+
+
+# Create a new wsgi.py file from the template and fill in the virtual env path on it
+wsgiTemplateFile = open(os.getcwd() + "/openpds/wsgi.py.template", "r")
+
+if deployment == "apache":
+    wsgiContent = wsgiTemplateFile.read().replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", virtualEnvPath)
+else:
+    wsgiContent = wsgiTemplateFile.read().replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", "..")
+
+
+wsgiOutputFile = open(os.getcwd() + "/openpds/wsgi.py", "w")
+wsgiOutputFile.write(wsgiContent)
+wsgiOutputFile.close()
+wsgiTemplateFile.close()
+
+
+
 
 print "wsgi.py and settings.py generated"
 print "Setup done. Please continue with django setup by running: ./manage.py syncdb"
