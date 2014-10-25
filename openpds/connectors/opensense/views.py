@@ -10,7 +10,8 @@ from openpds import settings
 from openpds.authorization import PDSAuthorization
 from openpds.core.models import Profile
 from openpds import getInternalDataStore
-
+import pdb
+from openpds import getfunfdata
 
 def data(request):
     print "\n\n DATA REACHED \n\n"
@@ -28,6 +29,7 @@ def data(request):
     token = request.POST['bearer_token']
     data = json.loads(request.POST['data'])
     result = {}
+    funfresult = {}
 
     # use token to authorize writing to the PDS
     authorization = PDSAuthorization("ios_write", audit_enabled=True)
@@ -41,6 +43,16 @@ def data(request):
 
     # write to the datastore
     result = extractAndInsertData(data, internalDataStore, token)
+
+    # write to funf data
+    funfresult = insertfunf(data, internalDataStore, token)
+    blankdata = getfunfdata.insertblankdata()
+    try:
+        internalDataStore.saveData(blankdata, 'funf')
+        blankdata = {'status':'ok', 'entries_inserted':1}
+    except Exception as e:
+        print "\n\nException from os_connector on pds: %s\n" %e
+        blankdata = {'success':False, 'error_message':e.message}
 
     # let the client know what happened
     print result
@@ -67,6 +79,23 @@ def extractAndInsertData(data, internalDataStore, token):
         result = {'success':False, 'error_message':e.message}
     return result
 
+def insertfunf(data, internalDataStore, token):
+    funfresult = {}
+    print '\n======================\nextractAndInsertData:'
+    print data
+    print '\n======================\n'
+
+    for object in data:
+        funfdata = getfunfdata.getfunfdata(object)
+
+
+        try:
+            internalDataStore.saveData(funfdata, 'funf')
+            funfresult = {'status':'ok', 'entries_inserted':1}
+        except Exception as e:
+            print "\n\nException from os_connector on pds: %s\n" %e
+            funfresult = {'success':False, 'error_message':e.message}
+    return funfresult
 
 def register(request):
     ''' register a device using the open-sense library'''
