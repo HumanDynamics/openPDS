@@ -5,7 +5,7 @@ import os
 
 #import pdb
 virtualEnvPath = os.environ.get('VIRTUALENVPATH')
-mitRegistryServer = os.environ.get('MITREGISTRYSERVER')
+registryServer = os.environ.get('MITREGISTRYSERVER')
 backend = os.environ.get('BACKEND')
 
 # use prompts for manual deployment
