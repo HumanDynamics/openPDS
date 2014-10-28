@@ -10,7 +10,7 @@ backend = os.environ.get('BACKEND')
 
 # use prompts for manual deployment
 # i.e. all of the above variables aren't defined
-if not all([virtualEnvPath, mitRegistryServer, backend]):
+if not all([virtualEnvPath, registryServer, backend]):
     print "\n"
     print "##########################################################################"
     print "NOTE: This must be run from the root directory of the openPDS project"
