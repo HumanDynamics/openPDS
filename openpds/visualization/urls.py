@@ -22,5 +22,5 @@ urlpatterns = patterns('openpds.visualization.views',
     (r'^mitfit/usertime$', direct_to_template, { 'template' : 'visualization/mitfit_user_time.html' }),
     (r'^mitfit/recos$', direct_to_template, { 'template' : 'visualization/mitfit_recos.html' }),
     (r'^hotspots$', direct_to_template, { 'template' : 'visualization/hotspots.html' }),
-    (r'^tester/', redirect_to, {'url': 'http://bd.ljh.me'}),
+    (r'^beaverdash/', redirect_to, {'url': 'http://bd.ljh.me'}),
 )
