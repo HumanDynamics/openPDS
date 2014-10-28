@@ -4,32 +4,42 @@ import sys
 import os
 
 #import pdb
+virtualEnvPath = os.environ.get('VIRTUALENVSERVER')
+mitRegistryServer = os.environ.get('MITREGISTRYSERVER')
+backend = os.environ.get('BACKEND')
+deployment = os.environ.get('DEPLOYMENT')
 
-print "\n"
-print "##########################################################################"
-print "NOTE: This must be run from the root directory of the openPDS project"
-print "and for the virtualenv to be located in the directory above it."
-print "ie: you should be in /pdsEnv/openPDS"
-print "if necessary, press ctrl+c to exit and then move to the correct directory."
-print "##########################################################################"
-virtualEnvPath = os.path.dirname(os.getcwd())
-virtualEnvPathInput = raw_input("Enter the path to the openPDS virtual environment (or nothing for default: %s): "%virtualEnvPath)
-virtualEnvPath = virtualEnvPathInput if virtualEnvPathInput is not None and len(virtualEnvPathInput) > 0 else virtualEnvPath
+# use prompts for manual deployment
+# i.e. all of the above variables aren't defined
+if not all([virtualEnvPath, mitRegistryServer, backend, deployment]):
+    print "\n"
+    print "##########################################################################"
+    print "NOTE: This must be run from the root directory of the openPDS project"
+    print "and for the virtualenv to be located in the directory above it."
+    print "ie: you should be in /pdsEnv/openPDS"
+    print "if necessary, press ctrl+c to exit and then move to the correct directory."
+    print "##########################################################################"
 
-mitRegistryServer = "http://linkedpersonaldata.org"
-registryServerInput = raw_input("\nEnter the Registry Server domain name (or nothing for MIT default: %s): " %mitRegistryServer)
-registryServer = registryServerInput if registryServerInput is not None and len(registryServerInput) > 0 else mitRegistryServer
+    #configure virtualenv path
+    virtualEnvPath = os.path.dirname(os.getcwd())
+    virtualEnvPathInput = raw_input("Enter the path to the openPDS virtual environment (or nothing for default: %s): "%virtualEnvPath)
+    virtualEnvPath = virtualEnvPathInput if virtualEnvPathInput is not None and len(virtualEnvPathInput) > 0 else virtualEnvPath
 
-# Determine the backend
-backends = { "1": "openpds.backends.mongo", "2": "openpds.backends.sqlite", "3": "openpds.backends.postgres" }
+    # configure registry server
+    mitRegistryServer = "http://linkedpersonaldata.org"
+    registryServerInput = raw_input("\nEnter the Registry Server domain name (or nothing for MIT default: %s): " %mitRegistryServer)
+    registryServer = registryServerInput if registryServerInput is not None and len(registryServerInput) > 0 else mitRegistryServer
 
-print "\nWhich backend would you like to use for personal data storage?"
-print "1. MongoDB (openpds.backends.mongo)"
-print "2. SQLite (openpds.backends.sqlite)"
-print "3. Postsgres (openpds.backends.postgres)"
-selection = raw_input("Enter 1, 2, or 3 (default is 1): ")
-selection = "1" if selection is None or len(selection) == 0 else selection
-backend = backends[selection]
+    # Determine the backend
+    backends = { "1": "openpds.backends.mongo", "2": "openpds.backends.sqlite", "3": "openpds.backends.postgres" }
+
+    print "\nWhich backend would you like to use for personal data storage?"
+    print "1. MongoDB (openpds.backends.mongo)"
+    print "2. SQLite (openpds.backends.sqlite)"
+    print "3. Postsgres (openpds.backends.postgres)"
+    selection = raw_input("Enter 1, 2, or 3 (default is 1): ")
+    selection = "1" if selection is None or len(selection) == 0 else selection
+    backend = backends[selection]
 
 # Create a new settings.py file from the template and fill in the virtual env / registry server on it
 settingsTemplateFile = open(os.getcwd() + "/openpds/settings.py.template", "r")
