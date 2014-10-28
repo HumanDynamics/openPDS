@@ -4,7 +4,7 @@ import sys
 import os
 
 #import pdb
-virtualEnvPath = os.environ.get('VIRTUALENVSERVER')
+virtualEnvPath = os.environ.get('VIRTUALENVPATH')
 mitRegistryServer = os.environ.get('MITREGISTRYSERVER')
 backend = os.environ.get('BACKEND')
 deployment = os.environ.get('DEPLOYMENT')
