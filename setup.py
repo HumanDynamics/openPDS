@@ -2,8 +2,8 @@
 
 import sys
 import os
-#import pdb
 
+#import pdb
 
 print "\n"
 print "##########################################################################"
@@ -29,31 +29,13 @@ print "2. SQLite (openpds.backends.sqlite)"
 print "3. Postsgres (openpds.backends.postgres)"
 selection = raw_input("Enter 1, 2, or 3 (default is 1): ")
 selection = "1" if selection is None or len(selection) == 0 else selection
-
 backend = backends[selection]
-
-# Ask about apache
-deployment = {"1": "local", "2": "apache"}
-
-print "\nAre you running this project..."
-print "1. Locally"
-print "2. On Apache"
-selection = raw_input("Enter 1 or 2 (default is 1): ")
-selection = "1" if selection is None or len(selection) == 0 else selection
-
-deployment = deployment[selection]
-
 
 # Create a new settings.py file from the template and fill in the virtual env / registry server on it
 settingsTemplateFile = open(os.getcwd() + "/openpds/settings.py.template", "r")
 settingsContent = settingsTemplateFile.read()
 settingsContent = settingsContent.replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", virtualEnvPath)
-
-if deployment == "apache":
-    settingsContent = settingsContent.replace("{{ RELATIVE_PATH_TO_DB }}", virtualEnvPath + "/openPDS/")
-else:
-    settingsContent = settingsContent.replace("{{ RELATIVE_PATH_TO_DB }}", "")
-
+settingsContent = settingsContent.replace("{{ RELATIVE_PATH_TO_DB }}", virtualEnvPath + "/openPDS/")
 settingsContent = settingsContent.replace("{{ REGISTRY_URL }}", registryServer)
 settingsContent = settingsContent.replace("{{ PDS_BACKEND }}", backend)
 settingsOutputFile = open(os.getcwd() + "/openpds/settings.py", "w")
@@ -64,13 +46,7 @@ settingsOutputFile.close()
 
 # Create a new wsgi.py file from the template and fill in the virtual env path on it
 wsgiTemplateFile = open(os.getcwd() + "/openpds/wsgi.py.template", "r")
-
-if deployment == "apache":
-    wsgiContent = wsgiTemplateFile.read().replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", virtualEnvPath)
-else:
-    wsgiContent = wsgiTemplateFile.read().replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", "..")
-
-
+wsgiContent = wsgiTemplateFile.read().replace("{{ PATH_TO_OPENPDS_VIRTUALENV }}", virtualEnvPath)
 wsgiOutputFile = open(os.getcwd() + "/openpds/wsgi.py", "w")
 wsgiOutputFile.write(wsgiContent)
 wsgiOutputFile.close()
