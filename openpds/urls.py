@@ -9,6 +9,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('openpds.views',
     (r'^home/', 'home'),
+    (r'^discovery/ping/', 'ping'),
     (r'^api/', include(v1_api.urls)),
     (r'^admin/audit', direct_to_template, { 'template' : 'audit.html' }),
     #(r'^documentation/', include('tastytools.urls'), {'api_name': v1_api.api_name}),
