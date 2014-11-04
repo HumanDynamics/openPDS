@@ -31,9 +31,9 @@ Please note: openPDS requires a separate registry server for account management 
 
     > cd openPDS
 
-    >pip install -r conf/requirements.txt
+    >pip install -r requirements.txt
 
-    >python setup.py
+    >python start.py
 
     >python manage.py syncdb
     
