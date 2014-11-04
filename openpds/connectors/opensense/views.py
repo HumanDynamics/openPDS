@@ -13,7 +13,7 @@ from openpds import getInternalDataStore
 
 
 def data(request):
-    pdb.set_trace()
+    #pdb.set_trace()
     print "\n\n DATA REACHED \n\n"
 
     '''parse json data and upload them to your PDS'''
@@ -71,10 +71,12 @@ def extractAndInsertData(data, internalDataStore, token):
 
 def register(request):
     ''' register a device using the open-sense library'''
+    print "\n--Device attempting to register--"
+    #pdb.set_trace()
     data = request.POST
 
-    if not data.get('datastore_owner__uuid'):
-        responseData = {'error': 'Missing datastore_owner__uuid parameter'}
+    if not data.get('device_id'):
+        responseData = {'error': 'Missing device_id parameter'}
         return HttpResponseBadRequest(json.dumps(data), content_type='application/json')
 
     else:
@@ -100,3 +102,7 @@ def generateKey():
         key += validCharacters[index]
 
     return key
+
+def test(request):
+    print "foobar"
+    return "foobar"
