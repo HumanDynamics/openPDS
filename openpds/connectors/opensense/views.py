@@ -11,7 +11,7 @@ from openpds.authorization import PDSAuthorization
 from openpds.core.models import Profile
 from openpds import getInternalDataStore
 import pdb
-from openpds import getfunfdata
+from openpds import getfunfdata, getmotiondata
 
 def data(request):
     print "\n\n DATA REACHED \n\n"
@@ -81,24 +81,47 @@ def extractAndInsertData(data, internalDataStore, token):
 
 def insertfunf(data, internalDataStore, token):
     funfresult = {}
+    motiondata = []
     print '\n======================\nextractAndInsertData:'
     print data
     print '\n======================\n'
 
     for object in data:
-        funfdata = getfunfdata.getfunfdata(object)
+            if object['probe'] == 'motion':
+                motiondata.append(object)
 
+    # pdb.set_trace()
+    #calls function with only motion data to calculate activity
+    #activitydata is dictionary of all ActivityProbe instances
+    activitydata = getmotiondata.ondatareceived(motiondata)
+
+
+    activityresut = {}
+    #insert activitydata
+    for object in activitydata:
+        pdb.set_trace()
 
         try:
-            internalDataStore.saveData(funfdata, 'funf')
-            funfresult = {'status':'ok', 'entries_inserted':1}
+            internalDataStore.saveData(object, 'funf')
+            activityresult = {'status':'ok', 'entries_inserted': 1}
         except Exception as e:
             print "\n\nException from os_connector on pds: %s\n" %e
             funfresult = {'success':False, 'error_message':e.message}
+    for object in data:
+
+            funfdata = getfunfdata.getfunfdata(object)
+
+            try:
+                internalDataStore.saveData(funfdata, 'funf')
+                funfresult = {'status':'ok', 'entries_inserted':1}
+            except Exception as e:
+                print "\n\nException from os_connector on pds: %s\n" %e
+                funfresult = {'success':False, 'error_message':e.message}
     return funfresult
 
 def register(request):
     ''' register a device using the open-sense library'''
+    print "register device called"
     data = request.POST
 
     if not data.get('datastore_owner__uuid'):

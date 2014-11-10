@@ -26,9 +26,9 @@ def getfunfdata(data):
     if devtype== 'deviceinfo':
         funfdata = deviceinfo(data)
         return funfdata
-    if devtype == 'motion':
+    '''if devtype == 'motion':
         funfdata = motion(data)
-        return funfdata
+        return '''
     if devtype == 'positioning':
         funfdata = positioning(data)
         return funfdata
@@ -82,29 +82,6 @@ def deviceinfo(data):
     dinfo.update(HardwareInfoProbe)
 
     return dinfo
-def motion(data):
-    x = data['userAcceleration_x']
-    y = data['userAcceleration_y']
-    z = data['userAcceleration_z']
-    magnitude = math.sqrt(x**2+y**2+z**2)
-    datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M'))) - time.timezone
-
-    ActivityProbe ={
-     "edu.mit.media.funf.probe.builtin.ActivityProbe": {
-    "_id": {
-      "$oid": "540a2b2491cfc86cda60813c"
-    },
-    "key": "edu.mit.media.funf.probe.builtin.ActivityProbe",
-    "time": datetime,
-    "value": {
-      "high_activity_intervals": magnitude,
-      "low_activity_intervals": 0,
-      "timestamp": datetime,
-      "total_intervals": 0
-    }
-  }
-    }
-    return ActivityProbe
 
 
 def positioning(data):
@@ -156,6 +133,8 @@ def positioning(data):
     }
     print SimpleLocation
     return SimpleLocation
+
+
 
 def insertblankdata():
     blanks = {
@@ -271,3 +250,4 @@ def insertblankdata():
 }
 
     return blanks
+
