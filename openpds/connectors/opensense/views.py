@@ -90,16 +90,16 @@ def insertfunf(data, internalDataStore, token):
             if object['probe'] == 'motion':
                 motiondata.append(object)
 
-    # pdb.set_trace()
+    #pdb.set_trace()
     #calls function with only motion data to calculate activity
     #activitydata is dictionary of all ActivityProbe instances
     activitydata = getmotiondata.ondatareceived(motiondata)
 
 
-    activityresut = {}
+    activityresult = {}
     #insert activitydata
     for object in activitydata:
-        pdb.set_trace()
+        #pdb.set_trace()
 
         try:
             internalDataStore.saveData(object, 'funf')
@@ -124,8 +124,8 @@ def register(request):
     print "register device called"
     data = request.POST
 
-    if not data.get('datastore_owner__uuid'):
-        responseData = {'error': 'Missing datastore_owner__uuid parameter'}
+    if not data.get('device_id'):
+        responseData = {'error': 'Missing device_id parameter'}
         return HttpResponseBadRequest(json.dumps(data), content_type='application/json')
 
     else:

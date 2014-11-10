@@ -20,6 +20,7 @@ uniques = {
             'userAcceleration_z': 0.06832537800073624},
 
 }
+
 def getfunfdata(data):
 
     devtype = data['probe']
@@ -46,7 +47,8 @@ def deviceinfo(data):
     model.append(data['system_version'])
     model = ' '.join(model)
 
-    datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M'))) - time.timezone
+
+    datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
     ScreenProbe = {"edu.mit.media.funf.probe.builtin.ScreenProbe": {
     "_id": {
       "$oid": "540a1d3791cfc86cda607ef4"
@@ -87,7 +89,7 @@ def deviceinfo(data):
 def positioning(data):
     altitude = data['altitude']
     course = data['course']
-    datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M'))) - time.timezone
+    datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
     horacc = data['horizontal_accuracy']
     lat = data['lat']
     lon = data['lon']
