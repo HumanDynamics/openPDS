@@ -151,3 +151,7 @@ def generateKey():
         key += validCharacters[index]
 
     return key
+
+def test(request):
+    print "foobar"
+    return "foobar"
