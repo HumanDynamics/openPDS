@@ -4,10 +4,12 @@ from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 from django.contrib import admin
 from openpds.core.tools import v1_api
+from django.views.generic.base import RedirectView
 
 admin.autodiscover()
 
 urlpatterns = patterns('openpds.views',
+    (r'^$', RedirectView.as_view(url='https://github.com/HumanDynamics/openPDS/wiki')),
     (r'^home/', 'home'),
     (r'^discovery/ping/', 'ping'),
     (r'^api/', include(v1_api.urls)),
