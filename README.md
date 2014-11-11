@@ -5,7 +5,7 @@ The personal data store component of [openPDS](http://openpds.media.mit.edu/) ha
 
 __Please note__: openPDS requires a separate registry server for account management and to act as an OAuth 2.0 provider. This can be found at https://github.com/HumanDynamics/openPDS-RegistryServer. If you run your own registry server, the domain for your registry server must be provided to the openPDS setup script. 
 
-__Contributors__: development is active on the dev branch. Please submit pull requests to this branch.
+__Contributors__: The dev branch is for ongoing development. Please submit pull requests to this brach.
 
 ## Getting started with openPDS
 (You must have python pip, virtualenv, and mongodb server installed on your machine)
