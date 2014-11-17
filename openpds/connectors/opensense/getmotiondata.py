@@ -1,7 +1,7 @@
 __author__ = 'jbt'
 import time
 import math
-import pdb
+#import pdb
 
 
 newmotiondata = []
@@ -16,16 +16,6 @@ def update(x, y, z, count, variancesum, avg, sums):
     avg = newavg
     return (variancesum, sums, avg)
 
-
-def reset(timestamp):
-
-    #if more than an interval away, start a new scan
-    variancesum = avg = sums = count = 0
-    starttime = intervalstarttime = timestamp
-    variancesum = avg = count = 0
-    intervalcount = 0
-    lowactintcount = 0
-    highactintcount = 0
 
 def intervalreset(timestamp, high, low, variancesum):
     #insert high low data, then reset
@@ -71,7 +61,14 @@ def ondatareceived(motiondata):
         timestamp = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
         intervalstarttime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
         if timestamp >= intervalstarttime + 2* interval:
-            reset(timestamp)
+            # reset the timestamp
+            variancesum = avg = sums = count = 0
+            starttime = intervalstarttime = timestamp
+            variancesum = avg = count = 0
+            intervalcount = 0
+            lowactintcount = 0
+            highactintcount = 0
+
         else:
 
             intervalreset(timestamp, highactintcount, lowactintcount, variancesum)
