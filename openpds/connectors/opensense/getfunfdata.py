@@ -56,7 +56,7 @@ def deviceinfo(data):
         print "\n\n EXCEPT 2 STATEMENT ENTERED\n\n"
         datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S'))) - time.timezone
     except:
-        print "\n\n EXCEPT ELSE STATEMENT ENTERED\n\n"
+        print "\n\n EXCEPT ELSE DEVICEINFO STATEMENT ENTERED\n\n"
         print "datetime could not be parsed"
         print data
         print data['datetime']
