@@ -25,7 +25,7 @@ if not all([virtualEnvPath, registryServer, backend]):
     virtualEnvPath = virtualEnvPathInput if virtualEnvPathInput is not None and len(virtualEnvPathInput) > 0 else virtualEnvPath
 
     # configure registry server
-    mitRegistryServer = "http://linkedpersonaldata.org"
+    mitRegistryServer = "linkedpersonaldata.org"
     registryServerInput = raw_input("\nEnter the Registry Server domain name (or nothing for MIT default: %s): " %mitRegistryServer)
     registryServer = registryServerInput if registryServerInput is not None and len(registryServerInput) > 0 else mitRegistryServer
 
