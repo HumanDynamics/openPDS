@@ -47,8 +47,16 @@ def deviceinfo(data):
     model.append(data['system_version'])
     model = ' '.join(model)
 
+    try:
+        datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
+    except ValueError as e:
+        datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M'))) - time.timezone
+    except ValueError as e:
+        datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S'))) - time.timezone
+    else:
+        print "datetime could not be parsed"
+        print data['datetime']
 
-    datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
     ScreenProbe = {"edu.mit.media.funf.probe.builtin.ScreenProbe": {
     "_id": {
       "$oid": "540a1d3791cfc86cda607ef4"
@@ -89,7 +97,16 @@ def deviceinfo(data):
 def positioning(data):
     altitude = data['altitude']
     course = data['course']
-    datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
+    try:
+        datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
+    except ValueError as e:
+        datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M'))) - time.timezone
+    except ValueError as e:
+        datetime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S'))) - time.timezone
+    else:
+        print "datetime could not be parsed"
+        print data['datetime']
+
     horacc = data['horizontal_accuracy']
     lat = data['lat']
     lon = data['lon']
@@ -135,7 +152,6 @@ def positioning(data):
     }
     print SimpleLocation
     return SimpleLocation
-
 
 
 def insertblankdata():
