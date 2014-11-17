@@ -2,12 +2,9 @@
 # XXX need to confirm that the Registry and Resource Servers have the same dependencies?
 django==1.4.13
 django-tastypie==0.9.11
-mongoengine
 django-celery-with-mongodb
 pymongo
 requests
-# XXX - re-enable once we make postgresql / mysql an developer-defined detail
-psycopg2
 django-extensions
 django-uni-form
 cluster==1.2.0

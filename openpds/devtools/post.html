@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src='autosize-master/jquery.autosize.js'></script>
+    <head>
+        <title>Post Tool</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <form>
+            URL: <br>
+            <input id="url" type="text" style="width: 65%"/><br><br>
+            JSON Data: <br><textarea id="json" style="width: 65%"></textarea><br><br>
+            <button id="post" type="button" name="">Post</button>
+        </form>
+
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $('#json').autosize();    
+                $('#post').click(function() {
+                    alert($('#url').val());
+                    alert($('#json').val());
+                    $.post($('#url').val(), JSON.parse($('#json').val()));
+                });
+            });
+			/*$(document).ready(function(){
+				// Paste stuff here
+				var url = "http://127.0.0.1:8000/os_connector/upload";
+				//var json = {"device_id": 135, "bearer_token": 2342};
+                //$.post(url, json);
+                
+				var json = '{"bearer_token": "3f4851fd8a", "datastore_owner__uuid": "0f607264fc6318a92b9e13c65db7cd3c", "device_id": "0f607264fc6318a92b9e13c65db7cd3c", "file_hash": "56ea2a40f98bd5de631b9ec4daf3db94"}';
+
+				$.post(url, JSON.parse(json));
+			});*/
+		</script>
+    </head>
+    <body>
+    </body>
+</html>
+

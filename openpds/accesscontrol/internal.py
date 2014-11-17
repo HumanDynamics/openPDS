@@ -28,8 +28,8 @@ class AccessControlledInternalDataStore(object):
     def getAnswerList(self, key):
         return self.ids.getAnswerList(key)
 
-    def saveData(self, data):
-        return self.ids.saveData(data)
+    def saveData(self, data, collectionname):
+        return self.ids.saveData(data, collectionname)
 
     def testServiceEnabled(self):
         result = False
