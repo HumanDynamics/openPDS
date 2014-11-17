@@ -2,16 +2,15 @@
 import os
 import json
 import random
-import pdb
 
 from django.http import HttpResponse, HttpResponseBadRequest
 
 from openpds import settings
 from openpds.authorization import PDSAuthorization
+from openpds.connectors.opensense import getfunfdata, getmotiondata
 from openpds.core.models import Profile
 from openpds import getInternalDataStore
-import pdb
-from openpds import getfunfdata, getmotiondata
+
 
 def data(request):
     print "\n\n DATA REACHED \n\n"
