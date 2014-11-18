@@ -3,6 +3,7 @@ from django.conf import settings
 from django.conf.urls.defaults import *
 from django.views.generic.simple import direct_to_template
 from openpds.meetup.views import meetup_home
+from django.views.generic.simple import redirect_to
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -21,4 +22,5 @@ urlpatterns = patterns('openpds.visualization.views',
     (r'^mitfit/usertime$', direct_to_template, { 'template' : 'visualization/mitfit_user_time.html' }),
     (r'^mitfit/recos$', direct_to_template, { 'template' : 'visualization/mitfit_recos.html' }),
     (r'^hotspots$', direct_to_template, { 'template' : 'visualization/hotspots.html' }),
+    (r'^beaverdash/', redirect_to, {'url': 'http://bd.ljh.me'}),
 )
