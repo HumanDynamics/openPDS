@@ -1,5 +1,5 @@
-import pprint
-import pdb
+#import pprint
+#import pdb
 import time
 funfuniques = {
   "edu.mit.media.funf.probe.builtin.ActivityProbe": {
