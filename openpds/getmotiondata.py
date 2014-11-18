@@ -68,8 +68,20 @@ def ondatareceived(motiondata):
     intervalstarttime = 0
 
     for data in motiondata:
-        timestamp = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
-        intervalstarttime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
+        pdb.set_trace()
+        try:
+            timestamp = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M'))) - time.timezone
+            intervalstarttime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M'))) - time.timezone
+        except ValueError as e:
+            timestamp = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S'))) - time.timezone
+            intervalstarttime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S'))) - time.timezone
+        except ValueError as e:
+            timestamp = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
+            intervalstarttime = int(time.mktime(time.strptime(data['datetime'], '%Y-%m-%d %H:%M:%S:%f'))) - time.timezone
+        else:
+            print "datetime could not be parsed"
+            print data['datetime']
+
         if timestamp >= intervalstarttime + 2* interval:
             reset(timestamp)
         else:

@@ -1,8 +1,7 @@
 __author__ = 'jbt'
-import json
-import pdb
+
 import time
-import math
+
 uniques = {
 'motion': { 'attitude_pitch': 0.733424593851337,
             'attitude_x': -0.2209912033994121,
