@@ -1,0 +1,89 @@
+<html>
+    <head>
+        <script src="jquery-2.1.1.min.js"></script>
+
+    </head>
+    <body>
+
+    <div style="color:gray">
+        This is a simple tool to test insertions into the iOS schema. It uses a device_id and bearer_token that are match up with the server at linkedpersonaldata.org. If you are using a different registry server, you will need to register your device there, and insert the relevant bearer token and device id. The simulator in <a href="https://github.com/OpenSensing/ios-opensensing">this repo</a> can help you do that. Please feel free to reach out with questions. - arcarter@mit.edu
+
+    </div>
+    <div>
+        <h3>Base URL:</h3>
+        <input type="text" id="baseurl" value="http://0.0.0.0:8002" style="width: 200px">
+
+    </div>
+    <div>
+        <h3>Actions:</h3>
+        <button onclick="register()" style="width: 200px">register iOS Device</button>
+    </div>
+    <div>
+        <button onclick="uploadios()" style="width: 200px">upload iOS Data</button>
+    </div>
+    <!-- NOT BUILT YET 
+
+    <div>
+        <button onclick="uploadFunf()">upload FUNF</button>
+    </div> -->
+
+    <div><h3>Response:</h3></div>
+    <div id="responsearea">
+        
+    </div>
+    <script>
+
+
+    function register() {
+        $.ajax({
+            type: "POST",
+            url: $("#baseurl").val() + "/os_connector/register",
+            data: {"device_id":"7c7fa82dbfbdadc2b500e988f8c4a817"},
+            success: function( data ){
+                $("#responsearea").text(JSON.stringify(data));
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                $("#responsearea").text('An error occured. Check your console.');
+
+                console.log(jqXHR);
+                console.log(textStatus);
+                console.log(errorThrown);
+            },
+            dataType: "JSON"
+        });
+    };
+
+    function uploadios() {
+        $.ajax({
+            type: "POST",
+            url: $("#baseurl").val() + "/os_connector/upload",
+            data: iosUploadData,
+            success: function( data ){
+                 $("#responsearea").text(JSON.stringify(data));
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                $("#responsearea").text('An error occured. Check your console.');
+
+                console.log(jqXHR);
+                console.log(textStatus);
+                console.log(errorThrown);
+            },
+            dataType: "JSON"
+        });
+    };
+
+    var iosUploadData = {
+    "bearer_token" : "3f4851fd8a",
+    "data" : "[{\"device_model\":\"iPhone Simulator\",\"system_version\":\"7.0.3\",\"brightness\":0.5,\"probe\":\"deviceinfo\",\"country\":\"en_US\",\"datetime\":\"2014-11-18 14:05:46:108\",\"language\":\"en\"},{\"course\":269.3,\"altitude\":0,\"lon\":-122.03783266,\"speed\":26.61,\"horizontal_accuracy\":5,\"lat\":37.33452613,\"vertical_accuracy\":-1,\"probe\":\"positioning\",\"datetime\":\"2014-11-18 14:05:47:336\"},{\"course\":269.3,\"altitude\":0,\"lon\":-122.03783266,\"speed\":26.61,\"horizontal_accuracy\":5,\"lat\":37.33452613,\"vertical_accuracy\":-1,\"probe\":\"positioning\",\"datetime\":\"2014-11-18 14:05:49:197\"},{\"device_model\":\"iPhone Simulator\",\"system_version\":\"7.0.3\",\"brightness\":0.5,\"probe\":\"deviceinfo\",\"country\":\"en_US\",\"datetime\":\"2014-11-18 14:05:49:200\",\"language\":\"en\"},{\"probe\":\"battery\",\"state\":\"unknown\",\"datetime\":\"2014-11-18 14:05:49:202\",\"level\":-100},{\"state\":false,\"datetime\":\"2014-11-18 14:05:49:204\",\"probe\":\"proximity\"}]",
+    "datastore_owner__uuid" : "7c7fa82dbfbdadc2b500e988f8c4a817",
+    "device_id" : "7c7fa82dbfbdadc2b500e988f8c4a817",
+    "file_hash" : "cc86bd696aedf36d32a26a9266b39dd1"
+    };
+
+
+
+    </script>
+
+    </body>
+
+</html>
