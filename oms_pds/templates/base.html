@@ -13,13 +13,16 @@
   <script src="/static/mgh/components/platform/platform.js"></script>
 	
 	<!-- jQuery/jQuery Mobile -->
-	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-    <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>		
-	<script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.js"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+	
+	{% block jquerymobile %}
+	<script src="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.js"></script>
+	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.css" />
+	{% endblock %}
 	
 	{% block scripts %}
 	{% endblock %}
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css" />
     <link rel="stylesheet" href="{{ STATIC_URL }}css/style.css" />
 
     {% block css %}
@@ -35,9 +38,6 @@
     <div data-role="page" data-theme="a" id="pageDiv">
 
         <script>
-        if (typeof android !== "undefined" && android.hideWebNavBar && android.hideWebNavBar()) {
-        	$("#navbar").hide();
-        }
         </script>
     
         <div id="content" data-role="content" style="padding: 0px">

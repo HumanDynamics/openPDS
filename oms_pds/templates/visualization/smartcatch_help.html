@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}
+smartCATCH
+{% endblock %}
+
+{% block scripts %}
+  <link type="text/css" rel="stylesheet" href="/static/mgh/contents/stylesheet.css">
+  <style>
+	html{
+	}
+	html,body {
+		background-color:#f6f6f6
+		font-family: 'RobotoDraft', sans-serif;
+	  }
+	  core-header-panel {
+		height: 100%;
+	  }
+	  core-toolbar {
+		background: #03a9f4;
+		color: white;
+	  }
+	  paper-tabs {
+		width: 100%;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	  }
+	  .scontainer {
+		width: 80%;
+		margin: 50px auto;
+	  }
+	  @media (min-width: 481px) {
+		paper-tabs {
+		  width: 45em;
+		}
+		.scontainer {
+		  width: 400px;
+		}
+	  }
+	</style>
+{% endblock %}
+
+{% block content %}
+<div id="mainPage">
+
+<div id="mainPage">
+	<!--<div id="logo-border-blue">
+		<img id="Logo" src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
+	</div>-->
+	
+      <div id="subheader1">
+      </div>
+      <div id="helppage">
+	    
+	    Dear Smart-CATCH participant,
+<br/><br/>
+Thank you for your participation. Should you have any questions or experience any technical difficulty while participating in this study, please don't hesitate to contact me at:
+<br/><br/>
+treid1@mgh.harvard.edu<br/>
+617-724-7593
+<br/><br/>
+Thank you for your participation once more. 
+<br/><br/>
+With all best wishes, 
+<br/>
+Dr. Todd G. Reid 
+      
+      
+      </div>
+</div>
+
+{% endblock %}

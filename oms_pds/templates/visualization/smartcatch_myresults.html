@@ -9,7 +9,6 @@ smartCATCH
   <link rel="import" href="/static/mgh/contents/graph.html">
   <link rel="import" href="/static/mgh/contents/line_graph.html">
   <link type="text/css" rel="stylesheet" href="/static/mgh/contents/stylesheet.css">
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <link rel="import" href="/static/mgh/components/font-roboto/roboto.html">
   <link rel='import' href="/static/mgh/components/core-icon-button/core-icon-button.html">
@@ -20,7 +19,7 @@ smartCATCH
   <style>
 	html{
 		height:1280px;
-		width:720px;
+		width:350px;
 		border: 3px solid black;
 	}
 	html,body {
@@ -45,194 +44,274 @@ smartCATCH
 		paper-tabs {
 		  width: 45em;
 		}
+	  }
 	</style>
 {% endblock %}
 
 {% block content %}
-<div id="mainPage">
-	<div id="logo-border-blue">
-		<img id="Logo" src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
-	</div>
-	
-  <div id="subheader1">
-    <div class="date mainDate"></div>
+<div id="mainPage">{% comment %}{{ request.get_full_path }}
+<br />{% endcomment %} 
+<!--<div id="logo-border-blue">
+                <img id="Logo" src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
+        </div>-->
+<div id="subheader1">
+  <div class="date mainDate"></div><div class="group-results">Group results <div class="group-results-button">Off</div></div>
+</div>
+{% if goaltype != 'n' %}
+<div class="divider">
+  <div class="divider-half">
+    <span class="divider-text">
+      YOUR GOAL
+    </span>
   </div>
-  
-  
-		<img class="divider" src="/static/mgh/SmartCatch_design_app/Img/other/yourgoal.png"/>
-  
-    <div id="bcontent">
-      <div  class='scontainer'>
-        <div class='bar'>
-          <div class=" card goalCard">
-            <graph>
-            	<div class="goalBox">
-              	<div class="boxPad">
-                  <div id='goalTitle'><img id="goalImg" src=""/></div>
-                  <div class="label">Weekly<div class="scoreText" id="goalWeekScore"></div>
-                    <div class="howWell"></div>
-                  </div>
-                  <div class="goalBackground recent">
-                    <div class="chart goalBars week" id="goal"></div>
-                  </div>
-					   
-                  <div class="label">Your average<span class="scoreText hide" id="goalAvgScore"></span></div>
-                  <div class="goalBackground average"><div class="chart goalBars" id="goalAvg"></div></div>
-                </div>
-              </div>
-            </graph>
-          </div>
-          <img class="divider" src="/static/mgh/SmartCatch_design_app/Img/other/yourgeneralresults.png"/>
-          <div id="sorted-bars"></div>
-		
-		<div id="socCard" class="card">
-			<graph>
-				<div class="box social">
-				<div class="boxPad">
-          <div class="boxTitle">
-            <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/interactions_01.png" />Social
-          </div>
-				<div>
-				   <div class="label">Weekly<div class="scoreText" id="socWeekScore"></div><div class="howWell"></div></div>
-				   <div class="background recent"><div class="chart socialBars week" id="soc"></div></div>
-				   
-					<div class="label">Your average<span class="scoreText hide" id="socAvgScore"></span></div>
-					<div class="background average"><div class="chart hide socialBars" id="socAvg"></div></div>
+</div>
+{% endif %}
 
-					<div class="groupText">Group<span class="groupScore" id="socGroupScore"></span></div>
-					<div class="background groupBackground"><div class="chart group" id="socGAvg"></div></div>
-				  </div>
-				  </div>
-				</div>
-			</graph>
-		</div>
-	
-		<div id="actCard"class="card">
-			<graph>
-				<div class="box activity" >
-					<div class="boxPad">
-            <div class="boxTitle">
-					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/activity_01.png" />Activity
+<div id="bcontent">
+  <div class='scontainer'>
+    <div class='bar'>
+      {% if goaltype != 'n' %}
+      <div class=" card goalCard">
+        <graph>
+          <div class="goalBox">
+            <div class="boxPad">
+	      <a class="moreinfo" href="{{ moreinfo_goal_url }}" >more info</a>
+              <div id='goalTitle'>
+                <img id="goalImg" src="" />
+              </div>
+              {% if not control %}
+	      <div class="label">Weekly
+              <div class="scoreText" id="goalWeekScore"></div>
+              <div class="howWell"></div></div>
+              <div class="goalBackground recent">
+                <div class="chart goalBars week" id="goal"></div>
+              </div>
+              <div class="label">Your average
+              <span class="scoreText hide" id="goalAvgScore"></span></div>
+              <div class="goalBackground average">
+                <div class="chart goalBars" id="goalAvg"></div>
+              </div>
+	      {% endif %}
             </div>
-						<div class="label ">Weekly<div class="scoreText" id="actWeekScore"></div><div class="howWell"></div></div>
-						<div class="background recent"><div class="chart activityBars week" id="act"></div></div>
-					   
-						<div class="label">Your average<span class="scoreText hide" id="actAvgScore"></span></div>
-						<div class="background average"><div class="chart activityBars" id="actAvg"></div></div>
-					
-						<div class="groupText">Group<span class="groupScore" id="actGroupScore" ></span></div>
-						<div class="background groupBackground"><div class="chart group" id="actGAvg"></div></div>
-					</div>
-				</div>
-			</graph>
-		</div>
-	
-		<div id="regCard" class="card">
-			<graph>
-				<div class="box regularity">
-					<div class="boxPad">
-            <div class="boxTitle">
-					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/regularity_01.png" />Regularity
+          </div>
+        </graph>
+      </div>
+      {% endif %}
+      
+      <div class="divider">
+        <div class="divider-half">
+          <span class="divider-text">
+            YOUR MEDICAL RESULTS
+          </span>
+        </div>
+      </div>
+      
+      <div id="sorted-bars"></div>
+      
+      <div id="medicalCards" class="card">
+        <graph>
+          <div class="box glucose">
+            <div class="boxPad">
+	      <a class="moreinfo" href="http://www.diabetes.org/living-with-diabetes/treatment-and-care/blood-glucose-control/checking-your-blood-glucose.html" >more info</a>
+              <div class="boxTitle">
+              <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/blood_01.png" />Glucose</div>
+              {% if not control %}
+              <div class="label">Weekly
+              <div class="scoreText" id="gluWeekScore"></div>
+              <div class="howWell"></div></div>
+              <div class="background recent">
+                <div class="chart glucoseBars week" id="glu"></div>
+              </div>
+              <div class="label">Your average
+              <span class="scoreText hide" id="gluAvgScore"></span></div>
+              <div class="background average">
+                <div class="chart glucoseBars" id="gluAvg"></div>
+              </div>
+              <div class="groupText">Group
+              <span class="groupScore hide" id="gluGroupScore"></span></div>
+              <div class="background groupBackground">
+                <div class="chart group" id="gluGAvg"></div>
+              </div>
+	      {% endif %}
             </div>
-					   <div class="label">Weekly<div class="scoreText" id="regWeekScore"></div><div class="howWell"></div></div>
-					   <div class="background recent"><div class="chart regularityBars week" id="reg"></div></div>
-					   
-					   <div class="label">Your average<span class="scoreText hide" id="regAvgScore"></span></div>
-					   <div class="background average"><div class="chart regularityBars" id="regAvg"></div></div>
-				
-					   <div class="groupText">Group<span class="groupScore" id="regGroupScore" ></span></div>
-					   <div class="background groupBackground"><div class="chart group" id="regGAvg"></div></div>
-					</div>
-				</div>
-			</graph>
-		</div>
-		
-		<div id="gluCard" class="card">
-			<graph>
-				<div class="box glucose">
-					<div class="boxPad">
-            <div class="boxTitle">
-					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/blood_01.png" />Glucose
+          </div>
+        </graph>
+        <graph>
+          <div class="box medication">
+            <div class="boxPad">
+	      <a class="moreinfo" href="http://www.diabetes.org/living-with-diabetes/treatment-and-care/medication/" >more info</a>
+              <div class="boxTitle">
+              <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/drugs_01.png" />Medication Adherence</div>
+              {% if not control %}
+              <div class="label">Weekly
+              <div class="scoreText" id="medWeekScore"></div>
+              <div class="howWell"></div></div>
+              <div class="background recent">
+                <div class="chart medicationBars week" id="med"></div>
+              </div>
+              <div class="label">Your average
+              <span class="scoreText hide" id="medAvgScore"></span></div>
+              <div class="background average">
+                <div class="chart medicationBars" id="medAvg"></div>
+              </div>
+              <div class="groupText">Group
+              <span class="groupScore hide" id="medGroupScore"></span></div>
+              <div class="background groupBackground">
+                <div class="chart group" id="medGAvg"></div>
+              </div>
+	      {% endif %}
             </div>
-					   <div class="label">Weekly<div class="scoreText" id="gluWeekScore"></div><div class="howWell"></div></div>
-					   <div class="background recent"><div class="chart glucoseBars week" id="glu"></div></div>
-					   
-					   <div class="label">Your average<span class="scoreText hide" id="gluAvgScore"></span></div>
-					   <div class="background average"><div class="chart glucoseBars" id="gluAvg"></div></div>
-				
-					   <div class="groupText">Group<span class="groupScore" id="gluGroupScore" ></span></div>
-					   <div class="background groupBackground"><div class="chart group" id="gluGAvg"></div></div>
-					</div>
-				</div>
-			</graph>
-		</div>
-		
-		<div id="medCard" class="card">
-			<graph>
-				<div class="box medication">
-					<div class="boxPad">
-            <div class="boxTitle">
-					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/drugs_01.png" />Medication Adherence
+          </div>
+        </graph>
+        <graph>
+          <div class="box sleep">
+            <div class="boxPad">
+	      <a class="moreinfo" href="http://sleepfoundation.org/how-sleep-works/how-much-sleep-do-we-really-need" >more info</a>
+              <div class="boxTitle">
+              <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/sleep_01.png" />Sleep</div>
+              {% if not control %}
+              <div class="label">Weekly
+              <div class="scoreText" id="slpWeekScore"></div>
+              <div class="howWell"></div></div>
+              <div class="background recent">
+                <div class="chart sleepBars week" id="slp"></div>
+              </div>
+              <div class="label">Your average
+              <span class="scoreText hide" id="slpAvgScore"></span></div>
+              <div class="background average">
+                <div class="chart sleepBars" id="slpAvg"></div>
+              </div>
+              <div class="groupText">Group
+              <span class="groupScore hide" id="slpGroupScore"></span></div>
+              <div class="background groupBackground">
+                <div class="chart group" id="slpGAvg"></div>
+              </div>
+	      {% endif %}
             </div>
-					   <div class="label">Weekly<div class="scoreText" id="medWeekScore"></div><div class="howWell"></div></div>
-					   <div class="background recent"><div class="chart medicationBars week" id="med"></div></div>
-					   
-					   <div class="label">Your average<span class="scoreText hide" id="medAvgScore"></span></div>
-					   <div class="background average"><div class="chart medicationBars" id="medAvg"></div></div>
-				
-					   <div class="groupText">Group<span class="groupScore" id="medGroupScore" ></span></div>
-					   <div class="background groupBackground"><div class="chart group" id="medGAvg"></div></div>
-					</div>
-				</div>
-			</graph>
-		</div>
-	
-		<div id="slpCard" class="card">
-			<graph>
-				<div class="box sleep">
-					<div class="boxPad">
-            <div class="boxTitle">
-					   <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/sleep_01.png" />Sleep
+          </div>
+        </graph>
+      </div>
+      
+      <div class="divider">
+        <div class="divider-half">
+          <span class="divider-text">
+            YOUR BEHAVIORAL RESULTS
+          </span>
+        </div>
+      </div>
+      
+      <div id="behaviorCards" class="card">
+        <graph>
+          <div class="box social">
+            <div class="boxPad">
+              <div class="boxTitle">
+              <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/interactions_01.png" />Social</div>
+              <div>
+              {% if not control %}
+                <div class="label">Weekly
+                <div class="scoreText" id="socWeekScore"></div>
+                <div class="howWell"></div></div>
+                <div class="background recent">
+                  <div class="chart socialBars week" id="soc"></div>
+                </div>
+                <div class="label">Your average
+                <span class="scoreText hide" id="socAvgScore"></span></div>
+                <div class="background average">
+                  <div class="chart socialBars" id="socAvg"></div>
+                </div>
+                <div class="groupText">Group
+                <span class="groupScore hide" id="socGroupScore"></span></div>
+                <div class="background groupBackground">
+                  <div class="chart group" id="socGAvg"></div>
+                </div>
+	      {% endif %}
+              </div>
             </div>
-					   <div class="label">Weekly<div class="scoreText" id="slpWeekScore"></div><div class="howWell"></div></div>
-					   <div class="background recent"><div class="chart sleepBars week" id="slp"></div></div>
-					   
-					   <div class="label">Your average<span class="scoreText hide" id="slpAvgScore"></span></div>
-					   <div class="background average"><div class="chart sleepBars" id="slpAvg"></div></div>
-				
-					   <div class="groupText">Group<span class="groupScore" id="slpGroupScore" ></span></div>
-					   <div class="background groupBackground"><div class="chart group" id="slpGAvg"></div></div>
-					</div>
-				</div>
-			</graph>
-		</div>
-		</div>
-		
-	</div>
-	<div id="footer"></div>
+          </div>
+        </graph>
+        <graph>
+          <div class="box activity">
+            <div class="boxPad">
+              <div class="boxTitle">
+              <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/activity_01.png" />Activity</div>
+              {% if not control %}
+              <div class="label">Weekly
+              <div class="scoreText" id="actWeekScore"></div>
+              <div class="howWell"></div></div>
+              <div class="background recent">
+                <div class="chart activityBars week" id="act"></div>
+              </div>
+              <div class="label">Your average
+              <span class="scoreText hide" id="actAvgScore"></span></div>
+              <div class="background average">
+                <div class="chart activityBars" id="actAvg"></div>
+              </div>
+              <div class="groupText">Group
+              <span class="groupScore hide" id="actGroupScore"></span></div>
+              <div class="background groupBackground">
+                <div class="chart group" id="actGAvg"></div>
+              </div>
+	      {% endif %}
+            </div>
+          </div>
+        </graph>
+        <graph>
+          <div class="box regularity">
+            <div class="boxPad">
+              <div class="boxTitle">
+              <img src="/static/mgh/SmartCatch_design_app/Img/category_icons/regularity_01.png" />Routine</div>
+              {% if not control %}
+              <div class="label">Weekly
+              <div class="scoreText" id="regWeekScore"></div>
+              <div class="howWell"></div></div>
+              <div class="background recent">
+                <div class="chart regularityBars week" id="reg"></div>
+              </div>
+              <div class="label">Your average
+              <span class="scoreText hide" id="regAvgScore"></span></div>
+              <div class="background average">
+                <div class="chart regularityBars" id="regAvg"></div>
+              </div>
+              <div class="groupText">Group
+              <span class="groupScore hide" id="regGroupScore"></span></div>
+              <div class="background groupBackground">
+                <div class="chart group" id="regGAvg"></div>
+              </div>
+	      {% endif %}
+            </div>
+          </div>
+        </graph>
+      </div>
+      
+    </div>
+  </div>
+  <div id="footer"></div>
 </div>
 
+
 <script>
-var goalD=[20,100,100,100,74];//data for goal //data inputs here
-var goalAvgD=[32,30];//goal average
-var socD=[20,100,100,50,74];//data for social
-var socAvgD=[32,30];//for social average
-var actD=[42,54,50,80];//for activity
-var actAvgD=[42,54,74,80];//for activity average
-var slpD=[100,100,50,80];//for sleep
-var slpAvgD=[42,54,74,80];//for sleep average
-var regD=[12,14,52,57];//for regularity
-var regAvgD=[123,12,23,84];//for regularity average
-var gluD=[1,2,3,4,5];// glucose
-var gluAvgD=[23,75,78,90,82];//glucose average
-var medD=[95,85,24,67,98,70];// medication
-var medAvgD=[23,90,32,32,97];//medication average
-var gluGAvgD=[98,90,29,87,54]
-var medGAvgD= [76,89,95,86,45]
-var socGAvgD=[70,32,30];//for social average
-var actGAvgD=[13,14,74,89];//for activity average
-var regGAvgD=[123,12,23,84];//for regularity average
-var slpGAvgD=[12,96,24,91];
+var goalD=[{{ surveyscores.goal }}];//data for goal //data inputs here
+var goalAvgD=[ {{ avgGoal }}];//goal average
+var socD=[{{ socialhealth.user.social }}];//data for social
+var socAvgD=[ {{ avgSocial }} ];//for social average
+var actD=[{{ socialhealth.user.activity }}];//for activity
+var actAvgD=[ {{ avgActivity }} ];//for activity average
+var slpD=[{{ surveyscores.sleep }}];//for sleep
+var slpAvgD=[{{ avgSleep }}];//for sleep average
+var regD=[{{ socialhealth.user.focus }}];//for regularity
+var regAvgD=[{{ avgFocus }}];//for regularity average
+var gluD=[{{ surveyscores.glucose }}];// glucose
+var gluAvgD=[{{ avgGlucose }}];//glucose average
+var medD=[{{ surveyscores.meds }}];// medication
+var medAvgD=[{{ avgMeds }}];//medication average
+var gluGAvgD=[20,];
+var medGAvgD= [20,];
+var socGAvgD=[{{socialhealth.user_group.social}}];//for social average
+var actGAvgD=[{{socialhealth.user_group.activity}}];//for activity group average
+var regGAvgD=[{{socialhealth.user_group.focus}}];//for regularity average
+var slpGAvgD=[20,];
+
+console.log(JSON.stringify(socD));
 
 
 // date
@@ -240,12 +319,9 @@ var d = new Date();
 var day = d.getDate();
 var month = d.getMonth();
 var dayOfWeek= d.getDay();
-var weeks=1;
 var months=["Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Oct"," Nov","Dec"];
-if(dayOfWeek==0){
-	weeks++};
 	
-$(".date").text(months[month]+" "+day + " / ").append($("<span></span>", { text: "week " + weeks })).find("span").css("font-weight", "400");
+$(".date").text(months[month]+" "+day + " / ").append($("<span></span>", { text: "week " + {{ weeksSinceStart }}  })).find("span").css("font-weight", "400");
 //averages data
 var Avg=function(data){
 	var sum=0;
@@ -261,7 +337,7 @@ var numCompare= function(present, average){
 	return percentChange
 };
 //sorts bars
-var barsAvg=[Avg(socD),Avg(actD),Avg(regD), Avg(slpD), Avg(gluD), Avg(medD)];
+/*var barsAvg=[Avg(socD),Avg(actD),Avg(regD), Avg(slpD), Avg(gluD), Avg(medD)];
 var bars=['soc','act','reg', 'slp', 'glu', 'med'];
 var sortedBars=[];
 barsAvg.sort(function(a,b){return a-b});
@@ -277,33 +353,38 @@ console.log(sortedBars);
 for(move=0;move<sortedBars.length;move++){
 	$("#sorted-bars").append($("#"+sortedBars[move]));
 };
+*/
 
 //person goal stuff
-var goal="Stress level";
+var goalType = "{{ goaltype }}";
+var goal="none selected";
 var goalImage="";
 var goalQuestion="";
 var goalOptions="";
-$('#goalTitle').append(goal);
-switch(goal.toUpperCase()){
-	case "FEET CARE":
+switch(goalType){
+	case "f":
+	        goal = 'feet care';
 		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/feet_01.png";
 		console.log(goal+ "1");
 		goalQuestion="Have you checked your feet today?";
 		goalOptions='<div class="qNum feetQNum" ></div><div class="questionText feetQ"></div><br><input class="feetQ" type="radio" name="feetQ" value="yes" id="feetY"><label for="feetY" class="feetQ"><div class="qButton feetButton">Yes</div></label><input class="feetQ" type="radio" name="feetQ" value="no" id="feetN"><label for="feetN" class="feetQ"><div class="qButton feetButton">No</div><br>'
 		break;
-	case "SMOKING":
+	case "s":
+	        goal = 'smoking';
 		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/smoking_01.png";
 		console.log(goal+ "2");
 		goalQuestion="Rate how many less cigarettes you smoked today compared to yesterday on a scale of 0 ( I smoked the same or more today) to 40 less than yesterday. "
 		goalOption='<input class="smokingQ" type="range" data-show-value="true" min="0" max="40"></br>'
 		break;
-	case "EATING HEALTHY":
+	case "e":
+	        goal = 'eating healthy';
 		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/eathealthy_01.png";
 		console.log(goal+ "3");
 		goalQuestion="Rate your eating today on a scale of 1  (I really made bad food choices today)  to 10 (I ate really healthy-today)"
 		goalOption='<input class="eatingQ" type="range" data-show-value="true" min="0" max="10"></br>'
 		break;
-	case "STRESS LEVEL":
+	case "t":
+	        goal = 'stress level';
 		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/stress_01.png";
 		console.log(goal+ "4");
 		goalQuestion="Rate your stress reduction techniques today on a scale of 1 (I practiced very good techniques to reduce my feelings of stress today) to 10 ( I was very stressed out and I did nothing to help myself calm down). "
@@ -311,6 +392,8 @@ switch(goal.toUpperCase()){
 		break;
 	}
 $('#goalImg').attr('src',goalImage);
+$('#goalTitle').append(goal);
+
 //bar charts
 d3.select("#act")
 		.data([Avg(actD)])
@@ -340,7 +423,6 @@ d3.select("#socAvg")
 		.data([Avg(socAvgD)])
 		.style("width",function(d) {return d +"%";});
 
-		
 d3.select("#reg")
 		.data([Avg(regD)])
 		.style("width",function(d) {return d +"%";});
@@ -422,7 +504,7 @@ var sleepColor="white";
 var glucoseColor='white';
 var medicationColor="white";
 
-if(Avg(socD)<=50){
+if(Avg(socD)<=30){
 	socialColor='#Fc4c4c';
 	$('#socAvg').addClass('stripe-r');
 	}
@@ -433,7 +515,7 @@ else{
 	socialColor='#f9ce20';
 	$('#socAvg').addClass('stripe-y');};
 	
-if(Avg(actD)<=50){
+if(Avg(actD)<=30){
 	activityColor='#Fc4c4c';
 	$('#actAvg').addClass('stripe-r');}
 else if(Avg(actD)>=70){
@@ -443,7 +525,7 @@ else{
 	activityColor='#f9ce20';
 	$('#actAvg').addClass('stripe-y');};
 	
-if(Avg(regD)<=50){
+if(Avg(regD)<=30){
 	regularityColor='#Fc4c4c';
 	$('#regAvg').addClass('stripe-r');}
 else if(Avg(regD)>=70){
@@ -453,7 +535,7 @@ else{
 	regularityColor='#f9ce20';
 	$('#regAvg').addClass('stripe-y');};
 	
-if(Avg(slpD)<=50){
+if(Avg(slpD)<=30){
 	sleepColor='#fc4c4c';
 	$('#slpAvg').addClass('stripe-r');}
 else if(Avg(slpD)>=70){
@@ -463,7 +545,7 @@ else{
 	sleepColor='#f9ce20';
 	$('#slpAvg').addClass('stripe-y');};
 
-if(Avg(gluD)<=50){
+if(Avg(gluD)<=30){
 	glucoseColor='#Fc4c4c';
 	$('#gluAvg').addClass('stripe-r');}
 else if(Avg(gluD)>=70){
@@ -473,7 +555,7 @@ else{
 	glucoseColor='#f9ce20';
 	$('#gluAvg').addClass('stripe-y');};
 	
-if(Avg(medD)<=50){
+if(Avg(medD)<=30){
 	medicationColor='#Fc4c4c';
 	$('#medAvg').addClass('stripe-r');}
 else if(Avg(medD)>=70){
@@ -483,7 +565,7 @@ else{
 	medicationColor='#f9ce20';
 	$('#medAvg').addClass('stripe-y');};
 	
-if(Avg(goalD)<=50){
+if(Avg(goalD)<=30){
 	goalColor='#Fc4c4c';
 	$('#goalAvg').addClass('stripe-r');}
 else if(Avg(slpD)>=70){
@@ -558,5 +640,16 @@ for(fill=1; fill<=barFilled; fill++){
 //	$(barEmpty).atr
 //};
 
+
+
+$(".group-results-button").click(function() {
+      if ($(this).hasClass('g-on')) {
+	    $(this).removeClass('g-on').text("Off");
+	    $(".groupBackground, .groupText").hide();
+      } else {
+	    $(this).addClass('g-on').text("On");
+	    $(".groupBackground, .groupText").show();
+      }
+});
 </script>
 {% endblock %}

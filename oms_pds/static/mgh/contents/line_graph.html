@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<head>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<style>
+	path{	
+			fill:none;
+		}
+	.axis{
+		shape-rendering: crispEdges;
+		}
+		}
+	.x.axis.minor{
+		stroke-opacity:.5;
+		}
+	.x.axis path{
+		display: none;
+		}
+	.y.axis line, y.axis path{
+		fill: none;
+		stroke:#000;
+		}
+	#graph{
+		position:absolute;
+		float: left;
+	#tick{
+		margin-left: 10px;
+		}
+</style>
+</head>
+<body>
+<div id="graph" class="Graph"></id>
+<script>
+var margin=[50,20,50,20];
+var wid=500-margin[1]-margin[3];
+var height=400-margin[0]-margin[2];
+var socData = [20,74,66,86,66,82,65,67];//data entered here, must have at least 7 in one of them
+var actData = [13,57,75,16,97,58];//or it will show decimals
+var regData = [67,88,78,38,59,77];
+
+
+var x = d3.scale.linear().domain([1,(Math.max(socData.length,actData.length,regData.length)+1)]).range([0,wid]);
+var y = d3.scale.linear().domain([0,100]).range([height,0]);
+var socLine=d3.svg.line()
+	.x(function(d, i){return x(i+1);})
+	.y(function(d, i){return y(d);});
+	
+var actLine=d3.svg.line()
+	.x(function(d, i){return x(i+1);})
+	.y(function(d, i){return y(d);});
+	
+var regLine=d3.svg.line()
+	.x(function(d, i){return x(i+1);})
+	.y(function(d, i){return y(d);});
+	
+var graph=d3.select("#graph").append("svg:svg")
+	.attr("width", wid+margin[1]+margin[3])
+	.attr("height",height+margin[0]+margin[2])
+   .append("svg:g")
+    .attr("transform", "translate("+margin[0]+","+margin[1]+")");
+	
+var xAxis = d3.svg.axis().scale(x).tickSize(-height);
+
+graph.append("svg:g")
+			      .attr("class", "x axis")
+			      .attr("transform", "translate(15," + height + ")")
+			      .call(xAxis);
+ 
+var yAxisLeft = d3.svg.axis().scale(y).ticks(4).orient("left");
+			
+graph.append("svg:g")
+	.attr("class","y axis")
+	.attr("transform","translate(15,0)")
+	.attr('stroke','black')
+	.call(yAxisLeft);
+	
+graph.append("svg:path").attr("d",socLine(socData)).attr('stroke','#33B5E5').attr('stroke-width',5).attr('transform','translate(15,0)').attr('class','social');
+graph.append("svg:path").attr("d",actLine(actData)).attr('stroke','#FF4444').attr('stroke-width',5).attr('transform','translate(15,0)').attr('class','activity');
+graph.append("svg:path").attr("d",regLine(regData)).attr('stroke','#99cc00').attr('stroke-width',5).attr('transform','translate(15,0)').attr('class','regularity');
+
+</script>

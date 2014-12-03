@@ -1,13 +1,14 @@
 from celery import task
-from oms_pds.pds.models import Profile, Notification, Device
+from oms_pds.pds.models import Profile, Notification, Device, QuestionType, QuestionInstance
 from bson import ObjectId
 from pymongo import Connection
 from django.conf import settings
 import time
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from django.utils import timezone
 import json
 import pdb
-import math
+import math, logging
 import cluster
 from gcm import GCM
 from oms_pds.pds.models import Profile
@@ -30,6 +31,8 @@ ANSWERKEY_NAME_MAPPING = {
     "recentActivityByHour": "Activity",
     "socialhealth": "My Social Health"
 }
+
+REPEAT_INTERVAL = 60 #2 # when repeated questions should be asked again in minutes
 
 def copyData(fromInternalDataStore, toInternalDataStore):
     startTime = 1391291231
@@ -216,14 +219,17 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, serviceId, includeBl
     aggregates = {}
 
     for profile in profiles:
-        # NOTE: need a means of getting at a token for authorizing this task to run. For now, we're not checking anyway, so it's blank
-        internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
-#        if mean is None or dev is None:
-        data = aggregateForUser(internalDataStore, answerKey, timeRanges, aggregator, includeBlanks)
-#        else:
-#            data = aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks, mean.get(profile.uuid), dev.get(profile.uuid))
-        if data is not None and len(data) > 0:
-            aggregates[profile.uuid] = data
+        try:
+            # NOTE: need a means of getting at a token for authorizing this task to run. For now, we're not checking anyway, so it's blank
+            internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
+    #        if mean is None or dev is None:
+            data = aggregateForUser(internalDataStore, answerKey, timeRanges, aggregator, includeBlanks)
+    #        else:
+    #            data = aggregateForUser(profile, answerKey, timeRanges, aggregator, includeBlanks, mean.get(profile.uuid), dev.get(profile.uuid))
+            if data is not None and len(data) > 0:
+                aggregates[profile.uuid] = data
+        except:
+            logging.info("function aggregateForAllUsers does not work for profile with pk="+str(profile.pk))
 
     return aggregates
 
@@ -247,7 +253,7 @@ def getStartTime(daysAgo, startAtMidnight):
 def recentActivityLevels(includeBlanks = False):
     startTime = getStartTime(6, True)
     endTime = time.time()
-    interval = 3600*2
+    interval = 3600*2 #note is this 2 hours?
     answerKey = "RecentActivityByHour"
     timeRanges = [(start, start + interval) for start in range(int(startTime), int(endTime), interval)]
     #pdb.set_trace()
@@ -311,6 +317,18 @@ def recentActivityScore():
     
     return score
 
+def yearlyActivityScore():
+    #data = recentActivityLevels(False)
+    currentTime = time.time()
+    data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 365, currentTime)], activityForTimeRange, "Activity", False)
+    score = {}
+   
+    for uuid, activityList in data.iteritems():
+        if len(activityList) > 0:
+            score[uuid] = computeActivityScore(activityList)
+    
+    return score
+
 def recentFocusScore():
     data = recentFocusLevels(True)
     #currentTime = time.time()
@@ -342,7 +360,8 @@ def recentSocialScore():
 
 def addNotification(profile, notificationType, title, content, uri):
     notification, created = Notification.objects.get_or_create(datastore_owner=profile, type=notificationType)
-    notification.title = title
+    if uri != -1:
+        notification.title = uri # Set title as URI for now
     notification.content = content
     notification.datastore_owner = profile
     if uri is not None:
@@ -359,9 +378,80 @@ def formatNotification(question, type="Picker", description="", items=[], **kwar
     return json.dumps({ 's1': s1, 's2': s2, 's3': s3 })
 #    return s1, s2, s3 # TODO: JSONfy
 
+def fetchQuestion(profile, device):
+    ret_val = None
+    q_list = []
+    qtypes = QuestionType.objects.filter(frequency_interval__isnull=False)
+    qtypes = qtypes.filter(goal__isnull=True) | qtypes.filter(goal=profile.goal)
+        
+    print "DEBUG: got %d question types" % qtypes.count()
+    for qtype in qtypes:
+        # Get previous recent questions asked
+
+        # TODO: d needs to be based on wakeup time of the current user, and not on NOW.
+#        d = date.today() - timedelta(minutes=qtype.frequency_interval)
+#        questions = QuestionInstance.objects.filter(profile=profile).filter(datetime__gt=d).filter(question_type=qtype) # TODO: probably need an index: (profile, datetime).
+        
+        questions = QuestionInstance.objects.filter(profile=profile).filter(question_type=qtype).filter(expired=False)
+
+        print "QUESTIONS = %s" % questions
+        
+        if qtype.sleep_offset < 0:
+            d_ask = datetime.combine(datetime.date(datetime.today()), profile.sleep) - timedelta(qtype.sleep_offset) 
+        else:
+            d_ask = datetime.combine(datetime.date(datetime.today()), profile.wake) + timedelta(qtype.sleep_offset) 
+        if (questions.count() == 0 and d_ask.time() < datetime.time(datetime.now()) ):
+            # this question wasn't asked yet. Generate it.
+            q = QuestionInstance(question_type=qtype, profile=profile)
+            q_list.append({'instance': q, 'type': qtype})
+            
+            qf = None
+            if qtype.followup_question:
+                # generate the data question as well
+                qf = QuestionInstance(question_type=qtype.followup_question, profile=profile)
+                q.notification_counter = 1
+            
+            q.save()
+            if qf:
+                qf.save()
+        else:
+            ql = list(questions.reverse()[:1])
+            q = None
+            if ql:
+                q = ql[0]
+            
+            if (q and qtype.resend_quantity > q.notification_counter):
+                # Check if q needs to be reasked and act accordingly
+                next_qtime = q.datetime + timedelta(minutes=REPEAT_INTERVAL)
+                if (next_qtime < timezone.now()):
+                    if not q.answer or (qtype.followup_key != None and q.answer != qtype.followup_key):
+                        print 'Updating question = %s' % q
+                        q.notification_counter = q.notification_counter + 1
+                        q.save()
+                        q_list.append({'instance': q, 'type': qtype})
+        
+    # at this point q_list contains notification questions (not followups)
+    if len(q_list) > 1:
+        ret_val = {'question': ('You have %d unanswered questions' % len(q_list)), 'description': 'Multiple questions', 'action': -1}
+    elif len(q_list) == 1:
+        ret_val = {'question': q_list[0]['type'].text, 'description': q_list[0]['type'].text, 'action': q_list[0]['instance'].id}
+    
+    return ret_val
+
+def expireQuestions():
+    questions = QuestionInstance.objects.all().filter(expired=False)
+    for question in questions:
+        dt = timezone.now() - timedelta(minutes=question.question_type.expiry)
+        if ( dt > question.datetime ):
+            # This question is expired. Update it
+            question.expired = True
+            print "Expiring question %d" % question.id
+            question.save() 
+
 @task()
 def smartcatchNotifications():
     print "Starting notifications task"
+    expireQuestions()
 
     profiles = Profile.objects.all()
     for profile in profiles:
@@ -370,19 +460,22 @@ def smartcatchNotifications():
         	gcm = GCM(settings.GCM_API_KEY)
 	        for device in Device.objects.filter(datastore_owner = profile):
         	    try:
-                	# add the notification to the DB
-	                q = 'How are you today?'
-        	        js = formatNotification(q, description='A query about your emotional state', items=['Low','Medium','High'])
-                	addNotification(profile, 2, 'SmartCATCH', q, js)
-	                # send an alert that a notification is ready (app will call back to fetch the notification data)
-        	        print "id=%s, uuid=%s, device=%s" % (profile.id, profile.uuid,device.gcm_reg_id)
-                	gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})
+                	# add the notification to the D
+			q_params = fetchQuestion(profile, device)
+			print 'q_params = %s' % q_params
+			if q_params is not None:
+        	        	js = formatNotification(q_params['question'], description=q_params['description'], items=[q_params['action']])
+                		addNotification(profile, 2, 'SmartCATCH', q_params['question'], q_params['action'])
+	                	# send an alert that a notification is ready (app will call back to fetch the notification data)
+        	        	print "id=%s, uuid=%s, device=%s" % (profile.id, profile.uuid,device.gcm_reg_id)
+                		gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})
 	            except Exception as e:
         	        print "Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
                 	print e    
 
 @task()
 def recentSocialHealthScores():
+    logging.info("Starting Social Health Score Calculation")
     profiles = Profile.objects.all()
     data = {}
     
@@ -436,12 +529,12 @@ def recentSocialHealthScores():
 def getToken(profile, app_uuid):
     return ""
 
-@task()
-def recentSocialHealthScores2():
-    profiles = Profile.objects.all()
-    startTime = getStartTime(6, True)
+GROUP_LABEL = "_group"
+def socialHealthScores(label, daysago, timeinterval):
+    profiles = Profile.objects.filter(study_status__in=['c','i'])
+    startTime = getStartTime(daysago, True)
     currentTime = time.time()
-    timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
+    timeRanges = [(start, start + timeinterval) for start in range(int(startTime), int(currentTime), timeinterval)]
 
     sums = {"activity": 0, "social": 0, "focus": 0}
     activeUsers = []
@@ -454,6 +547,7 @@ def recentSocialHealthScores2():
         activityLevels = aggregateForUser(internalDataStore, "RecentActivityByHour", timeRanges, activityForTimeRange, False)
        
         if len(activityLevels) > 0:
+            logging.info("ActivityLevels count > 0 for uuid="+profile.uuid)
             socialLevels = aggregateForUser(internalDataStore, "RecentSocialByHour", timeRanges, socialForTimeRange, True)
             focusLevels = aggregateForUser(internalDataStore, "RecentFocusByHour", timeRanges, focusForTimeRange, True)
 
@@ -466,22 +560,234 @@ def recentSocialHealthScores2():
             sums["focus"] += focusScore
             activeUsers.append(profile)
     
-            data[profile.uuid] = {}
-            data[profile.uuid]["user"] = {
-                "activity": activityScore,
-                "social": socialScore,
-                "focus": focusScore
-            } 
+            try:
+                data[profile.uuid] = internalDataStore.getAnswer("socialhealth")[0]['value']
+            except:
+                data[profile.uuid] = {}
+                
+            data[profile.uuid][label] = {
+                "activity": activityScore*10,
+                "social": socialScore*10,
+                "focus": focusScore*10
+            }
 
     numUsers = len(activeUsers)
     if numUsers > 0:
+        logging.info("Active Users > 0")
         averages = { k: sums[k] / numUsers for k in sums }
-        variances = { k: [(data[p.uuid]["user"][k] - averages[k])**2 for p in activeUsers] for k in averages }
-        stdDevs = { k: math.sqrt(sum(variances[k]) / len(variances[k])) for k in variances }
+        #variances = { k: [(data[p.uuid]["user"][k] - averages[k])**2 for p in activeUsers] for k in averages }
+        #stdDevs = { k: math.sqrt(sum(variances[k]) / len(variances[k])) for k in variances }
         for profile in activeUsers:
             token = getToken(profile, "app-uuid")
             internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
-            data[profile.uuid]["averageLow"] = { k: max(0, averages[k] - stdDevs[k]) for k in stdDevs }
-            data[profile.uuid]["averageHigh"] = { k: min(averages[k] + stdDevs[k], 10) for k in stdDevs }
+            data[profile.uuid][label+GROUP_LABEL] = { k: averages[k] for k in averages }
+            #data[profile.uuid]["averageLow"] = { k: max(0, averages[k] - stdDevs[k]) for k in stdDevs }
+            #data[profile.uuid]["averageHigh"] = { k: min(averages[k] + stdDevs[k], 10) for k in stdDevs }
             internalDataStore.saveAnswer("socialhealth", data[profile.uuid])
+            logging.info("Saving socialhealth for uui="+profile.uuid+", data="+str(data[profile.uuid]))
+            
     return data
+    
+
+@task()
+def recentSocialHealthScores2():
+    daysago = 6
+    timeinterval = 3600*4 #4 hours
+    return socialHealthScores("user", daysago, timeinterval)
+
+SOCIALHEALTH_HISTORY_LABEL = "hourlyuser"
+SURVEY_HISTORY_LABEL = "dailysurveyscores"
+
+@task()
+def hourlySocialHealthScores():
+    daysago = .0416 # 1 hour ago
+    timeinterval = 60*15 # 15 minutes
+    return socialHealthScores(SOCIALHEALTH_HISTORY_LABEL, daysago, timeinterval)
+
+def historyAvg(history):
+    total = 0
+    for h in history:
+        total += h['score']
+    return total/len(history)
+
+def historyScore(internalDataStore, key, newscore):
+    history = internalDataStore.getAnswerList(key)
+    history = history[0]['value'] if history.count()>0 else []
+    history.append({"score": newscore, "time": int(time.time())})
+    internalDataStore.saveAnswer(key, history)
+    return history
+
+@task()
+def saveHistory():
+    profiles = Profile.objects.filter(study_status__in=['c','i'])
+
+    for profile in profiles:
+        try:
+            token = getToken(profile, "app-uuid")
+            internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
+        
+            # Add social scores to historical data
+            socialhealth = internalDataStore.getAnswer("socialhealth")[0]['value'][SOCIALHEALTH_HISTORY_LABEL]
+            socialScoreHistory = historyScore(internalDataStore, "socialScoreHistory", socialhealth['social'])
+            activityScoreHistory = historyScore(internalDataStore, "activityScoreHistory", socialhealth['activity'])
+            focusScoreHistory = historyScore(internalDataStore, "focusScoreHistory", socialhealth['focus'])
+            
+            # Add survey scores to historical data
+            surveyscores = internalDataStore.getAnswer(SURVEY_HISTORY_LABEL)[0]['value']
+            sleepScoreHistory = historyScore(internalDataStore, "sleepScoreHistory", surveyscores['sleep'])
+            glucoseScoreHistory = historyScore(internalDataStore, "glucoseScoreHistory", surveyscores['glucose'])
+            medsScoreHistory = historyScore(internalDataStore, "medsScoreHistory", surveyscores['meds'])
+            goalScoreHistory = historyScore(internalDataStore, "goalScoreHistory", surveyscores['goal'])
+
+            # Add group social scores to historical data
+            socialhealthGroup = internalDataStore.getAnswer("socialhealth")[0]['value'][SOCIALHEALTH_HISTORY_LABEL + GROUP_LABEL]
+            historyScore(internalDataStore, "socialScoreGroupHistory", socialhealthGroup['social'])
+            historyScore(internalDataStore, "activityScoreGroupHistory", socialhealthGroup['activity'])
+            historyScore(internalDataStore, "focusScoreGroupHistory", socialhealthGroup['focus'])
+            
+            # Add group survey scores to historical data
+            surveyscoresGroup = internalDataStore.getAnswer(SURVEY_HISTORY_LABEL + GROUP_LABEL)[0]['value']
+            historyScore(internalDataStore, "sleepScoreGroupHistory", surveyscoresGroup['sleep'])
+            historyScore(internalDataStore, "glucoseScoreGroupHistory", surveyscoresGroup['glucose'])
+            historyScore(internalDataStore, "medsScoreGroupHistory", surveyscoresGroup['meds'])
+            historyScore(internalDataStore, "goalScoreGroupHistory", surveyscoresGroup['goal'])
+            
+            socialAvg = historyAvg(socialScoreHistory)
+            activityAvg = historyAvg(activityScoreHistory)
+            focusAvg = historyAvg(focusScoreHistory)
+            sleepAvg = historyAvg(sleepScoreHistory)
+            glucoseAvg = historyAvg(glucoseScoreHistory)
+            medsAvg = historyAvg(medsScoreHistory)
+            goalAvg = historyAvg(goalScoreHistory)
+            data = { 'social':socialAvg, 'activity':activityAvg, 'focus':focusAvg, 'meds':medsAvg, 'glucose':glucoseAvg, 'sleep':sleepAvg, 'goal':goalAvg }
+            internalDataStore.saveAnswer("socialhealthavgs", data)
+        except Exception as e:
+            logging.info("Issue with calculating historical scores for: uuid=%s" % (profile.uuid,))
+            logging.info(e)
+            
+#QuestionTypes that have specific pks
+QUESTION_TO_PK = {
+    "glucose": [1,2],
+    "sleep": 4,
+    "medication": 3,
+}
+
+def calculateMedsScore(profile, daysago):
+    return calculateGenericScore(profile, "medication", daysago)
+def calculateSleepScore(profile, daysago):
+    return calculateGenericScore(profile, "sleep", daysago)
+    
+def calculateGoalScore(profile, daysago):
+    startTime = datetime.fromtimestamp(getStartTime(daysago, True))
+    endTime = datetime.fromtimestamp(time.time())
+    qis = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__goal__isnull=False, question_type__goal=profile.goal, answer__isnull=False)
+    return calculateGenericScoreCustomQuery(qis)
+
+DEFAULT_SCORE = 50 #out of 100
+
+#for questions that have standard pre-normalized answers from 0 to 100
+def calculateGenericScore(profile, question_label, daysago):
+    startTime = datetime.fromtimestamp(getStartTime(daysago, True))
+    endTime = datetime.fromtimestamp(time.time())
+    qis = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK[question_label], answer__isnull=False)
+    return calculateGenericScoreCustomQuery(qis)
+   
+def calculateGenericScoreCustomQuery(qis):
+    total = 0
+    for qi in qis:
+        total += qi.answer
+    if len(qis) > 0:
+        return total/len(qis)
+    return DEFAULT_SCORE
+    
+
+#TODO this needs to be worked on once Todd gives me the equation
+def normalizeGlucoseScore(score):
+    if score > 50 and score < 180:
+        return 100
+    return 0
+
+def calculateGlucoseScore(profile, daysago):
+    startTime = datetime.fromtimestamp(getStartTime(daysago, True))
+    endTime = datetime.fromtimestamp(time.time())
+    gcq1s = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK["glucose"][0], answer__isnull=False)
+    gcq2s = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK["glucose"][1], answer__isnull=False)
+   
+    gcq1_total = 0
+    for gcq in gcq1s:
+        gcq1_total += gcq.answer * 100 #the answer is either 0 or 1 here
+    gcq1_score = gcq1_total/len(gcq1s) if len(gcq1s) < 0 else DEFAULT_SCORE
+
+    gcq2_total = 0
+    for gcq in gcq2s:
+        gcq2_total += normalizeGlucoseScore(gcq.answer)
+    gcq2_score = gcq2_total/len(gcq2s) if len(gcq2s) < 0 else DEFAULT_SCORE
+   
+    if len(gcq2s) > 0 and len(gcqp1s) > 0:
+        return gcq1_score*.25 + gcq2_score*.75
+    elif len(gcq2s) > 0:
+        return gcq2_score
+    elif len(gcq1s) > 0:
+        return gcqp1_score*.50 + gcq2_score*.50
+    return DEFAULT_SCORE
+
+def surveyScores(daysago, label):
+    profiles = Profile.objects.filter(study_status__in=['c','i'])
+
+    totalMedsScore = 0
+    totalGlucoseScore = 0
+    totalSleepScore = 0
+    totalGoalScore = 0
+    scoreCount = 0
+    
+    
+    for profile in profiles:
+        try:
+            token = getToken(profile, "app-uuid")
+            internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
+           
+            medsScore = calculateMedsScore(profile, daysago)
+            glucoseScore = calculateGlucoseScore(profile, daysago)
+            sleepScore = calculateSleepScore(profile, daysago)
+            goalScore = calculateGoalScore(profile, daysago)
+    
+            data = { 'meds':medsScore, 'glucose':glucoseScore, 'sleep':sleepScore, 'goal':goalScore }
+            internalDataStore.saveAnswer(label, data)
+            
+            scoreCount += 1
+            totalMedsScore += medsScore
+            totalGlucoseScore += glucoseScore
+            totalSleepScore += sleepScore
+            totalGoalScore += goalScore
+        except Exception as e:
+            logging.info("Problem with survey score for profile pk=%s uuid=%s" % (profile.id, profile.uuid))
+            logging.info(e)
+            
+    if scoreCount > 0:
+        avgMedsScore  = totalMedsScore / scoreCount
+        avgGlucoseScore  = totalGlucoseScore / scoreCount
+        avgSleepScore  = totalSleepScore / scoreCount
+        avgGoalScore  = totalGoalScore / scoreCount
+                
+        for profile in profiles:
+            try:
+                token = getToken(profile, "app-uuid")
+                internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
+                data = { 'meds':avgMedsScore, 'glucose':avgGlucoseScore, 'sleep':avgSleepScore, 'goal':avgGoalScore }
+                internalDataStore.saveAnswer(label + GROUP_LABEL, data)
+            except Exception as e:
+                logging.info("Problem with group survey score for profile pk=%s uuid=%s" % (profile.id, profile.uuid))
+                logging.info(e)
+            
+            
+
+@task()
+def recentSurveyScores():
+    daysago = 6
+    label = "surveyscores"
+    surveyScores(daysago, label)
+        
+@task()
+def dailySurveyScores():
+    daysago = 1
+    surveyScores(daysago, SURVEY_HISTORY_LABEL)

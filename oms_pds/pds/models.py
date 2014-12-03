@@ -5,11 +5,28 @@ from django.utils import simplejson
 
 connect(settings.MONGODB_DATABASE)
 
+GOAL_CHOICES = (
+    ('s','smoking'),
+    ('e','eating better'),
+    ('t','stress reduction'),
+    ('f','footcare'),
+    ('n','none selected'),
+)
+
+STUDY_STATUS_CHOICES = (
+    ('n', 'Not in study'),
+    ('c', 'Control'),
+    ('i', 'Intervention'),
+    ('t', 'Test'),
+)
 
 class Profile(models.Model):
     uuid = models.CharField(max_length=36, unique=True, blank = False, null = False, db_index = True)
     wake = models.TimeField(default="8:00")
     sleep = models.TimeField(default="23:00")
+    goal = models.CharField(max_length=1, choices=GOAL_CHOICES, default='n')
+    study_status = models.CharField(max_length=1, choices=STUDY_STATUS_CHOICES, default='n')
+    created = models.DateTimeField(auto_now_add=True)
 
     def getDBName(self):
         return "User_" + str(self.uuid).replace("-", "_")
@@ -24,20 +41,29 @@ class QuestionType(models.Model):
         ('m', 'Multiple Choice'),
     )
     
+    goal = models.CharField(max_length=1, choices=GOAL_CHOICES, blank=True, null=True, help_text="this is only set if the question is a goal question. otherwise null")
     text = models.TextField() #What was your morning Glucose level?
     ui_type = models.CharField(max_length=1, choices=UI_CHOICES)
-    params = models.TextField(default="[]", help_text="this column must be coded in JSON and is specific to the uitype - for YES/NO params=[], for slider params='[ min, max ]' ie '[ 0, 10 ]', Multiple Choice '[ [0, \"Never\"], [1, \"Some\"], [2, \"All\" ]]'")
+    params = models.TextField(default="[]", help_text="this column must be coded in JSON and is specific to the uitype - for YES/NO params=[], for slider params='[ [min, \"label\"], [max, \"label\"] ]' ie '[[ 0, \"worst\"], [10, \"best\"]]', Multiple Choice '[ [0, \"Never\"], [1, \"Some\"], [2, \"All\" ]]'")
     frequency_interval = models.IntegerField(default=1440, blank=True, null=True, help_text="minutes between the next time the question is asked. set as null if the question isn't set on a schedule directly.")
     resend_quantity = models.IntegerField(default=0, help_text="Number of times to resend this question until it's answered.")
     followup_key = models.IntegerField(blank=True, null=True, help_text="If this question result in a followup question, select the answer that results in a follow up. If not, or if any answer creates a follow up, leave blank")
-    followup_question = models.ForeignKey('QuestionType', blank=True, null=True, help_text="If this question should result in a followup question, select the follow-up question. If not, leave blank") 
+    followup_question = models.ForeignKey('QuestionType', related_name="parent_question", blank=True, null=True, help_text="If this question should result in a followup question, select the follow-up question. If not, leave blank") 
     expiry = models.IntegerField(default=1440, help_text="minutes until the question expires")
+    sleep_offset = models.IntegerField(default=0, help_text="minutes after a user wakes up to send notification. if negative, it's minutes before a user goes to sleep to send a notification.")
+    
     
     def __unicode__(self):
-        return str(self.pk) + ": " + self.text
+        return unicode( str(self.pk) + ": " + self.text )
         
     def optionList(self):
         return simplejson.loads(self.params)
+        
+    def followup_question_parent(self):
+        parents = self.parent_question.all()
+        if len(parents) > 0:
+            return parents[0]
+        return None
         
 
 class QuestionInstance(models.Model):
@@ -47,7 +73,7 @@ class QuestionInstance(models.Model):
     answer = models.IntegerField(blank=True, null=True)
     expired = models.BooleanField(default=False, help_text="Once an answer either expires past a certain time or is completed, this is checked off. This is for the efficiency of only querying the database on expired and profile.")
     notification_counter = models.IntegerField(default=0, help_text="How many times was a notification sent out for this Question Instance?")
-    
+#    followup_instance = models.ForeignKey('QuestionInstance', blank=True, null=True, help_text="If this question has a followup question associated, then reference it from here")
     def __unicode__(self):
         return str(self.datetime) + ": " +self.profile.__unicode__() + " (" +str(self.question_type.pk)+ ")"
 
@@ -121,7 +147,7 @@ class AuditEntry(models.Model):
     timestamp = models.DateTimeField(auto_now_add = True, db_index=True)
     
     def __unicode__(self):
-        self.pk
+        return str(self.pk)
 
 class Notification(models.Model):
     '''
@@ -138,7 +164,7 @@ class Notification(models.Model):
 #    json_content = models.TextField()
     
     def __unicode__(self):
-        self.pk
+        return str(self.pk)
 
 class Device(models.Model):
     datastore_owner = models.ForeignKey(Profile, blank=False, null=False, related_name="device_owner", db_index=True)

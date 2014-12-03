@@ -23,8 +23,9 @@ urlpatterns = patterns('oms_pds.visualization.views',
     (r'^mitfit/statsaggregate$', direct_to_template, { 'template' : 'visualization/mitfit_stats_aggregate.html' }),
     (r'^mitfit/recos$', direct_to_template, { 'template' : 'visualization/mitfit_recos.html' }),
 
-    (r'^smartcatch/splash', direct_to_template, { 'template': 'visualization/smartcatch_splash.html'}),
-    (r'^smartcatch/myresults', direct_to_template, { 'template': 'visualization/smartcatch_myresults.html'}),
-    (r'^smartcatch/history', direct_to_template, { 'template': 'visualization/smartcatch_history.html'}),
-    (r'^smartcatch/questions', 'questionsPage'),
+    (r'^smartcatch/splash', 'smartcatchSplash'),
+    (r'^smartcatch/myresults', 'smartcatchMyResults'),
+    (r'^smartcatch/history', 'smartcatchHistory'),
+    (r'^smartcatch/questions', 'smartcatchQuestionsPage'),
+    (r'^smartcatch/help', 'smartcatchHelp'),
 )
