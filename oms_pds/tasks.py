@@ -92,23 +92,23 @@ def get_date():
 
 @task()
 def sendVerificationSurvey():
-    broadcastNotification(2, "Social Health Survey", get_date() + ": Please take a moment to complete this social health survey", "/survey/?survey=8")
+    broadcastNotification(2,  "{}: Social Health Survey".format(get_date()), "Please take a moment to complete this social health survey", "/survey/?survey=8")
 
 @task()
 def sendPast3DaysSurvey():
-    broadcastNotification(2, "Social Health Survey", get_date() + ": Please take a moment to complete this social health survey", "/survey/?survey=5")
+    broadcastNotification(2, "{}: Social Health Survey".format(get_date()), "Please take a moment to complete this social health survey", "/survey/?survey=5")
 
 @task()
-def sendExperienceSampleSurvey():
-    broadcastNotification(2, "Social Health Survey", get_date() + ": Please take a moment to complete this social health survey", "/survey/?survey=9")
+def sendExperienceSampleSurvey(n):
+    broadcastNotification(2, "{0}, {1}/4: Social Health Survey".format(get_date(), n), "Please take a moment to complete this social health survey", "/survey/?survey=9")
 
 @task()
 def sendSleepStartSurvey():
-    broadcastNotification(2, "Sleep Tracker", get_date() + ": Please take this survey right before bed", "/survey/?survey=10")
+    broadcastNotification(2, "{}: Sleep Tracker".format(get_date()), "Please take this survey right before bed", "/survey/?survey=10")
 
 @task()
 def sendSleepEndSurvey():
-    broadcastNotification(2, "Sleep Tracker", get_date() + ": Please take this survey right after waking up", "/survey/?survey=11")
+    broadcastNotification(2, "{}: Sleep Tracker".format(get_date()), "Please take this survey right after waking up", "/survey/?survey=11")
 
 def minDiff(elements, item):
     return min([abs(el - item) for el in elements])
@@ -119,16 +119,17 @@ def scheduleExperienceSamplesForToday():
     # assuming we send the first within 2 hours of running this, and need to get all surveys done within 8 hours,
     # we can build the list of delays via simple rejection  
     maxDelay = 3600 * 8
-    delays = [random.randint(0,maxDelay)]
+    delays = [random.randint(0, maxDelay)]
     while len(delays) < 4:
         nextDelay = random.randint(0, maxDelay)
         if minDiff(delays, nextDelay) >= 3600:
             delays.append(nextDelay)
     print delays
     print [time.strftime("%H:%M", time.localtime(1385042444 + d)) for d in delays]
-    for t in delays:
+    # send the survey number, too
+    for n, t in enumerate(delays):
         print "sending survey with %s second delay..." % str(t)
-        sendExperienceSampleSurvey.apply_async(countdown = t)
+        sendExperienceSampleSurvey.apply_async((n,), countdown=t)
 
 @task() 
 def findMusicGenres():
