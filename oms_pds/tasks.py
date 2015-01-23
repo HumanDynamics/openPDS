@@ -79,29 +79,36 @@ def notifyAll():
                     print "Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
                     print e
 
+
 def broadcastNotification(notificationType, title, content, uri):
     for profile in Profile.objects.all():
         addNotificationAndNotify(profile, notificationType, title, content, uri)
 
+
+def get_date():
+    today = date.today()
+    return today.strftime('%d %b')
+
+
 @task()
 def sendVerificationSurvey():
-    broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=8")
+    broadcastNotification(2, "Social Health Survey", get_date() + ": Please take a moment to complete this social health survey", "/survey/?survey=8")
 
 @task()
 def sendPast3DaysSurvey():
-    broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=5")
+    broadcastNotification(2, "Social Health Survey", get_date() + ": Please take a moment to complete this social health survey", "/survey/?survey=5")
 
 @task()
 def sendExperienceSampleSurvey():
-    broadcastNotification(2, "Social Health Survey", "Please take a moment to complete this social health survey", "/survey/?survey=9")
+    broadcastNotification(2, "Social Health Survey", get_date() + ": Please take a moment to complete this social health survey", "/survey/?survey=9")
 
 @task()
 def sendSleepStartSurvey():
-    broadcastNotification(2, "Sleep Tracker", "Please take this survey right before bed", "/survey/?survey=10")
+    broadcastNotification(2, "Sleep Tracker", get_date() + ": Please take this survey right before bed", "/survey/?survey=10")
 
 @task()
 def sendSleepEndSurvey():
-    broadcastNotification(2, "Sleep Tracker", "Please take this survey right after waking up", "/survey/?survey=11")
+    broadcastNotification(2, "Sleep Tracker", get_date() + ": Please take this survey right after waking up", "/survey/?survey=11")
 
 def minDiff(elements, item):
     return min([abs(el - item) for el in elements])
