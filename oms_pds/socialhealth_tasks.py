@@ -381,8 +381,13 @@ def formatNotification(question, type="Picker", description="", items=[], **kwar
 def fetchQuestion(profile, device):
     ret_val = None
     q_list = []
-    qtypes = QuestionType.objects.filter(frequency_interval__isnull=False)
-    qtypes = qtypes.filter(goal__isnull=True) | qtypes.filter(goal=profile.goal)
+    
+    if profile.study_status == 'c':
+        qtypes = QuestionType.objects.filter(frequency_interval__isnull=False, intervention_only=False)
+        qtypes = qtypes.filter(goal__isnull=True) | qtypes.filter(goal=profile.goal)
+    else:
+        qtypes = QuestionType.objects.filter(frequency_interval__isnull=False)
+        qtypes = qtypes.filter(goal__isnull=True) | qtypes.filter(goal=profile.goal)
         
     print "DEBUG: got %d question types" % qtypes.count()
     for qtype in qtypes:
@@ -600,7 +605,7 @@ SURVEY_HISTORY_LABEL = "dailysurveyscores"
 
 @task()
 def hourlySocialHealthScores():
-    daysago = .0416 # 1 hour ago
+    daysago = .0833 # 2 hours ago
     timeinterval = 60*15 # 15 minutes
     return socialHealthScores(SOCIALHEALTH_HISTORY_LABEL, daysago, timeinterval)
 
@@ -668,20 +673,68 @@ def saveHistory():
 #QuestionTypes that have specific pks
 QUESTION_TO_PK = {
     "glucose": [1,2],
-    "sleep": 4,
-    "medication": 3,
+    "sleep": [4,5],
+    "medication": [3,],
 }
 
 def calculateMedsScore(profile, daysago):
     return calculateGenericScore(profile, "medication", daysago)
+
+def normalizeSleepScore(score):
+    if score >= 10:
+        return 75
+    if score >= 6:
+        return 100
+    if score >= 4:
+        return 50
+    if score >= 2:
+        return 25
+    return 0
+
 def calculateSleepScore(profile, daysago):
-    return calculateGenericScore(profile, "sleep", daysago)
+    startTime = datetime.fromtimestamp(getStartTime(daysago, True))
+    endTime = datetime.fromtimestamp(time.time())
+    q1s = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK["sleep"][0], answer__isnull=False)
+    q2s = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK["sleep"][1], answer__isnull=False)
+    print "Sleep Instances 1,2: "+str(len(q1s)) + ", " +str(len(q2s))
+
+    q1_total = 0
+    for q in q1s:
+        q1_total += q.answer * 10 #the answer is 0 to 10
+    q1_score = q1_total/len(q1s) if len(q1s) > 0 else DEFAULT_SCORE
+
+    q2_total = 0
+    for q in q2s:
+        q2_total += normalizeSleepScore(q.answer)
+    q2_score = q2_total/len(q2s) if len(q2s) > 0 else DEFAULT_SCORE
+   
+    print "Sleep scores 1,2: "+str(q1_score) + ", " +str(q2_score)
+    print "Sleep total 1,2: "+str(q1_total) + ", " +str(q2_total)
+    print q1s
+    print q2s
+    
+    if len(q2s) > 0 and len(q1s) > 0:
+        return q1_score*.5 + q2_score*.5
+    elif len(q2s) > 0:
+        return q2_score
+    elif len(q1s) > 0:
+        return q1_score
+    return DEFAULT_SCORE
     
 def calculateGoalScore(profile, daysago):
     startTime = datetime.fromtimestamp(getStartTime(daysago, True))
     endTime = datetime.fromtimestamp(time.time())
-    qis = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__goal__isnull=False, question_type__goal=profile.goal, answer__isnull=False)
-    return calculateGenericScoreCustomQuery(qis)
+    qis = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__goal=profile.goal, answer__isnull=False)
+    total = 0
+    for qi in qis:
+        if qi.answer:
+            total += qi.answer*10
+        else:
+            total += DEFAULT_SCORE
+            
+    if len(qis) > 0:
+        return total/len(qis)
+    return DEFAULT_SCORE
 
 DEFAULT_SCORE = 50 #out of 100
 
@@ -689,7 +742,7 @@ DEFAULT_SCORE = 50 #out of 100
 def calculateGenericScore(profile, question_label, daysago):
     startTime = datetime.fromtimestamp(getStartTime(daysago, True))
     endTime = datetime.fromtimestamp(time.time())
-    qis = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK[question_label], answer__isnull=False)
+    qis = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk__in=QUESTION_TO_PK[question_label], answer__isnull=False)
     return calculateGenericScoreCustomQuery(qis)
    
 def calculateGenericScoreCustomQuery(qis):
@@ -716,19 +769,19 @@ def calculateGlucoseScore(profile, daysago):
     gcq1_total = 0
     for gcq in gcq1s:
         gcq1_total += gcq.answer * 100 #the answer is either 0 or 1 here
-    gcq1_score = gcq1_total/len(gcq1s) if len(gcq1s) < 0 else DEFAULT_SCORE
+    gcq1_score = gcq1_total/len(gcq1s) if len(gcq1s) > 0 else DEFAULT_SCORE
 
     gcq2_total = 0
     for gcq in gcq2s:
         gcq2_total += normalizeGlucoseScore(gcq.answer)
-    gcq2_score = gcq2_total/len(gcq2s) if len(gcq2s) < 0 else DEFAULT_SCORE
+    gcq2_score = gcq2_total/len(gcq2s) if len(gcq2s) > 0 else DEFAULT_SCORE
    
-    if len(gcq2s) > 0 and len(gcqp1s) > 0:
+    if len(gcq2s) > 0 and len(gcq1s) > 0:
         return gcq1_score*.25 + gcq2_score*.75
     elif len(gcq2s) > 0:
         return gcq2_score
     elif len(gcq1s) > 0:
-        return gcqp1_score*.50 + gcq2_score*.50
+        return gcq1_score*.50 + gcq2_score*.50
     return DEFAULT_SCORE
 
 def surveyScores(daysago, label):
@@ -750,6 +803,8 @@ def surveyScores(daysago, label):
             glucoseScore = calculateGlucoseScore(profile, daysago)
             sleepScore = calculateSleepScore(profile, daysago)
             goalScore = calculateGoalScore(profile, daysago)
+            
+            print "Sleep Score: " + str(sleepScore)
     
             data = { 'meds':medsScore, 'glucose':glucoseScore, 'sleep':sleepScore, 'goal':goalScore }
             internalDataStore.saveAnswer(label, data)

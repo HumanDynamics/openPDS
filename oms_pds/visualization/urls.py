@@ -28,4 +28,5 @@ urlpatterns = patterns('oms_pds.visualization.views',
     (r'^smartcatch/history', 'smartcatchHistory'),
     (r'^smartcatch/questions', 'smartcatchQuestionsPage'),
     (r'^smartcatch/help', 'smartcatchHelp'),
+    (r'^smartcatch/summary', 'smartcatchSummary'),
 )
