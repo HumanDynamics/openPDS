@@ -436,8 +436,10 @@ function getDateFormatForCutoff(cutoff) {
         return d3.time.format('%b %d')
     } else if (cutoff == weekCutoff) {
         return d3.time.format('%b %d')
-    } else {
+    } else if (cutoff == dayCutoff) {
         return d3.time.format('%b %d, %H:00')
+    } else {
+        return d3.time.format('%b %d')
     }
  }
 
@@ -447,11 +449,24 @@ function generateAxes(svg, x, bins, cutoff) {
     //var formatDate = d3.time.format("%d/%m/%y");
     var formatDate = getDateFormatForCutoff(cutoff);
 
-    // make tick values the first and last of the domain
+    // Most of the axis configs should be fine, but when we have lots of
+    // data being shown, we should add another in the middle
+    tickValues = []
+    var first_val = x.domain()[0]
+    var last_val = x.domain().slice(-1)[0]
+    var middle_index = Math.floor(x.domain().length / 2);
+    var middle_val = x.domain().slice(middle_index)[0]
+    if (cutoff == null && x.domain().length > 30) {
+        tickValues = [first_val, middle_val, last_val];
+    } else {
+        tickValues = [first_val, last_val];
+    }
+
+    // construct the axis
     xAxis = d3.svg.axis()
                   .scale(x)
                   .tickSize(0)
-                  .tickValues([x.domain()[0], x.domain().slice(-1)[0]])
+                  .tickValues(tickValues)
                   .orient("bottom");
 
     svg.append('svg:g')
@@ -463,11 +478,36 @@ function generateAxes(svg, x, bins, cutoff) {
  }
 
 
+// aggregate data for the given date/month cutoff.
+// The cutoff will determine the key we use when aggregating.
+function aggregateData(data, cutoff) {
+    var keyFunc = getDateFormatForCutoff(cutoff);
+
+    var data = d3.nest()
+                 .key(function(d) { return keyFunc(new Date(d.x));})
+                 .rollup(function(d) { 
+                     return d3.mean(d, function(g) {return g.y; });
+                 }).entries(data);
+
+    // nest renames the objects, let's fix the keys.
+    data.forEach(function(d) {
+        d.x = d.key;
+        d.y = d.values;
+        delete d.key;
+        delete d.values;
+    });
+
+    console.log(data);
+    return data
+ }
+
 
 function setupHist(id, data, color, cutoff, label) {
     var svg = d3.select(id);
 
     var parseDate = getDateFormatForCutoff(cutoff);
+    
+    data = aggregateData(data, cutoff);
 
     // if there's no cutoff, we don't want to change the axis range.
     if (cutoff == null) {
@@ -488,6 +528,11 @@ function setupHist(id, data, color, cutoff, label) {
                                            CHART_WIDTH - CHART_MARGINS.right],
                                            0.15);
     }
+
+    // start of group bars, too.
+    /* var x1 = d3.scale.ordinal()
+       x1.domain([color, groupColor])
+       .rangeRoundBands([0, xRange.rangeBand()]); */
 
     generateAxes(svg, xRange, cutoff);
 
