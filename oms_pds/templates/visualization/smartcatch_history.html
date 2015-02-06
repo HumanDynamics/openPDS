@@ -86,10 +86,7 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="goalSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="goalSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="goalSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="goalSVG-day" class="day-line" width="622" height="320"></svg>
+      <svg id="goalSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
 		{% endif %}
@@ -100,10 +97,8 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="glucSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="glucSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="glucSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="glucSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="glucSVG" width="622" height="320"></svg>
+
 			{% endif %}
 		</div>
 
@@ -113,10 +108,7 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="medsSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="medsSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="medsSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="medsSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="medsSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
 
@@ -126,10 +118,7 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="sleepSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="sleepSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="sleepSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="sleepSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="sleepSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
 
@@ -139,10 +128,7 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="socSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="socSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="socSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="socSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="socSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
 
@@ -152,10 +138,7 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="actSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="actSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="actSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="actSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="actSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
 
@@ -165,14 +148,9 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="regSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="regSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="regSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="regSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="regSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
-
-
 	</div>
 
 	<div id="footer"></div>
@@ -403,23 +381,28 @@ var weekCutoff = {{ weekCutoff }} * 1000;
 var monthCutoff = {{ monthCutoff }} * 1000;
 
 function cleanData(data) {
-      var newlist = []
-      for (d in data) {
-	    data[d]["x"] *= 1000; //convert from s to ms
-	    newlist.push(data[d]);
-      }
-      return newlist;
+    var newlist = []
+    for (d in data) {
+        var newx = data[d]['x'] * 1000;
+        newlist.push({'x': newx,
+                      'y': data[d]['y']});
+//	      data[d]["x"] *= 1000; //convert from s to ms
+	      //newlist.push(data[d]);
+    }
+//    console.log(newlist);
+    return newlist;
 }
 
 function filterPoints(data, cutoff) {
       var newlist = []
       for (d in data) {
-	    if (data[d]["x"] >= cutoff) {
-		  newlist.push(data[d]);
-	    }
+	        if (data[d]["x"] >= cutoff) {
+		          newlist.push(data[d]);
+	        }
       }
-      return newlist;
+    return newlist;
 }
+
 var CHART_WIDTH = 622;
 var CHART_HEIGHT = 267;
 var CHART_MARGINS = {
@@ -428,8 +411,26 @@ var CHART_MARGINS = {
   bottom: 0,
   left: 40
 };
+
 var CHART_Y_RANGE = d3.scale.linear().range([CHART_HEIGHT - CHART_MARGINS.top, CHART_MARGINS.bottom]).domain([0,100]);
 
+var SVG_IDS = ['#actSVG', '#socSVG', '#regSVG', '#sleepSVG', '#medsSVG', '#glucSVG', '#goalSVG'];
+
+var SVG_DATA_MAPPING = {'#actSVG': actGData,
+                        '#socSVG': socGData,
+                        '#regSVG': regGData,
+                        '#sleepSVG': sleepGData,
+                        '#medsSVG': medsGData,
+                        '#glucSVG': glucGData,
+                        '#goalSVG': goalGData};
+
+var SVG_COLOR_MAPPING = {'#actSVG': activityColor,
+                         '#socSVG': socialColor,
+                         '#regSVG': regularityColor,
+                         '#sleepSVG': sleepColor,
+                         '#medsSVG': medicationColor,
+                         '#glucSVG': glucoseColor,
+                         '#goalSVG': goalColor};
 
 function getDateFormatForCutoff(cutoff) {
     if (cutoff == monthCutoff) {
@@ -439,44 +440,9 @@ function getDateFormatForCutoff(cutoff) {
     } else if (cutoff == dayCutoff) {
         return d3.time.format('%b %d, %H:00')
     } else {
-        return d3.time.format('%b %d, %H:00')
+        return d3.time.format('%b %d')
     }
  }
-
-
-function generateAxes(svg, x, bins, cutoff) {
-    // create axis, format the date
-    //var formatDate = d3.time.format("%d/%m/%y");
-    var formatDate = getDateFormatForCutoff(cutoff);
-
-    // Most of the axis configs should be fine, but when we have lots of
-    // data being shown, we should add another in the middle
-    tickValues = []
-    var first_val = x.domain()[0]
-    var last_val = x.domain().slice(-1)[0]
-    var middle_index = Math.floor(x.domain().length / 2);
-    var middle_val = x.domain().slice(middle_index)[0]
-    if (cutoff == null && x.domain().length > 30) {
-        tickValues = [first_val, middle_val, last_val];
-    } else {
-        tickValues = [first_val, last_val];
-    }
-
-    // construct the axis
-    xAxis = d3.svg.axis()
-                  .scale(x)
-                  .tickSize(0)
-                  .tickValues(tickValues)
-                  .orient("bottom");
-
-    svg.append('svg:g')
-       .attr('class', 'x axis')
-       .attr('transform', 'translate(0, 300)')
-       .attr('font-size', '13pt')
-       .attr('font-family', 'Roboto Light')
-       .call(xAxis);
- }
-
 
 // aggregate data for the given date/month cutoff.
 // The cutoff will determine the key we use when aggregating.
@@ -502,10 +468,48 @@ function aggregateData(data, cutoff) {
  }
 
 
-function getXScale(cutoff, data) {
-    var parseDate = getDateFormatForCutoff(cutoff);
+function createAxis(svg, x, cutoff) {
+    // create axis, format the date
+    //var formatDate = d3.time.format("%d/%m/%y");
+    var formatDate = getDateFormatForCutoff(cutoff);
+
+    // Most of the axis configs should be fine, but when we have lots of
+    // data being shown, we should add another in the middle
+    tickValues = []
+    var first_val = x.domain()[0]
+    var last_val = x.domain().slice(-1)[0]
+    var middle_index = Math.floor(x.domain().length / 2);
+    var middle_val = x.domain().slice(middle_index)[0]
+    if (cutoff == null && x.domain().length > 30) {
+        tickValues = [first_val, middle_val, last_val];
+    } else {
+        tickValues = [first_val, last_val];
+    }
+
+    // construct the axis
+    xAxis = d3.svg.axis()
+                  .scale(x)
+                  .tickSize(0)
+                  .tickValues(tickValues)
+                  .orient("bottom");
+
+    svg.append('svg:g')
+       .style("opacity",0)
+       .attr('class', 'x axis')
+       .attr('transform', 'translate(0, 300)')
+       .attr('font-size', '13pt')
+       .attr('font-family', 'Roboto Light')
+        .transition()
+        .duration(1000)
+        .style('opacity', 100)
+       .call(xAxis);
+ }
+
+function getXScale(dateCutoff, data) {
+    var parseDate = getDateFormatForCutoff(dateCutoff);
+    console.log('getting x scale for cutoff:', new Date(dateCutoff));
     // if there's no cutoff, we don't want to change the axis range.
-    if (cutoff == null) {
+    if (dateCutoff == null) {
         xRange = d3.scale.ordinal()
                          .domain(data.map(function(d) {
                              return parseDate(new Date(d.x));
@@ -515,7 +519,7 @@ function getXScale(cutoff, data) {
                                            0.15);
     } else {
 	      xRange = d3.scale.ordinal()
-                         .domain([new Date(cutoff), new Date()])
+                         .domain([new Date(dateCutoff), new Date()])
                          .domain(data.map(function(d) {
                              return parseDate(new Date(d.x));
                          }))
@@ -527,61 +531,58 @@ function getXScale(cutoff, data) {
  }
 
 
-function setupHist(id, data, color, cutoff, label) {
-    var svg = d3.select(id);
-    data = aggregateData(data, cutoff);
-    xRange = getXScale(cutoff, data)
+function setupAxes(dateCutoff) {
+    for (i in SVG_IDS) {
+        var svg = d3.select(SVG_IDS[i]);
+        var data = getData(SVG_IDS[i], dateCutoff);
+        data = aggregateData(data, dateCutoff);
 
-    generateAxes(svg, xRange, cutoff);
-
-    // get the range of y values from the binned data
-    var yRange = d3.scale.linear()
-                         .domain([0, 100])
-                         .range([CHART_HEIGHT, 0]);
-
-    var parseDate = getDateFormatForCutoff(cutoff);
-    // convenience function to convert to date and parse x values
-    var get_x_range = function(x) {
-        return xRange(parseDate(new Date(x)));
+        x = getXScale(dateCutoff, data);
+        createAxis(svg, x, dateCutoff);
     }
-
-    svg.selectAll(".bar")
-       .data(data)
-       .enter()
-       .append("rect")
-       .attr("width", xRange.rangeBand())
-       .attr("x", function(d) { return get_x_range(d.x);})
-       .attr("height", function(d) { return 0;})
-       .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
-       .attr('fill', color)
-       .attr('class', label)
-       .transition().delay(function (d,i){ return i * 35;})
-       .duration(300)
-       .attr("y", function(d) { return yRange(d.y); })
-       .attr("height", function(d) { return CHART_HEIGHT - yRange(d.y); });
  }
 
 
-function setupFilteredDataLines(id, data, color, label) {
-    var cleanedData = cleanData(data);
-
-    //TEMP - for testing
-    var new_data = [];
-    var item;
-    for (item in cleanedData) {
-        new_data.push({'x': cleanedData[item].x,
-                       'y': Math.floor(Math.random() * 100)});
-    }
-    cleanedData = new_data;
-
-    setupHist(id+"-full", cleanedData, color, null, label);
-    var dataMonth = filterPoints(cleanedData, monthCutoff);
-    setupHist(id+"-month", dataMonth, color, monthCutoff, label);
-    var dataWeek = filterPoints(dataMonth, weekCutoff);
-    setupHist(id+"-week", dataWeek, color, weekCutoff, label);
-    var dataDay = filterPoints(dataWeek, dayCutoff);
-    setupHist(id+"-day", dataDay, color, dayCutoff, label);
+function setupChart(svg, data, dateCutoff, x, y) {
+    console.log("setting up chart...");
+    createAxis(svg, x, dateCutoff);
+    var parseDate = getDateFormatForCutoff(dateCutoff);
+    var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
+    var label = "user";
+    svg.selectAll('.bar')
+        .data(data)
+        .enter()
+        .append("rect")
+        .attr("width", x.rangeBand())
+        .attr("x", function(d) { return x(parseDate(new Date(d.x))); })
+        .attr("height", function(d) { return 0;})
+        .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
+        .attr('fill', color)
+        .attr('class', label)
+        .transition().delay(function (d,i){ return i * 35;})
+        .duration(300)
+        .attr("y", function(d) { return y(d.y); })
+        .attr("height", function(d) { return CHART_HEIGHT - y(d.y); });
  }
+
+
+function setupCharts(dateCutoff) {
+    console.log("setting up charts. date cutoff:", dateCutoff);
+    for (i in SVG_IDS) {
+        var svg = d3.select(SVG_IDS[i]);
+        var data = getData(SVG_IDS[i], dateCutoff);
+        console.log('setup data:', data);
+        data = aggregateData(data, dateCutoff);
+        x = getXScale(dateCutoff, data);
+        y = d3.scale.linear()
+                    .domain([0, 100])
+                    .range([CHART_HEIGHT, 0]);
+
+        setupChart(svg, data, dateCutoff, x, y);
+    }
+ }
+
+
 
 
 function showGroupBars() {
@@ -597,40 +598,164 @@ function showGroupBars() {
  }
 
 
-var svgs = ['.day-line', '.month-line', '.week-line', 'full-line']
-function hideBars(id) {
-    for (i in svgs) {
-        svg = d3.selectAll(svgs[i]);
-        svg.selectAll(id)
+function getData(chartID, dateCutoff) {
+    console.log('getting data for chart ID: ', chartID, " and date cutoff: ", dateCutoff);
+    var data = SVG_DATA_MAPPING[chartID];
+    var data = cleanData(data);
+
+    var monthData = filterPoints(data, monthCutoff);
+    var weekData = filterPoints(monthData, weekCutoff);
+    var dayData = filterPoints(weekData, dayCutoff);
+
+    if (dateCutoff == monthCutoff) {
+        console.log("getting month data for", chartID);
+        data = monthData;
+    } else if (dateCutoff == weekCutoff) {
+        console.log("getting week data for", chartID);
+        data = weekData;
+    } else if (dateCutoff == dayCutoff) {
+        console.log("getting day data for", chartID);
+        data = dayData;
+    } else {
+        console.log("getting all data for", chartID);
+        console.log("date cutoff:", new Date(dateCutoff));
+    }
+
+    //TEMP - for testing
+    var new_data = [];
+    var item;
+    for (item in data) {
+        new_data.push({'x': data[item].x,
+                       'y': Math.floor(Math.random() * 100)});
+    }
+    return new_data;
+    //TEMP
+ }
+ /* function setupCharts(dateCutoff) {
+    for (i in SVG_IDS) {
+    var svg = d3.select(SVG_IDS[i]);
+    data = getData(SVG_IDS[i], dateCutoff);
+    data = aggregateData(data, dateCutoff);
+    xRange = getXScale(dateCutoff, data);
+    createAxis(svg, xRange, dateCutoff);
+    var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
+    var label = "user";
+
+    // get the range of y values from the binned data
+    var yRange = d3.scale.linear()
+    .domain([0, 100])
+    .range([CHART_HEIGHT, 0]);
+
+    var parseDate = getDateFormatForCutoff(dateCutoff);
+    // convenience function to convert to date and parse x values
+    var get_x_range = function(x) {
+    return xRange(parseDate(new Date(x)));
+    }
+
+    svg.selectAll(".bar")
+    .data(data)
+    .enter()
+    .append("rect")
+    .attr("width", xRange.rangeBand())
+    .attr("x", function(d) { return get_x_range(d.x);})
+    .attr("height", function(d) { return 0;})
+    .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
+    .attr('fill', color)
+    .attr('class', label)
+    .transition().delay(function (d,i){ return i * 35;})
+    .duration(300)
+    .attr("y", function(d) { return yRange(d.y); })
+    .attr("height", function(d) { return CHART_HEIGHT - yRange(d.y); });
+    }
+    
+    } */
+
+
+function updateCharts(dateCutoff) {
+    for (i in SVG_IDS) {
+        var svg = d3.selectAll(SVG_IDS[i]);
+        var data = getData(SVG_IDS[i], dateCutoff);
+        console.log('updated data:', data);
+        console.log('updated date cutoff:', dateCutoff);
+        data = aggregateData(data, dateCutoff);
+        var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
+        var label = "user";
+
+        var parseDate = getDateFormatForCutoff(dateCutoff);
+
+        var y = d3.scale.linear()
+                        .domain([0, 100])
+                        .range([CHART_HEIGHT, 0]);
+        var x = getXScale(dateCutoff, data);
+
+        console.log('x axis:', x.domain());
+
+        // replace axis
+        svg.selectAll('g.x.axis')
+            .transition()
+            .duration(500)
+            .style("opacity",0)
+            .remove();
+
+        createAxis(svg, x, dateCutoff);
+
+        // remove the bars
+        svg.selectAll('.user')
            .transition()
-           .duration(300)
-           .ease("exp")
+           .duration(500)
+//           .ease("exp")
            .attr('y', CHART_HEIGHT - 0.5)
            .attr("height", 0)
-           .remove()
+           .remove();
+
+        // bring back with new data
+        svg.selectAll(".bar")
+           .data(data)
+           .enter()
+           .append("rect")
+           .attr("width", xRange.rangeBand())
+           .attr("x", function(d) { return x(parseDate(new Date(d.x))); })
+           .attr("height", function(d) { return 0;})
+           .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
+           .attr('fill', color)
+           .attr('class', label)
+           .transition()
+//           .ease('exp')
+           //.transition().delay(function (d,i){ return i * 35;})
+           .duration(1000)
+           .attr("y", function(d) { return y(d.y); })
+           .attr("height", function(d) { return CHART_HEIGHT - y(d.y); });
     }
  }
 
 
 //var groupColor = "#7092a2";
 var groupColor = 'rgba(95, 127, 147, 0.50)';
-setupFilteredDataLines("#actSVG", actData, activityColor, "user");
-setupFilteredDataLines("#socSVG", socData, socialColor, "user");
-setupFilteredDataLines("#regSVG", regData, regularityColor, "user");
-setupFilteredDataLines("#sleepSVG", slpData, sleepColor, "user");
-setupFilteredDataLines("#medsSVG", medData, medicationColor, "user");
-setupFilteredDataLines("#glucSVG", gluData, glucoseColor, "user");
-setupFilteredDataLines("#goalSVG", goalData, goalColor, "user");
+ /* setupFilteredDataLines("#actSVG", actData, activityColor, "user");
+    setupFilteredDataLines("#socSVG", socData, socialColor, "user");
+    setupFilteredDataLines("#regSVG", regData, regularityColor, "user");
+    setupFilteredDataLines("#sleepSVG", slpData, sleepColor, "user");
+    setupFilteredDataLines("#medsSVG", medData, medicationColor, "user");
+    setupFilteredDataLines("#glucSVG", gluData, glucoseColor, "user");
+    setupFilteredDataLines("#goalSVG", goalData, goalColor, "user"); */
 
+setupCharts(dayCutoff);
 
-var filter_selected 
+var CLASS_CUTOFF_MAPPING = {'day-line': dayCutoff,
+                            'week-line': weekCutoff,
+                            'month-line': monthCutoff}
+
 $(".filter-button").click(function() {
-    $("svg").hide();
-    console.log($(this).attr("id"));
-    $("." + $(this).attr("id")).show();
+    //$("svg").hide();
+    console.log('clicked cutoff button: ', $(this).attr('id'));
+    dateCutoff = CLASS_CUTOFF_MAPPING[$(this).attr("id")];
+    console.log('updating for cutoff: ', dateCutoff);
+
+    updateCharts(dateCutoff);
+//    $("." + $(this).attr("id")).show();
     $(".button-selected").removeClass("button-selected");
     $(this).addClass("button-selected");
- }).eq(0).click();
+ })//.eq(0).click();
 
 
 var groupAlreadyShown = false;
