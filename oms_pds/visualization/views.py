@@ -100,6 +100,8 @@ MOREINFO_GOAL_URL = {
 def smartcatchMyResults(request):
     datastore_owner_uuid = request.GET["datastore_owner"]
     profile, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
+    if profile.study_status == 'c':
+        return smartcatchSplash(request)
     
     #TODO right now the bearer_token is not being checked. This must be checked.
     internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
@@ -166,6 +168,8 @@ def smartcatchSplash(request):
 def smartcatchHistory(request):
     datastore_owner_uuid = request.GET["datastore_owner"]
     profile, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
+    if profile.study_status == 'c':
+        return smartcatchSplash(request)
     
     #TODO right now the bearer_token is not being checked. This must be checked.
     internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
