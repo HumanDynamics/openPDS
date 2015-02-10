@@ -8,6 +8,7 @@ from oms_pds.pds.internal import getInternalDataStore
 import pdb, datetime, re, time, math
 from oms_pds.pds.models import Profile, QuestionInstance, QuestionType
 from django.core.urlresolvers import reverse
+from django.db.models import Avg, StdDev
 
 def places(request):
     template = {}
@@ -99,6 +100,8 @@ MOREINFO_GOAL_URL = {
 def smartcatchMyResults(request):
     datastore_owner_uuid = request.GET["datastore_owner"]
     profile, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
+    if profile.study_status == 'c':
+        return smartcatchSplash(request)
     
     #TODO right now the bearer_token is not being checked. This must be checked.
     internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
@@ -165,6 +168,8 @@ def smartcatchSplash(request):
 def smartcatchHistory(request):
     datastore_owner_uuid = request.GET["datastore_owner"]
     profile, ds_owner_created = Profile.objects.get_or_create(uuid = datastore_owner_uuid)
+    if profile.study_status == 'c':
+        return smartcatchSplash(request)
     
     #TODO right now the bearer_token is not being checked. This must be checked.
     internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
@@ -227,3 +232,102 @@ def smartcatchHelp(request):
     return render_to_response("visualization/smartcatch_help.html", {
     }, context_instance=RequestContext(request))
     
+def smartcatchSummary(request):
+    response = ''
+    
+    now = datetime.datetime.now()
+    sevendaysago = now - datetime.timedelta(days=7)
+    
+    totalParticipants = Profile.objects.filter(study_status__in=['i','c'])
+    control = totalParticipants.filter(study_status='c')
+    intervention = totalParticipants.filter(study_status='i')
+    response += "Total Participants: %s<br/>" % (str(totalParticipants.count()))
+    response += "Control: %s<br/>" % (str(control.count()))
+    response += "Intervention: %s<br/>" % (str(intervention.count()))
+    response += "<br/>"
+    
+    controlWhoAnswerQuestions = Profile.objects.filter(study_status='c', questioninstance__datetime__range=[sevendaysago, now], questioninstance__answer__isnull=False).distinct()
+    interventionWhoAnswerQuestions = Profile.objects.filter(study_status='i', questioninstance__datetime__range=[sevendaysago, now], questioninstance__answer__isnull=False).distinct()
+    allWhoAnswerQuestions = Profile.objects.filter(study_status__in=['i', 'c'], questioninstance__datetime__range=[sevendaysago, now], questioninstance__answer__isnull=False).distinct()
+    response += "Number of participants responding to their notifications this week: %s<br/>" % (str(allWhoAnswerQuestions.count()))
+    response += "Number of control responding to their notifications this week: %s<br/>" % (str(controlWhoAnswerQuestions.count()))
+    response += "Number of intervention responding to their notifications this week: %s<br/>" % (str(interventionWhoAnswerQuestions.count()))
+    response += "<br/>"
+    
+    allResponse = QuestionInstance.objects.filter(profile__study_status__in=['c', 'i'], datetime__range=[sevendaysago, now])
+    allResponsePercent = float(allResponse.filter(answer__isnull=False).count()) / float(allResponse.count())*100
+    controlResponse = QuestionInstance.objects.filter(profile__study_status='c', datetime__range=[sevendaysago, now])
+    controlResponsePercent = float(controlResponse.filter(answer__isnull=False).count()) / float(controlResponse.count())*100 
+    interventionResponse = QuestionInstance.objects.filter(profile__study_status='i', datetime__range=[sevendaysago, now])
+    interventionResponsePercent = float(interventionResponse.filter(answer__isnull=False).count()) / float(interventionResponse.count())*100
+    response += "Percentage of completed notifications for all participants this week: %s%%<br/>" % (str(allResponsePercent))
+    response += "Percentage of completed notifications for control this week: %s%%<br/>" % (str(controlResponsePercent))
+    response += "Percentage of completed notifications for intervention this week: %s%%<br/>" % (str(interventionResponsePercent))
+    response += "<br/>"
+    
+    for i, p in enumerate(totalParticipants):
+        userInstances = QuestionInstance.objects.filter(profile=p, datetime__range=[sevendaysago, now])
+        userResponsePercent = float(userInstances.filter(answer__isnull=False).count()) / float(userInstances.count())*100
+        response += "%s. Percentage of completed notifications for individual user this week: %s%% (%s)<br/>" % (str(i+1), str(userResponsePercent), p.get_study_status_display())
+    response += "<br/>"
+    
+    allGlu = QuestionInstance.objects.filter(profile__study_status__in=['c','i'], question_type=2, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    controlGlu = QuestionInstance.objects.filter(profile__study_status='c', question_type=2, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    interventionGlu = QuestionInstance.objects.filter(profile__study_status='i', question_type=2, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    response += "Glucose avg and std dev for all questions this week : %s<br/>" % (str(allGlu))
+    response += "Glucose avg and std dev for control questions this week : %s<br/>" % (str(controlGlu))
+    response += "Glucose avg and std dev for intervention questions this week : %s<br/>" % (str(interventionGlu))
+    response += "<br/>"
+
+    allSleep = QuestionInstance.objects.filter(profile__study_status__in=['c','i'], question_type=5, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    controlSleep = QuestionInstance.objects.filter(profile__study_status='c', question_type=5, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    interventionSleep = QuestionInstance.objects.filter(profile__study_status='i', question_type=5, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    response += "Number of hours of sleep avg and std dev for all questions this week : %s<br/>" % (str(allSleep))
+    response += "Number of hours of sleep avg and std dev for control questions this week : %s<br/>" % (str(controlSleep))
+    response += "Number of hours of sleep avg and std dev for intervention questions this week : %s<br/>" % (str(interventionSleep))
+    response += "<br/>"
+
+    allMeds = QuestionInstance.objects.filter(profile__study_status__in=['c','i'], question_type=3, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    controlMeds = QuestionInstance.objects.filter(profile__study_status='c', question_type=3, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    interventionMeds = QuestionInstance.objects.filter(profile__study_status='i', question_type=3, datetime__range=[sevendaysago, now], answer__isnull=False).aggregate(Avg('answer'), StdDev('answer'))
+    response += "Meds avg and std dev for all questions this week (0=None of my meds, 100=All doses): %s<br/>" % (str(allMeds))
+    response += "Meds avg and std dev for control questions this week (0=None of my meds, 100=All doses): %s<br/>" % (str(controlMeds))
+    response += "Meds avg and std dev for intervention questions this week (0=None of my meds, 100=All doses): %s<br/>" % (str(interventionMeds))
+    response += "<br/>"
+
+    gluListC = []
+    gluListI = []
+    sleepListC = []
+    sleepListI = []
+    medsListC = []
+    medsListI = []
+    for i, p in enumerate(totalParticipants):
+        glu = QuestionInstance.objects.filter(profile=p, datetime__range=[sevendaysago, now], question_type=2, answer__isnull=False).aggregate(Avg('answer'))['answer__avg']
+        sleep = QuestionInstance.objects.filter(profile=p, datetime__range=[sevendaysago, now], question_type=5, answer__isnull=False).aggregate(Avg('answer'))['answer__avg']
+        meds = QuestionInstance.objects.filter(profile=p, datetime__range=[sevendaysago, now], question_type=3, answer__isnull=False).aggregate(Avg('answer'))['answer__avg']
+        if p.study_status == 'i':
+            gluListI.append(glu)
+            sleepListI.append(sleep)
+            medsListI.append(meds)
+        else:
+            gluListC.append(glu)
+            sleepListC.append(sleep)
+            medsListC.append(meds)
+    
+    response += "Average Glucose of intervention: %s<br/>" % (str(getListAvg(gluListI)))
+    response += "Average Glucose of control: %s<br/>" % (str(getListAvg(gluListC)))
+    response += "<br/>"
+    response += "Average Hours of Sleep of intervention: %s<br/>" % (str(getListAvg(sleepListI)))
+    response += "Average Hours of Sleep of control: %s<br>" % (str(getListAvg(sleepListC)))
+    response += "<br/>"
+    response += "Average Meds score of intervention (0=None of my meds, 100=All doses) %s<br/>" % (str(getListAvg(medsListI)))
+    response += "Average Meds score of control (0=None of my meds, 100=All doses): %s<br/>" % (str(getListAvg(medsListC)))
+    response += "<br/>"
+    return HttpResponse(response)
+    
+def getListAvg(l):
+    l = filter(lambda x: x != None, l)
+    try:
+        return reduce(lambda x, y: float(x)+float(y), l) / float(len(l))
+    except:
+        return None

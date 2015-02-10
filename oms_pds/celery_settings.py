@@ -30,7 +30,7 @@ CELERYBEAT_SCHEDULE = {
     "determine-avgs-and-history-social-health-scores": { #update history for social health and surveys. Also calculate averages for each user
         "task": "oms_pds.socialhealth_tasks.saveHistory",
         #"schedule": crontab(hour="*", minute="*/45")
-        "schedule": crontab(hour="*", minute="*/20")
+        "schedule": crontab(hour="*/2", minute="*")
      },
     "smartcatch-notifications": {
         "task": "oms_pds.socialhealth_tasks.smartcatchNotifications",
@@ -51,7 +51,7 @@ CELERYBEAT_SCHEDULE = {
 #    },
     "dump-survey-data": {
         "task": "oms_pds.tasks.dumpSurveyData",
-        "schedule": crontab(hour="0", minute="0")
+        "schedule": crontab(hour="*", minute="*/20")
     },
     "dump-funf-data": {
         "task": "oms_pds.tasks.dumpFunfData",
@@ -66,9 +66,9 @@ CELERYBEAT_SCHEDULE = {
 #       "task": "oms_pds.tasks.sendSleepEndSurvey",
 #       "schedule": crontab(hour="5", minute=0)
 #   },
-#    "recent-probe-counts": {
-#        "task": "oms_pds.tasks.recentProbeCounts",
-#        "schedule": crontab(hour="*", minute="*")
-#    },
+    "recent-probe-counts": {
+        "task": "oms_pds.tasks.recentProbeCounts",
+        "schedule": crontab(hour="*", minute="*/5")
+    },
 }
 

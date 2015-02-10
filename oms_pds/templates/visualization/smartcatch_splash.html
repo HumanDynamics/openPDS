@@ -59,11 +59,11 @@ smartCATCH
 	<!--<div id="logo-border-white">
 		<img id="Logo" src="/static/mgh/SmartCatch_design_app/Img/general/Logo_white.png"/>
 	</div>-->
-      {% if not control %}
 	<center><img id="splashHeart"/></center>
 	<center><div class="splashText" id="splashEncourage1"></div></center>
 	<center><div class="splashText" id="splashEncourage2"></div></center>
 	<center><div class="splashText" id="splashUnderscore">_</div></center>
+      {% if not control %}
 	<center>	
 		<div id="rectContainer">
 			<img class='splashRect' id="bar5" src="/static/mgh/SmartCatch_design_app/Img/splashscreen/emptybar.png"/>
@@ -77,9 +77,9 @@ smartCATCH
 			<img class='splashRect' id='bar1' src="/static/mgh/SmartCatch_design_app/Img/splashscreen/emptybar.png"/>
 		</div>
 	</center>
+      {% endif %}
 	
 	<div id="splashFooter"></div>
-      {% endif %}
 </div>
 
 
@@ -395,17 +395,21 @@ $('.medicationBars').css('background-color',medicationColor)
 $('.glucoseBars').css('background-color',glucoseColor)
 $('.goalBars').css('background-color',goalColor)
 		
-setTimeout(redirectSplash, 4000);
+{% if not control %}
+      setTimeout(redirectSplash, 4000);
+{% endif %}
 
 function redirectSplash() {
 	$("#content").fadeOut();
   window.location = "http://mgh.media.mit.edu:8080/visualization/smartcatch/myresults?bearer_token={{ request.GET.bearer_token }}&datastore_owner={{ request.GET.datastore_owner }}"
 }
 
-//splash screen
-$("#splash").click(function(){
-	redurectSplash();
-});
+{% if not control %}
+      //splash screen
+      $("#splash").click(function(){
+	      redirectSplash();
+      });
+{% endif %}
 	
 var allBarsAvg=[Avg(socD),Avg(actD),Avg(regD), Avg(slpD), Avg(goalD), Avg(gluD), Avg(medD)];
 var barFilled=0;
@@ -416,24 +420,31 @@ for (var a in allBarsAvg) {
 }
 
 
-if(barFilled>=4){
-	var splashColor='#27dc84';
-	$('#splashEncourage1').text('Keep going,');
-	$('#splashEncourage2').text('You are doing great!');
-	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/goodheart.png')
-	}
-else if(barFilled>=2){
-	var splashColor='#f9ce20';
-	$('#splashEncourage1').text('Almost there,');
-	$('#splashEncourage2').text('Keep working on!');
-	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/mediumheart.png')
-	}
-else{
-	var splashColor='#FF5f5f';
-	$('#splashEncourage1').text('You can do better,');
-	$('#splashEncourage2').text('Keep trying!');
-	$('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/badheart.png')
-};
+{% if control %}
+      var splashColor='#27dc84';
+      $('#splashEncourage1').text('Everything is working just great,');
+      $('#splashEncourage2').text('Thanks for your participation!');
+      $('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/goodheart.png')
+{% else %}
+      if(barFilled>=4){
+	      var splashColor='#27dc84';
+	      $('#splashEncourage1').text('Keep going,');
+	      $('#splashEncourage2').text('You are doing great!');
+	      $('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/goodheart.png')
+	      }
+      else if(barFilled>=2){
+	      var splashColor='#f9ce20';
+	      $('#splashEncourage1').text('Almost there,');
+	      $('#splashEncourage2').text('Keep working on!');
+	      $('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/mediumheart.png')
+	      }
+      else{
+	      var splashColor='#FF5f5f';
+	      $('#splashEncourage1').text('You can do better,');
+	      $('#splashEncourage2').text('Keep trying!');
+	      $('#splashHeart').attr('src','/static/mgh/SmartCatch_design_app/Img/splashscreen/badheart.png')
+      };
+{% endif %}
 
 var rectColor=splashColor;
 $('#splash').css('background-color',splashColor);
