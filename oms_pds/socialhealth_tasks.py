@@ -34,6 +34,9 @@ ANSWERKEY_NAME_MAPPING = {
 
 REPEAT_INTERVAL = 60 #2 # when repeated questions should be asked again in minutes
 
+# time to live for GCM notifications. 12 hours.
+GCM_TIME_TO_LIVE = 43200
+
 def copyData(fromInternalDataStore, toInternalDataStore):
     startTime = 1391291231
     endTime = 1392768449
@@ -53,7 +56,7 @@ def CDF(x, mean, dev):
 def computeActivityScore(activityList):
     recentActiveTotals = [1.0 * float(item["low"]) + item["high"] for item in activityList]
     recentTotal = float(sum([item["total"] for item in activityList]))
-     
+
     factor = 1000.0 / recentTotal if recentTotal > 0 else 1
     activeTotal = factor * float(sum(recentActiveTotals))
     return min(10.0 * CDF(activeTotal, 54, 39), 10)
@@ -102,7 +105,7 @@ def activityForTimeRange(internalDataStore, start, end, includeBlanks = False, i
     lowActivityIntervals = highActivityIntervals = totalIntervals = 0
 
     activityEntries = internalDataStore.getData("ActivityProbe", start, end)
-    if activityEntries is not None and (includeBlanks or activityEntries.count() > 0):        
+    if activityEntries is not None and (includeBlanks or activityEntries.count() > 0):
         for data in activityEntries:
             #pdb.set_trace()
             dataValue = data["value"]
@@ -143,7 +146,7 @@ def focusForTimeRange(internalDataStore, start, end, includeBlanks = False, incl
 
 def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, includeSelfAssessed = False):
     score = 0
-    
+
     # Get bluetooth entries for mobile phones only (middle byte == 02)
     # Also, filter out entries that were far away (looking at signal strength > -75) This number just seemed to fit the data well
     # The rationale for the signal strength filtering is that we want to try and keep this to face-to-face interactions
@@ -157,7 +160,7 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
         totalBt = sum(btByPerson)
         frequencies = [count / totalBt if totalBt > 0 else 1 for count in btByPerson]
         score += sum([-frequency * math.log(frequency, 10) for frequency in frequencies]) * 10
-        
+
     # For now, we're just taking the most recent probe value and checking message / call dates within it
     # This will not account for messages or call log entries that might have been deleted.
 
@@ -165,15 +168,15 @@ def socialForTimeRange(internalDataStore, start, end, includeBlanks = False, inc
     # Given that SMS and call log probes may include all messages and calls stored on the phone, we can't just look
     # at entries collected during that time frame
     smsEntries = internalDataStore.getData("SmsProbe", start, None)
-    
+
     if smsEntries is not None and (includeBlanks or smsEntries.count() > 0 or score > 0):
-        # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages        
+        # Message times are recorded at the millisecond level. It should be safe to use that as a unique id for messages
         messages = [smsEntry["value"] for smsEntry in smsEntries]
         messages = [message for message in messages if message["date"] >= start*1000 and message["date"] < end*1000]
-        
+
         # We're assuming a hit on a thread is equivalent to a single phone call
         messageCountByThread = []
-        
+
         for threadId in set([message["thread_id"] for message in messages]):
             smsCount = float(len([message for message in messages if message["thread_id"] == threadId]))
             messageCountByThread.append(smsCount)
@@ -235,12 +238,12 @@ def aggregateForAllUsers(answerKey, timeRanges, aggregator, serviceId, includeBl
 
 def aggregateForUser(internalDataStore, answerKey, timeRanges, aggregator, includeBlanks = False):
     aggregates = []
-    
+
     for (start, end) in timeRanges:
         data = aggregator(internalDataStore, start, end)
         if data is not None:
             aggregates.append(aggregator(internalDataStore, start, end, includeBlanks))
-    
+
     if answerKey is not None:
         internalDataStore.saveAnswer(answerKey, aggregates)
 
@@ -266,7 +269,7 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
     startTime = time.mktime((today - timedelta(days=6)).timetuple())
     timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
     data = aggregateForAllUsers(None, timeRanges, focusForTimeRange, "Focus", includeBlanks)
- 
+
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
             data[uuid] = []
@@ -275,15 +278,15 @@ def recentFocusLevels(includeBlanks = False, means = None, devs = None):
                 dev = devs[uuid] if devs[uuid] > 0 else 1
                 for f in focusList:
                     f["focus"] = 10.0*(1.0 - CDF(f["focus"], mean, dev))
-                    data[uuid].append(f)                
+                    data[uuid].append(f)
             else:
                 for f in focusList:
                     f["focus"] = int(f["focus"])
-                    data[uuid].append(f)               
+                    data[uuid].append(f)
             profile = Profile.objects.get(uuid = uuid)
             # TODO: get a token here to run internal queries against...
             ids = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
-            ids.saveAnswer(answerKey, data[uuid]) 
+            ids.saveAnswer(answerKey, data[uuid])
     return data
 
 def recentSocialLevels(includeBlanks = False):
@@ -292,7 +295,7 @@ def recentSocialLevels(includeBlanks = False):
     startTime = getStartTime(6, True)
     timeRanges = [(start, start + 3600*4) for start in range(int(startTime), int(currentTime), 3600*4)]
     data = aggregateForAllUsers(answerKey, timeRanges, socialForTimeRange, "Social", includeBlanks)
-    
+
     return data
 
 def recentSocialLevels2(internalDataStore, includeBlanks = False):
@@ -310,11 +313,11 @@ def recentActivityScore():
     currentTime = time.time()
     data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 7, currentTime)], activityForTimeRange, "Activity", False)
     score = {}
-   
+
     for uuid, activityList in data.iteritems():
         if len(activityList) > 0:
             score[uuid] = computeActivityScore(activityList)
-    
+
     return score
 
 def yearlyActivityScore():
@@ -322,11 +325,11 @@ def yearlyActivityScore():
     currentTime = time.time()
     data = aggregateForAllUsers(None, [(currentTime - 3600 * 24 * 365, currentTime)], activityForTimeRange, "Activity", False)
     score = {}
-   
+
     for uuid, activityList in data.iteritems():
         if len(activityList) > 0:
             score[uuid] = computeActivityScore(activityList)
-    
+
     return score
 
 def recentFocusScore():
@@ -338,11 +341,11 @@ def recentFocusScore():
     screenOnAverages = { uuid: float(sum([f["focus"] for f in focusList])) / len(focusList) if len(focusList) > 0 else 0  for uuid, focusList in data.iteritems()}
     screenOnStdDevs = { uuid: math.sqrt(sum([(f["focus"] - screenOnAverages[uuid])**2 for f in focusList]) / len(focusList)) if len(focusList) > 0 else 0 for uuid, focusList in data.iteritems()}
     data = recentFocusLevels(True, screenOnAverages, screenOnStdDevs)
-    
+
     for uuid, focusList in data.iteritems():
         if len(focusList) > 0:
             score[uuid] = computeFocusScore(focusList)
-    
+
     return score
 
 def recentSocialScore():
@@ -354,7 +357,7 @@ def recentSocialScore():
     for uuid, socialList in data.iteritems():
         if len(socialList) > 0:
             score[uuid] = computeSocialScore(socialList)
-    
+
     return score
 
 
@@ -383,7 +386,7 @@ def fetchQuestion(profile, device):
     q_list = []
     qtypes = QuestionType.objects.filter(frequency_interval__isnull=False)
     qtypes = qtypes.filter(goal__isnull=True) | qtypes.filter(goal=profile.goal)
-        
+
     print "DEBUG: got %d question types" % qtypes.count()
     for qtype in qtypes:
         # Get previous recent questions asked
@@ -391,26 +394,26 @@ def fetchQuestion(profile, device):
         # TODO: d needs to be based on wakeup time of the current user, and not on NOW.
 #        d = date.today() - timedelta(minutes=qtype.frequency_interval)
 #        questions = QuestionInstance.objects.filter(profile=profile).filter(datetime__gt=d).filter(question_type=qtype) # TODO: probably need an index: (profile, datetime).
-        
+
         questions = QuestionInstance.objects.filter(profile=profile).filter(question_type=qtype).filter(expired=False)
 
         print "QUESTIONS = %s" % questions
-        
+
         if qtype.sleep_offset < 0:
-            d_ask = datetime.combine(datetime.date(datetime.today()), profile.sleep) - timedelta(qtype.sleep_offset) 
+            d_ask = datetime.combine(datetime.date(datetime.today()), profile.sleep) - timedelta(qtype.sleep_offset)
         else:
-            d_ask = datetime.combine(datetime.date(datetime.today()), profile.wake) + timedelta(qtype.sleep_offset) 
+            d_ask = datetime.combine(datetime.date(datetime.today()), profile.wake) + timedelta(qtype.sleep_offset)
         if (questions.count() == 0 and d_ask.time() < datetime.time(datetime.now()) ):
             # this question wasn't asked yet. Generate it.
             q = QuestionInstance(question_type=qtype, profile=profile)
             q_list.append({'instance': q, 'type': qtype})
-            
+
             qf = None
             if qtype.followup_question:
                 # generate the data question as well
                 qf = QuestionInstance(question_type=qtype.followup_question, profile=profile)
                 q.notification_counter = 1
-            
+
             q.save()
             if qf:
                 qf.save()
@@ -419,7 +422,7 @@ def fetchQuestion(profile, device):
             q = None
             if ql:
                 q = ql[0]
-            
+
             if (q and qtype.resend_quantity > q.notification_counter):
                 # Check if q needs to be reasked and act accordingly
                 next_qtime = q.datetime + timedelta(minutes=REPEAT_INTERVAL)
@@ -429,13 +432,13 @@ def fetchQuestion(profile, device):
                         q.notification_counter = q.notification_counter + 1
                         q.save()
                         q_list.append({'instance': q, 'type': qtype})
-        
+
     # at this point q_list contains notification questions (not followups)
     if len(q_list) > 1:
         ret_val = {'question': ('You have %d unanswered questions' % len(q_list)), 'description': 'Multiple questions', 'action': -1}
     elif len(q_list) == 1:
         ret_val = {'question': q_list[0]['type'].text, 'description': q_list[0]['type'].text, 'action': q_list[0]['instance'].id}
-    
+
     return ret_val
 
 def expireQuestions():
@@ -446,7 +449,7 @@ def expireQuestions():
             # This question is expired. Update it
             question.expired = True
             print "Expiring question %d" % question.id
-            question.save() 
+            question.save()
 
 @task()
 def smartcatchNotifications():
@@ -456,29 +459,35 @@ def smartcatchNotifications():
     profiles = Profile.objects.all()
     for profile in profiles:
 
-	    if Device.objects.filter(datastore_owner = profile).count() > 0:
-        	gcm = GCM(settings.GCM_API_KEY)
-	        for device in Device.objects.filter(datastore_owner = profile):
-        	    try:
-                	# add the notification to the D
-			q_params = fetchQuestion(profile, device)
-			print 'q_params = %s' % q_params
-			if q_params is not None:
-        	        	js = formatNotification(q_params['question'], description=q_params['description'], items=[q_params['action']])
-                		addNotification(profile, 2, 'SmartCATCH', q_params['question'], q_params['action'])
-	                	# send an alert that a notification is ready (app will call back to fetch the notification data)
-        	        	print "id=%s, uuid=%s, device=%s" % (profile.id, profile.uuid,device.gcm_reg_id)
-                		gcm.plaintext_request(registration_id=device.gcm_reg_id, data={"action":"notify"})
-	            except Exception as e:
-        	        print "Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
-                	print e    
+        if Device.objects.filter(datastore_owner = profile).count() > 0:
+            gcm = GCM(settings.GCM_API_KEY)
+            for device in Device.objects.filter(datastore_owner = profile):
+                try:
+                    # add the notification to the D
+                    q_params = fetchQuestion(profile, device)
+                    print 'q_params = %s' % q_params
+                    if q_params is not None:
+                        js = formatNotification(q_params['question'],
+                                                description=q_params['description'],
+                                                items=[q_params['action']])
+                        addNotification(profile, 2, 'SmartCATCH',
+                                        q_params['question'],
+                                        q_params['action'])
+                        # send an alert that a notification is ready (app will call back to fetch the notification data)
+                        print "id=%s, uuid=%s, device=%s" % (profile.id, profile.uuid,device.gcm_reg_id)
+                        gcm.plaintext_request(registration_id=device.gcm_reg_id,
+                                              data={"action":"notify"},
+                                              time_to_live=GCM_TIME_TO_LIVE)
+                except Exception as e:
+                    print "Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
+                    print e
 
 @task()
 def recentSocialHealthScores():
     logging.info("Starting Social Health Score Calculation")
     profiles = Profile.objects.all()
     data = {}
-    
+
     activityScores = recentActivityScore()
     socialScores = recentSocialScore()
     focusScores = recentFocusScore()
@@ -493,17 +502,17 @@ def recentSocialHealthScores():
     activityStdDev = stdDevs[0]
     socialStdDev = stdDevs[1]
     focusStdDev = stdDevs[2]
- 
-    print "Averages (activity, social, focus):" 
+
+    print "Averages (activity, social, focus):"
     print averages
     print "Standard Deviations (activity, social, focus):"
-    print stdDevs 
+    print stdDevs
 
     for profile in [p for p in profiles if p.uuid in activityScores.keys()]:
         print "storing %s" % profile.uuid
-        
+
         internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
- 
+
         data[profile.uuid] = []
         #pdb.set_trace()
         data[profile.uuid].append({ "key": "activity", "layer": "User", "value": activityScores.get(profile.uuid, 0) })
@@ -545,7 +554,7 @@ def socialHealthScores(label, daysago, timeinterval):
         internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
 
         activityLevels = aggregateForUser(internalDataStore, "RecentActivityByHour", timeRanges, activityForTimeRange, False)
-       
+
         if len(activityLevels) > 0:
             logging.info("ActivityLevels count > 0 for uuid="+profile.uuid)
             socialLevels = aggregateForUser(internalDataStore, "RecentSocialByHour", timeRanges, socialForTimeRange, True)
@@ -554,17 +563,17 @@ def socialHealthScores(label, daysago, timeinterval):
             activityScore = computeActivityScore(activityLevels)
             socialScore = computeSocialScore(socialLevels)
             focusScore = computeFocusScore(focusLevels)
-    
+
             sums["activity"] += activityScore
             sums["social"] += socialScore
             sums["focus"] += focusScore
             activeUsers.append(profile)
-    
+
             try:
                 data[profile.uuid] = internalDataStore.getAnswer("socialhealth")[0]['value']
             except:
                 data[profile.uuid] = {}
-                
+
             data[profile.uuid][label] = {
                 "activity": activityScore*10,
                 "social": socialScore*10,
@@ -585,9 +594,9 @@ def socialHealthScores(label, daysago, timeinterval):
             #data[profile.uuid]["averageHigh"] = { k: min(averages[k] + stdDevs[k], 10) for k in stdDevs }
             internalDataStore.saveAnswer("socialhealth", data[profile.uuid])
             logging.info("Saving socialhealth for uui="+profile.uuid+", data="+str(data[profile.uuid]))
-            
+
     return data
-    
+
 
 @task()
 def recentSocialHealthScores2():
@@ -625,13 +634,13 @@ def saveHistory():
         try:
             token = getToken(profile, "app-uuid")
             internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
-        
+
             # Add social scores to historical data
             socialhealth = internalDataStore.getAnswer("socialhealth")[0]['value'][SOCIALHEALTH_HISTORY_LABEL]
             socialScoreHistory = historyScore(internalDataStore, "socialScoreHistory", socialhealth['social'])
             activityScoreHistory = historyScore(internalDataStore, "activityScoreHistory", socialhealth['activity'])
             focusScoreHistory = historyScore(internalDataStore, "focusScoreHistory", socialhealth['focus'])
-            
+
             # Add survey scores to historical data
             surveyscores = internalDataStore.getAnswer(SURVEY_HISTORY_LABEL)[0]['value']
             sleepScoreHistory = historyScore(internalDataStore, "sleepScoreHistory", surveyscores['sleep'])
@@ -644,14 +653,14 @@ def saveHistory():
             historyScore(internalDataStore, "socialScoreGroupHistory", socialhealthGroup['social'])
             historyScore(internalDataStore, "activityScoreGroupHistory", socialhealthGroup['activity'])
             historyScore(internalDataStore, "focusScoreGroupHistory", socialhealthGroup['focus'])
-            
+
             # Add group survey scores to historical data
             surveyscoresGroup = internalDataStore.getAnswer(SURVEY_HISTORY_LABEL + GROUP_LABEL)[0]['value']
             historyScore(internalDataStore, "sleepScoreGroupHistory", surveyscoresGroup['sleep'])
             historyScore(internalDataStore, "glucoseScoreGroupHistory", surveyscoresGroup['glucose'])
             historyScore(internalDataStore, "medsScoreGroupHistory", surveyscoresGroup['meds'])
             historyScore(internalDataStore, "goalScoreGroupHistory", surveyscoresGroup['goal'])
-            
+
             socialAvg = historyAvg(socialScoreHistory)
             activityAvg = historyAvg(activityScoreHistory)
             focusAvg = historyAvg(focusScoreHistory)
@@ -664,7 +673,7 @@ def saveHistory():
         except Exception as e:
             logging.info("Issue with calculating historical scores for: uuid=%s" % (profile.uuid,))
             logging.info(e)
-            
+
 #QuestionTypes that have specific pks
 QUESTION_TO_PK = {
     "glucose": [1,2],
@@ -676,7 +685,7 @@ def calculateMedsScore(profile, daysago):
     return calculateGenericScore(profile, "medication", daysago)
 def calculateSleepScore(profile, daysago):
     return calculateGenericScore(profile, "sleep", daysago)
-    
+
 def calculateGoalScore(profile, daysago):
     startTime = datetime.fromtimestamp(getStartTime(daysago, True))
     endTime = datetime.fromtimestamp(time.time())
@@ -691,7 +700,7 @@ def calculateGenericScore(profile, question_label, daysago):
     endTime = datetime.fromtimestamp(time.time())
     qis = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK[question_label], answer__isnull=False)
     return calculateGenericScoreCustomQuery(qis)
-   
+
 def calculateGenericScoreCustomQuery(qis):
     total = 0
     for qi in qis:
@@ -699,7 +708,7 @@ def calculateGenericScoreCustomQuery(qis):
     if len(qis) > 0:
         return total/len(qis)
     return DEFAULT_SCORE
-    
+
 
 #TODO this needs to be worked on once Todd gives me the equation
 def normalizeGlucoseScore(score):
@@ -712,7 +721,7 @@ def calculateGlucoseScore(profile, daysago):
     endTime = datetime.fromtimestamp(time.time())
     gcq1s = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK["glucose"][0], answer__isnull=False)
     gcq2s = QuestionInstance.objects.filter(datetime__range=[startTime, endTime], profile=profile, question_type__pk=QUESTION_TO_PK["glucose"][1], answer__isnull=False)
-   
+
     gcq1_total = 0
     for gcq in gcq1s:
         gcq1_total += gcq.answer * 100 #the answer is either 0 or 1 here
@@ -722,8 +731,8 @@ def calculateGlucoseScore(profile, daysago):
     for gcq in gcq2s:
         gcq2_total += normalizeGlucoseScore(gcq.answer)
     gcq2_score = gcq2_total/len(gcq2s) if len(gcq2s) < 0 else DEFAULT_SCORE
-   
-    if len(gcq2s) > 0 and len(gcqp1s) > 0:
+
+    if len(gcq2s) > 0 and len(gcq1s) > 0:
         return gcq1_score*.25 + gcq2_score*.75
     elif len(gcq2s) > 0:
         return gcq2_score
@@ -739,21 +748,21 @@ def surveyScores(daysago, label):
     totalSleepScore = 0
     totalGoalScore = 0
     scoreCount = 0
-    
-    
+
+
     for profile in profiles:
         try:
             token = getToken(profile, "app-uuid")
             internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
-           
+
             medsScore = calculateMedsScore(profile, daysago)
             glucoseScore = calculateGlucoseScore(profile, daysago)
             sleepScore = calculateSleepScore(profile, daysago)
             goalScore = calculateGoalScore(profile, daysago)
-    
+
             data = { 'meds':medsScore, 'glucose':glucoseScore, 'sleep':sleepScore, 'goal':goalScore }
             internalDataStore.saveAnswer(label, data)
-            
+
             scoreCount += 1
             totalMedsScore += medsScore
             totalGlucoseScore += glucoseScore
@@ -762,13 +771,13 @@ def surveyScores(daysago, label):
         except Exception as e:
             logging.info("Problem with survey score for profile pk=%s uuid=%s" % (profile.id, profile.uuid))
             logging.info(e)
-            
+
     if scoreCount > 0:
         avgMedsScore  = totalMedsScore / scoreCount
         avgGlucoseScore  = totalGlucoseScore / scoreCount
         avgSleepScore  = totalSleepScore / scoreCount
         avgGoalScore  = totalGoalScore / scoreCount
-                
+
         for profile in profiles:
             try:
                 token = getToken(profile, "app-uuid")
@@ -778,16 +787,49 @@ def surveyScores(daysago, label):
             except Exception as e:
                 logging.info("Problem with group survey score for profile pk=%s uuid=%s" % (profile.id, profile.uuid))
                 logging.info(e)
-            
-            
+
+
 
 @task()
 def recentSurveyScores():
     daysago = 6
     label = "surveyscores"
     surveyScores(daysago, label)
-        
+
 @task()
 def dailySurveyScores():
     daysago = 1
     surveyScores(daysago, SURVEY_HISTORY_LABEL)
+
+@task()
+def test_notification():
+    profiles = Profile.objects.all()
+    res = []
+    for profile in profiles:
+        devices = Device.objects.filter(datastore_owner=profile)
+        if devices.count() > 0:
+            gcm = GCM(settings.GCM_API_KEY)
+            for device in devices:
+                res.append({'datastore_owner': device.datastore_owner,
+                            'gcm_reg_id': device.gcm_reg_id})
+                try:
+                    payload = {'question': "this is a test question",
+                               'description': 'this is a test description',
+                               'action': [{'instance': 'what', 'type': 'its a type'}]}
+                    js = formatNotification(payload['question'],
+                                            description = payload['description'],
+                                            items = payload['action'])
+                    addNotification(profile, 2, 'SmartCATCH',
+                                    payload['question'],
+                                    payload['action'])
+                    gcm.plaintext_request(registration_id=device.gcm_reg_id,
+                                           data={'action': 'notify'})
+                except Exception as e:
+                    print "oh we've got a problem"
+                    print e
+    return res
+
+
+@task()
+def test_add():
+    return 5 + 5
