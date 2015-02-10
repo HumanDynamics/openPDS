@@ -416,13 +416,21 @@ var CHART_Y_RANGE = d3.scale.linear().range([CHART_HEIGHT - CHART_MARGINS.top, C
 
 var SVG_IDS = ['#actSVG', '#socSVG', '#regSVG', '#sleepSVG', '#medsSVG', '#glucSVG', '#goalSVG'];
 
-var SVG_DATA_MAPPING = {'#actSVG': actGData,
-                        '#socSVG': socGData,
-                        '#regSVG': regGData,
-                        '#sleepSVG': sleepGData,
-                        '#medsSVG': medsGData,
-                        '#glucSVG': glucGData,
-                        '#goalSVG': goalGData};
+var SVG_GROUP_DATA_MAPPING = {'#actSVG': actGData,
+                              '#socSVG': socGData,
+                              '#regSVG': regGData,
+                              '#sleepSVG': sleepGData,
+                              '#medsSVG': medsGData,
+                              '#glucSVG': glucGData,
+                              '#goalSVG': goalGData};
+
+var SVG_DATA_MAPPING = {'#actSVG': actData,
+                        '#socSVG': socData,
+                        '#regSVG': regData,
+                        '#sleepSVG': slpData,
+                        '#medsSVG': medData,
+                        '#glucSVG': gluData,
+                        '#goalSVG': goalData};
 
 var SVG_COLOR_MAPPING = {'#actSVG': activityColor,
                          '#socSVG': socialColor,
@@ -531,76 +539,15 @@ function getXScale(dateCutoff, data) {
  }
 
 
-function setupAxes(dateCutoff) {
-    for (i in SVG_IDS) {
-        var svg = d3.select(SVG_IDS[i]);
-        var data = getData(SVG_IDS[i], dateCutoff);
-        data = aggregateData(data, dateCutoff);
-
-        x = getXScale(dateCutoff, data);
-        createAxis(svg, x, dateCutoff);
-    }
- }
 
 
-function setupChart(svg, data, dateCutoff, x, y) {
-    console.log("setting up chart...");
-    createAxis(svg, x, dateCutoff);
-    var parseDate = getDateFormatForCutoff(dateCutoff);
-    var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
-    var label = "user";
-    svg.selectAll('.bar')
-        .data(data)
-        .enter()
-        .append("rect")
-        .attr("width", x.rangeBand())
-        .attr("x", function(d) { return x(parseDate(new Date(d.x))); })
-        .attr("height", function(d) { return 0;})
-        .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
-        .attr('fill', color)
-        .attr('class', label)
-        .transition().delay(function (d,i){ return i * 35;})
-        .duration(300)
-        .attr("y", function(d) { return y(d.y); })
-        .attr("height", function(d) { return CHART_HEIGHT - y(d.y); });
- }
-
-
-function setupCharts(dateCutoff) {
-    console.log("setting up charts. date cutoff:", dateCutoff);
-    for (i in SVG_IDS) {
-        var svg = d3.select(SVG_IDS[i]);
-        var data = getData(SVG_IDS[i], dateCutoff);
-        console.log('setup data:', data);
-        data = aggregateData(data, dateCutoff);
-        x = getXScale(dateCutoff, data);
-        y = d3.scale.linear()
-                    .domain([0, 100])
-                    .range([CHART_HEIGHT, 0]);
-
-        setupChart(svg, data, dateCutoff, x, y);
-    }
- }
-
-
-
-
-function showGroupBars() {
-    setupFilteredDataLines("#actSVG", actGData, groupColor, "group-line");
-    setupFilteredDataLines("#socSVG", socGData, groupColor, "group-line");
-    setupFilteredDataLines("#regSVG", regGData, groupColor, "group-line");
-
-    /* TODO !!! These need to be done*/
-    setupFilteredDataLines("#sleepSVG", sleepGData, groupColor, "group-line");
-    setupFilteredDataLines("#medsSVG", medsGData, groupColor, "group-line");
-    setupFilteredDataLines("#glucSVG", glucGData, groupColor, "group-line");
-    setupFilteredDataLines("#goalSVG", goalGData, groupColor, "group-line");
- }
-
-
-function getData(chartID, dateCutoff) {
+function getData(chartID, dateCutoff, group) {
     console.log('getting data for chart ID: ', chartID, " and date cutoff: ", dateCutoff);
-    var data = SVG_DATA_MAPPING[chartID];
+    if (group) {
+        var data = SVG_GROUP_DATA_MAPPING[chartID];
+    } else {
+        var data = SVG_DATA_MAPPING[chartID];
+    }
     var data = cleanData(data);
 
     var monthData = filterPoints(data, monthCutoff);
@@ -622,54 +569,120 @@ function getData(chartID, dateCutoff) {
     }
 
     //TEMP - for testing
-    var new_data = [];
-    var item;
-    for (item in data) {
-        new_data.push({'x': data[item].x,
-                       'y': Math.floor(Math.random() * 100)});
-    }
-    return new_data;
+    /* var new_data = [];
+       var item;
+       for (item in data) {
+       new_data.push({'x': data[item].x,
+       'y': Math.floor(Math.random() * 100)});
+       }
+       return new_data; */
     //TEMP
+    //console.log(data);
+    return data;
  }
- /* function setupCharts(dateCutoff) {
+
+
+var group_showing = false
+function toggleGroups(dateCutoff) {
     for (i in SVG_IDS) {
-    var svg = d3.select(SVG_IDS[i]);
-    data = getData(SVG_IDS[i], dateCutoff);
-    data = aggregateData(data, dateCutoff);
-    xRange = getXScale(dateCutoff, data);
-    createAxis(svg, xRange, dateCutoff);
-    var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
-    var label = "user";
+        var svg = d3.select(SVG_IDS[i]);
 
-    // get the range of y values from the binned data
-    var yRange = d3.scale.linear()
-    .domain([0, 100])
-    .range([CHART_HEIGHT, 0]);
+        var user_data = getData(SVG_IDS[i], dateCutoff);
+        user_data = aggregateData(user_data, dateCutoff);
 
-    var parseDate = getDateFormatForCutoff(dateCutoff);
-    // convenience function to convert to date and parse x values
-    var get_x_range = function(x) {
-    return xRange(parseDate(new Date(x)));
+        var group_data = getData(SVG_IDS[i], dateCutoff, true);
+        group_data = aggregateData(group_data, dateCutoff);
+
+        var compare = function(a, b) {
+            var a_date = new Date(a.x);
+            var b_date = new Date(b.x);
+            if (a_date < b_date)
+                return -1
+            if (a_date > b_date)
+                return 1;
+            return 0
+        }
+
+        user_data.sort(compare);
+        group_data.sort(compare);
+
+        data = [];
+        for (d in user_data) {
+            obj = {'x': user_data[d].x,
+                   'data':[{'name': 'user',
+                            'value': user_data[d].y},
+                           {'name': 'group',
+                            'value': group_data[d].y}
+                   ]};
+            data.push(obj);
+        }
+
+//        var data = user_data.concat(group_data);
+
+        var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
+        var label = "user";
+
+        var parseDate = getDateFormatForCutoff(dateCutoff);
+
+        var y = d3.scale.linear()
+                        .domain([0, 100])
+                        .range([CHART_HEIGHT, 0]);
+        var x = getXScale(dateCutoff, data);
+        
+        var barTypes = ['user', 'group'];
+        // second axis for groups
+        var x1 = d3.scale.ordinal()
+                         .domain(barTypes)
+                         .rangeRoundBands([0, x.rangeBand()]);
+
+        var color_map = {'user': SVG_COLOR_MAPPING[SVG_IDS[i]],
+                         'group': groupColor};
+
+
+        console.log('x axis:', x.domain());
+
+        // replace axis
+        svg.selectAll('g.x.axis')
+            .transition()
+            .duration(500)
+            .style("opacity",0)
+            .remove();
+
+        createAxis(svg, x, dateCutoff);
+
+        // remove the bars
+        svg.selectAll('.user')
+           .transition()
+           .duration(500)
+           .attr('y', CHART_HEIGHT - 0.5)
+           .attr("height", 0)
+           .remove();
+
+
+        var ticks = svg.selectAll('.time')
+                       .data(data)
+                       .enter().append('g')
+                       .attr('class', 'g')
+                       .attr('transform', function(d) { return 'translate(' + x(parseDate(new Date(d.x))) + ',0)';});
+
+        // bring back with new data
+        ticks.selectAll("rect")
+           .data(function(d) { return d.data})
+           .enter().append("rect")
+           .attr('width', x1.rangeBand())
+           .attr('x', function(d) { return x1(d.name); })
+           //.attr("x", function(d) { return x(parseDate(new Date(d.x))); })
+           .attr("height", function(d) { return 0;})
+           .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
+           .attr('fill', function(d) { return color_map[d.name];})
+           .attr('class', label)
+           .transition()
+           .delay(100) // stops colliding bars
+           .duration(1000)
+           .attr("y", function(d) { return y(d.value); })
+           .attr("height", function(d) { return CHART_HEIGHT - y(d.value); });
     }
-
-    svg.selectAll(".bar")
-    .data(data)
-    .enter()
-    .append("rect")
-    .attr("width", xRange.rangeBand())
-    .attr("x", function(d) { return get_x_range(d.x);})
-    .attr("height", function(d) { return 0;})
-    .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
-    .attr('fill', color)
-    .attr('class', label)
-    .transition().delay(function (d,i){ return i * 35;})
-    .duration(300)
-    .attr("y", function(d) { return yRange(d.y); })
-    .attr("height", function(d) { return CHART_HEIGHT - yRange(d.y); });
-    }
-    
-    } */
-
+ }
 
 function updateCharts(dateCutoff) {
     for (i in SVG_IDS) {
@@ -703,7 +716,6 @@ function updateCharts(dateCutoff) {
         svg.selectAll('.user')
            .transition()
            .duration(500)
-//           .ease("exp")
            .attr('y', CHART_HEIGHT - 0.5)
            .attr("height", 0)
            .remove();
@@ -720,8 +732,7 @@ function updateCharts(dateCutoff) {
            .attr('fill', color)
            .attr('class', label)
            .transition()
-//           .ease('exp')
-           //.transition().delay(function (d,i){ return i * 35;})
+           .delay(100) // stops colliding bars
            .duration(1000)
            .attr("y", function(d) { return y(d.y); })
            .attr("height", function(d) { return CHART_HEIGHT - y(d.y); });
@@ -729,17 +740,20 @@ function updateCharts(dateCutoff) {
  }
 
 
-//var groupColor = "#7092a2";
-var groupColor = 'rgba(95, 127, 147, 0.50)';
- /* setupFilteredDataLines("#actSVG", actData, activityColor, "user");
-    setupFilteredDataLines("#socSVG", socData, socialColor, "user");
-    setupFilteredDataLines("#regSVG", regData, regularityColor, "user");
-    setupFilteredDataLines("#sleepSVG", slpData, sleepColor, "user");
-    setupFilteredDataLines("#medsSVG", medData, medicationColor, "user");
-    setupFilteredDataLines("#glucSVG", gluData, glucoseColor, "user");
-    setupFilteredDataLines("#goalSVG", goalData, goalColor, "user"); */
+var groupColor = "#7092a2";
+function showGroupBars() {
+    setupFilteredDataLines("#actSVG", actGData, groupColor, "group-line");
+    setupFilteredDataLines("#socSVG", socGData, groupColor, "group-line");
+    setupFilteredDataLines("#regSVG", regGData, groupColor, "group-line");
 
-setupCharts(dayCutoff);
+    /* TODO !!! These need to be done*/
+    setupFilteredDataLines("#sleepSVG", sleepGData, groupColor, "group-line");
+    setupFilteredDataLines("#medsSVG", medsGData, groupColor, "group-line");
+    setupFilteredDataLines("#glucSVG", glucGData, groupColor, "group-line");
+    setupFilteredDataLines("#goalSVG", goalGData, groupColor, "group-line");
+ }
+
+//setupCharts(dayCutoff);
 
 var CLASS_CUTOFF_MAPPING = {'day-line': dayCutoff,
                             'week-line': weekCutoff,
@@ -750,31 +764,28 @@ $(".filter-button").click(function() {
     console.log('clicked cutoff button: ', $(this).attr('id'));
     dateCutoff = CLASS_CUTOFF_MAPPING[$(this).attr("id")];
     console.log('updating for cutoff: ', dateCutoff);
-
-    updateCharts(dateCutoff);
-//    $("." + $(this).attr("id")).show();
+    if ($(".group-results-button").hasClass('g-on')) {
+        toggleGroups(dateCutoff);
+    } else {
+        updateCharts(dateCutoff);
+    }
     $(".button-selected").removeClass("button-selected");
     $(this).addClass("button-selected");
- })//.eq(0).click();
+ }).eq(0).click();
 
 
 var groupAlreadyShown = false;
 $(".group-results-button").click(function() {
     console.log('Group button clicked...');
     console.log("groupalreadyshown:", groupAlreadyShown);
+    dateCutoff = $('.button-selected').attr('id');
+    dateCutoff = CLASS_CUTOFF_MAPPING[dateCutoff];
     if ($(this).hasClass('g-on')) {
 	      $(this).removeClass('g-on').text("Off");
-//      hideBars("rect.group-line");
-        //hideGroupBars();
-        $(".group-line").hide();
-    } else if (!groupAlreadyShown) { //only do the animation once
-	      $(this).addClass('g-on').text("On");
-        showGroupBars();
-        $(".group-line").show();
-        groupAlreadyShown = true;
+        updateCharts(dateCutoff);
     } else {
-        $(this).addClass('g-on').text("On");
-        $(".group-line").show();
+	      $(this).addClass('g-on').text("On");
+        toggleGroups(dateCutoff);
     }
  });
 
