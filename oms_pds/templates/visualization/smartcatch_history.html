@@ -15,7 +15,7 @@ smartCATCH
   <link rel="import" href="/static/mgh/components/core-header-panel/core-header-panel.html">
   <link rel="import" href="/static/mgh/components/core-toolbar/core-toolbar.html">
   <link rel="import" href="/static/mgh/components/paper-tabs/paper-tabs.html">
-  
+
   <style>
 	html{
 		width:350px;
@@ -44,13 +44,19 @@ smartCATCH
 		margin: 50px auto;
 	  }
 	  @media (min-width: 481px) {
-		paper-tabs {
-		  width: 45em;
-		}
-		.scontainer {
-		  width: 350px;
-		}
+		    paper-tabs {
+		        width: 45em;
+		    }
+		    .scontainer {
+		        width: 350px;
+		    }
 	  }
+
+   .bar rect {
+       shape-rendering: crispEdges;
+   }
+
+
 	</style>
 {% endblock %}
 
@@ -59,9 +65,9 @@ smartCATCH
 	<!--<div id="logo-border-blue">
 		<img id="Logo" src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
 	</div>-->
-	
+
   <div id="subheader1">
-      
+
       <div id="time-filter-buttons">
 	    <div id="day-line" class="filter-button">Today</div>
 	    <div id="week-line" class="filter-button">This Week</div>
@@ -69,10 +75,10 @@ smartCATCH
 	    <div id="full-line" class="filter-button">Complete</div>
       </div>
   </div>
-      
+
 	<div id="sorted-lines">
 	    <div class="group-results-history">Group results <div class="group-results-button">Off</div></div>
-	    
+
 	       {% if goaltype != 'n' %}
 		<div id="goalCardLine" class="lineGraph">
 			<div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/interactions_01.png" /></div>
@@ -80,37 +86,29 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="goalSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="goalSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="goalSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="goalSVG-day" class="day-line" width="622" height="320"></svg>
+      <svg id="goalSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
 		{% endif %}
-	
+
 		<div id="gluCardLine" class="lineGraph">
 			<div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/blood_01.png" />Glucose</div>
 			{% if not control %}
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="glucSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="glucSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="glucSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="glucSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="glucSVG" width="622" height="320"></svg>
+
 			{% endif %}
 		</div>
-	
+
 		<div id="medCardLine" class="lineGraph">
 			<div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/drugs_01.png" />Medication Adherence</div>
 			{% if not control %}
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="medsSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="medsSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="medsSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="medsSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="medsSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
 
@@ -120,10 +118,7 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="sleepSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="sleepSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="sleepSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="sleepSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="sleepSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
 
@@ -133,42 +128,31 @@ smartCATCH
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="socSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="socSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="socSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="socSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="socSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
-		
+
 		<div id="actCardLine" class="lineGraph">
 			<div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/activity_01.png" />Activity</div>
 			{% if not control %}
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="actSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="actSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="actSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="actSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="actSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
-		
+
 		<div id="regCardLine" class="lineGraph">
 			<div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/regularity_01.png" />Routine</div>
 			{% if not control %}
 			<div class="yaxis"><div>100</div><div>0</div></div>
 			<div class="lineBack"></div>
 			<div class="lineBorder"></div>
-			<svg id="regSVG-full" class="full-line" width="622" height="320"></svg>
-			<svg id="regSVG-month" class="month-line" width="622" height="320"></svg>
-			<svg id="regSVG-week" class="week-line" width="622" height="320"></svg>
-			<svg id="regSVG-day" class="day-line" width="622" height="320"></svg>
+			<svg id="regSVG" width="622" height="320"></svg>
 			{% endif %}
 		</div>
-		
-	
 	</div>
-		
+
 	<div id="footer"></div>
 </div>
 
@@ -203,7 +187,7 @@ var weeks=1;
 var months=["Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Oct"," Nov","Dec"];
 if(dayOfWeek==0){
 	weeks++};
-	
+
 $(".date").text(months[month]+" "+day + " / week " + weeks);
 //averages data
 var Avg=function(data){
@@ -282,7 +266,7 @@ else if(Avg(socD)>=70){
 else{
 	socialColor='#f9ce20';
 	$('#socAvg').addClass('stripe-y');};
-	
+
 if(Avg(actD)<=50){
 	activityColor='#Fc4c4c';
 	$('#actAvg').addClass('stripe-r');}
@@ -292,7 +276,7 @@ else if(Avg(actD)>=70){
 else{
 	activityColor='#f9ce20';
 	$('#actAvg').addClass('stripe-y');};
-	
+
 if(Avg(regD)<=50){
 	regularityColor='#Fc4c4c';
 	$('#regAvg').addClass('stripe-r');}
@@ -302,7 +286,7 @@ else if(Avg(regD)>=70){
 else{
 	regularityColor='#f9ce20';
 	$('#regAvg').addClass('stripe-y');};
-	
+
 if(Avg(slpD)<=50){
 	sleepColor='#fc4c4c';
 	$('#slpAvg').addClass('stripe-r');}
@@ -322,7 +306,7 @@ else if(Avg(gluD)>=70){
 else{
 	glucoseColor='#f9ce20';
 	$('#gluAvg').addClass('stripe-y');};
-	
+
 if(Avg(medD)<=50){
 	medicationColor='#Fc4c4c';
 	$('#medAvg').addClass('stripe-r');}
@@ -332,7 +316,7 @@ else if(Avg(medD)>=70){
 else{
 	medicationColor='#f9ce20';
 	$('#medAvg').addClass('stripe-y');};
-	
+
 if(Avg(goalD)<=50){
 	goalColor='#Fc4c4c';
 	$('#goalAvg').addClass('stripe-r');}
@@ -342,7 +326,7 @@ else if(Avg(slpD)>=70){
 else{
 	goalColor='#f9ce20';
 	$('#goalAvg').addClass('stripe-y');};
-	
+
 $('#socWeekScore').text(Avg(socD)).css('color',socialColor);
 $('#actWeekScore').text(Avg(actD)).css('color',activityColor);
 $('#regWeekScore').text(Avg(regD)).css('color',regularityColor);
@@ -371,7 +355,7 @@ $('.sleepBars').css('background-color',sleepColor)
 $('.medicationBars').css('background-color',medicationColor)
 $('.glucoseBars').css('background-color',glucoseColor)
 $('.goalBars').css('background-color',goalColor)
-		
+
 // line graphs
 var margin=[50,20,50,20];
 var wid=620;
@@ -397,23 +381,28 @@ var weekCutoff = {{ weekCutoff }} * 1000;
 var monthCutoff = {{ monthCutoff }} * 1000;
 
 function cleanData(data) {
-      var newlist = []
-      for (d in data) {
-	    data[d]["x"] *= 1000; //convert from s to ms
-	    newlist.push(data[d]);
-      }
-      return newlist;
+    var newlist = []
+    for (d in data) {
+        var newx = data[d]['x'] * 1000;
+        newlist.push({'x': newx,
+                      'y': data[d]['y']});
+//	      data[d]["x"] *= 1000; //convert from s to ms
+	      //newlist.push(data[d]);
+    }
+//    console.log(newlist);
+    return newlist;
 }
 
 function filterPoints(data, cutoff) {
       var newlist = []
       for (d in data) {
-	    if (data[d]["x"] >= cutoff) {
-		  newlist.push(data[d]);
-	    }
+	        if (data[d]["x"] >= cutoff) {
+		          newlist.push(data[d]);
+	        }
       }
-      return newlist;
+    return newlist;
 }
+
 var CHART_WIDTH = 622;
 var CHART_HEIGHT = 267;
 var CHART_MARGINS = {
@@ -422,114 +411,383 @@ var CHART_MARGINS = {
   bottom: 0,
   left: 40
 };
+
 var CHART_Y_RANGE = d3.scale.linear().range([CHART_HEIGHT - CHART_MARGINS.top, CHART_MARGINS.bottom]).domain([0,100]);
 
-function generateAxes(svg, xRange) {
-      xAxis = d3.svg.axis()
-	    .scale(xRange)
-	    .tickSize(0)
-	    .ticks(5)
-	    .tickSubdivide(true);
- 
-      svg.append('svg:g')
-	.attr('class', 'x axis')
-	.attr('transform', 'translate(0,300)')
-	.attr("font-size", "13pt")
-	.attr("font-family", "Roboto Light")
-	.call(xAxis);
-	
-      var ygrid =
-      d3.svg.axis()
-	    .scale(xRange)
-	    .ticks(5)
-	    .tickFormat("")
-	    .tickSize(266);
-      svg.append("g")
-	.attr("transform", "translate(0, 0)")
-        .call(ygrid)
-	
-}
+var SVG_IDS = ['#actSVG', '#socSVG', '#regSVG', '#sleepSVG', '#medsSVG', '#glucSVG', '#goalSVG'];
 
-function setupLine(id, data, color, cutoff, label) {
-      var svg = d3.select(id);
-      
-      if (cutoff == null) {
-	    xRange = d3.time.scale().range([CHART_MARGINS.left, CHART_WIDTH - CHART_MARGINS.right]).domain([CHART_MARGINS.left, CHART_WIDTH - CHART_MARGINS.right])
-	    .domain([d3.min(data, function(d) {
-	      return d.x;
-	    }), d3.max(data, function(d) {
-	      return d.x;
-	    })]);
-      } else {
-	    xRange = d3.time.scale().range([CHART_MARGINS.left, CHART_WIDTH - CHART_MARGINS.right]).domain([CHART_MARGINS.left, CHART_WIDTH - CHART_MARGINS.right])
-	    .domain([new Date(cutoff), new Date()]);//[cutoff, d3.max(data, function(d) { return d.x; })]);
-      }
-      
-      generateAxes(svg, xRange);
-      
-      // assembling line
-      var lineFunc = d3.svg.line()
-	.x(function(d) {
-	  return xRange(d.x);
-	})
-	.y(function(d) {
-	  return CHART_Y_RANGE(d.y);
-	})
-	.interpolate('linear');
-      svg.append('svg:path')
-	.attr('d', lineFunc(data))
-	.attr('stroke', color)
-	.attr('stroke-width', 5)
-	.attr('fill', 'none')
-	.attr('class', label);
-}
+var SVG_GROUP_DATA_MAPPING = {'#actSVG': actGData,
+                              '#socSVG': socGData,
+                              '#regSVG': regGData,
+                              '#sleepSVG': sleepGData,
+                              '#medsSVG': medsGData,
+                              '#glucSVG': glucGData,
+                              '#goalSVG': goalGData};
 
-function setupFilteredDataLines(id, data, color, label) {
-      var cleanedData = cleanData(data);
-      setupLine(id+"-full", cleanedData, color, null, label);
-      var dataMonth = filterPoints(cleanedData, monthCutoff);
-      setupLine(id+"-month", dataMonth, color, monthCutoff, label);
-      var dataWeek = filterPoints(dataMonth, weekCutoff);
-      setupLine(id+"-week", dataWeek, color, weekCutoff, label);
-      var dataDay = filterPoints(dataWeek, dayCutoff);
-      setupLine(id+"-day", dataDay, color, dayCutoff, label);
-}
+var SVG_DATA_MAPPING = {'#actSVG': actData,
+                        '#socSVG': socData,
+                        '#regSVG': regData,
+                        '#sleepSVG': slpData,
+                        '#medsSVG': medData,
+                        '#glucSVG': gluData,
+                        '#goalSVG': goalData};
+
+var SVG_COLOR_MAPPING = {'#actSVG': activityColor,
+                         '#socSVG': socialColor,
+                         '#regSVG': regularityColor,
+                         '#sleepSVG': sleepColor,
+                         '#medsSVG': medicationColor,
+                         '#glucSVG': glucoseColor,
+                         '#goalSVG': goalColor};
+
+function getDateFormatForCutoff(cutoff) {
+    if (cutoff == monthCutoff) {
+        return d3.time.format('%b %d')
+    } else if (cutoff == weekCutoff) {
+        return d3.time.format('%b %d')
+    } else if (cutoff == dayCutoff) {
+        return d3.time.format('%b %d, %H:00')
+    } else {
+        return d3.time.format('%b %d')
+    }
+ }
+
+// aggregate data for the given date/month cutoff.
+// The cutoff will determine the key we use when aggregating.
+function aggregateData(data, cutoff) {
+    var keyFunc = getDateFormatForCutoff(cutoff);
+
+    // aggregate it to the right cutoff
+    var data = d3.nest()
+                 .key(function(d) { return keyFunc(new Date(d.x));})
+                 .rollup(function(d) {
+                     return d3.mean(d, function(g) {return g.y; });
+                 }).entries(data);
+
+    // nest renames the objects, let's fix the keys.
+    data.forEach(function(d) {
+        d.x = d.key;
+        d.y = d.values;
+        delete d.key;
+        delete d.values;
+    });
+
+    return data
+ }
+
+
+function createAxis(svg, x, cutoff) {
+    // create axis, format the date
+    //var formatDate = d3.time.format("%d/%m/%y");
+    var formatDate = getDateFormatForCutoff(cutoff);
+
+    // Most of the axis configs should be fine, but when we have lots of
+    // data being shown, we should add another in the middle
+    tickValues = []
+    var first_val = x.domain()[0]
+    var last_val = x.domain().slice(-1)[0]
+    var middle_index = Math.floor(x.domain().length / 2);
+    var middle_val = x.domain().slice(middle_index)[0]
+    if (cutoff == null && x.domain().length > 30) {
+        tickValues = [first_val, middle_val, last_val];
+    } else {
+        tickValues = [first_val, last_val];
+    }
+
+    // construct the axis
+    xAxis = d3.svg.axis()
+                  .scale(x)
+                  .tickSize(0)
+                  .tickValues(tickValues)
+                  .orient("bottom");
+
+    svg.append('svg:g')
+       .style("opacity",0)
+       .attr('class', 'x axis')
+       .attr('transform', 'translate(0, 300)')
+       .attr('font-size', '13pt')
+       .attr('font-family', 'Roboto Light')
+        .transition()
+        .duration(1000)
+        .style('opacity', 100)
+       .call(xAxis);
+ }
+
+function getXScale(dateCutoff, data) {
+    var parseDate = getDateFormatForCutoff(dateCutoff);
+    console.log('getting x scale for cutoff:', new Date(dateCutoff));
+    // if there's no cutoff, we don't want to change the axis range.
+    if (dateCutoff == null) {
+        xRange = d3.scale.ordinal()
+                         .domain(data.map(function(d) {
+                             return parseDate(new Date(d.x));
+                         }))
+                         .rangeRoundBands([CHART_MARGINS.left,
+                                           CHART_WIDTH - CHART_MARGINS.right],
+                                           0.15);
+    } else {
+	      xRange = d3.scale.ordinal()
+                         .domain([new Date(dateCutoff), new Date()])
+                         .domain(data.map(function(d) {
+                             return parseDate(new Date(d.x));
+                         }))
+                         .rangeRoundBands([CHART_MARGINS.left,
+                                           CHART_WIDTH - CHART_MARGINS.right],
+                                           0.15);
+    }
+    return xRange
+ }
+
+
+
+
+function getData(chartID, dateCutoff, group) {
+    console.log('getting data for chart ID: ', chartID, " and date cutoff: ", dateCutoff);
+    if (group) {
+        var data = SVG_GROUP_DATA_MAPPING[chartID];
+    } else {
+        var data = SVG_DATA_MAPPING[chartID];
+    }
+    var data = cleanData(data);
+
+    var monthData = filterPoints(data, monthCutoff);
+    var weekData = filterPoints(monthData, weekCutoff);
+    var dayData = filterPoints(weekData, dayCutoff);
+
+    if (dateCutoff == monthCutoff) {
+        console.log("getting month data for", chartID);
+        data = monthData;
+    } else if (dateCutoff == weekCutoff) {
+        console.log("getting week data for", chartID);
+        data = weekData;
+    } else if (dateCutoff == dayCutoff) {
+        console.log("getting day data for", chartID);
+        data = dayData;
+    } else {
+        console.log("getting all data for", chartID);
+        console.log("date cutoff:", new Date(dateCutoff));
+    }
+
+    //TEMP - for testing
+    /* var new_data = [];
+       var item;
+       for (item in data) {
+       new_data.push({'x': data[item].x,
+       'y': Math.floor(Math.random() * 100)});
+       }
+       return new_data; */
+    //TEMP
+    //console.log(data);
+    return data;
+ }
+
+
+var group_showing = false
+function toggleGroups(dateCutoff) {
+    for (i in SVG_IDS) {
+        var svg = d3.select(SVG_IDS[i]);
+
+        var user_data = getData(SVG_IDS[i], dateCutoff);
+        user_data = aggregateData(user_data, dateCutoff);
+
+        var group_data = getData(SVG_IDS[i], dateCutoff, true);
+        group_data = aggregateData(group_data, dateCutoff);
+
+        var compare = function(a, b) {
+            var a_date = new Date(a.x);
+            var b_date = new Date(b.x);
+            if (a_date < b_date)
+                return -1
+            if (a_date > b_date)
+                return 1;
+            return 0
+        }
+
+        user_data.sort(compare);
+        group_data.sort(compare);
+
+        data = [];
+        for (d in user_data) {
+            obj = {'x': user_data[d].x,
+                   'data':[{'name': 'user',
+                            'value': user_data[d].y},
+                           {'name': 'group',
+                            'value': group_data[d].y}
+                   ]};
+            data.push(obj);
+        }
+
+//        var data = user_data.concat(group_data);
+
+        var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
+        var label = "user";
+
+        var parseDate = getDateFormatForCutoff(dateCutoff);
+
+        var y = d3.scale.linear()
+                        .domain([0, 100])
+                        .range([CHART_HEIGHT, 0]);
+        var x = getXScale(dateCutoff, data);
+        
+        var barTypes = ['user', 'group'];
+        // second axis for groups
+        var x1 = d3.scale.ordinal()
+                         .domain(barTypes)
+                         .rangeRoundBands([0, x.rangeBand()]);
+
+        var color_map = {'user': SVG_COLOR_MAPPING[SVG_IDS[i]],
+                         'group': groupColor};
+
+
+        console.log('x axis:', x.domain());
+
+        // replace axis
+        svg.selectAll('g.x.axis')
+            .transition()
+            .duration(500)
+            .style("opacity",0)
+            .remove();
+
+        createAxis(svg, x, dateCutoff);
+
+        // remove the bars
+        svg.selectAll('.user')
+           .transition()
+           .duration(500)
+           .attr('y', CHART_HEIGHT - 0.5)
+           .attr("height", 0)
+           .remove();
+
+
+        var ticks = svg.selectAll('.time')
+                       .data(data)
+                       .enter().append('g')
+                       .attr('class', 'g')
+                       .attr('transform', function(d) { return 'translate(' + x(parseDate(new Date(d.x))) + ',0)';});
+
+        // bring back with new data
+        ticks.selectAll("rect")
+           .data(function(d) { return d.data})
+           .enter().append("rect")
+           .attr('width', x1.rangeBand())
+           .attr('x', function(d) { return x1(d.name); })
+           //.attr("x", function(d) { return x(parseDate(new Date(d.x))); })
+           .attr("height", function(d) { return 0;})
+           .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
+           .attr('fill', function(d) { return color_map[d.name];})
+           .attr('class', label)
+           .transition()
+           .delay(100) // stops colliding bars
+           .duration(1000)
+           .attr("y", function(d) { return y(d.value); })
+           .attr("height", function(d) { return CHART_HEIGHT - y(d.value); });
+    }
+ }
+
+function updateCharts(dateCutoff) {
+    for (i in SVG_IDS) {
+        var svg = d3.selectAll(SVG_IDS[i]);
+        var data = getData(SVG_IDS[i], dateCutoff);
+        console.log('updated data:', data);
+        console.log('updated date cutoff:', dateCutoff);
+        data = aggregateData(data, dateCutoff);
+        var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
+        var label = "user";
+
+        var parseDate = getDateFormatForCutoff(dateCutoff);
+
+        var y = d3.scale.linear()
+                        .domain([0, 100])
+                        .range([CHART_HEIGHT, 0]);
+        var x = getXScale(dateCutoff, data);
+
+        console.log('x axis:', x.domain());
+
+        // replace axis
+        svg.selectAll('g.x.axis')
+            .transition()
+            .duration(500)
+            .style("opacity",0)
+            .remove();
+
+        createAxis(svg, x, dateCutoff);
+
+        // remove the bars
+        svg.selectAll('.user')
+           .transition()
+           .duration(500)
+           .attr('y', CHART_HEIGHT - 0.5)
+           .attr("height", 0)
+           .remove();
+
+        // bring back with new data
+        svg.selectAll(".bar")
+           .data(data)
+           .enter()
+           .append("rect")
+           .attr("width", xRange.rangeBand())
+           .attr("x", function(d) { return x(parseDate(new Date(d.x))); })
+           .attr("height", function(d) { return 0;})
+           .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
+           .attr('fill', color)
+           .attr('class', label)
+           .transition()
+           .delay(100) // stops colliding bars
+           .duration(1000)
+           .attr("y", function(d) { return y(d.y); })
+           .attr("height", function(d) { return CHART_HEIGHT - y(d.y); });
+    }
+ }
+
 
 var groupColor = "#7092a2";
-setupFilteredDataLines("#actSVG", actData, activityColor, "");
-setupFilteredDataLines("#socSVG", socData, socialColor, "");
-setupFilteredDataLines("#regSVG", regData, regularityColor, "");
-setupFilteredDataLines("#sleepSVG", slpData, sleepColor, "");
-setupFilteredDataLines("#medsSVG", medData, medicationColor, "");
-setupFilteredDataLines("#glucSVG", gluData, glucoseColor, "");
-setupFilteredDataLines("#goalSVG", goalData, goalColor, "");
+function showGroupBars() {
+    setupFilteredDataLines("#actSVG", actGData, groupColor, "group-line");
+    setupFilteredDataLines("#socSVG", socGData, groupColor, "group-line");
+    setupFilteredDataLines("#regSVG", regGData, groupColor, "group-line");
 
-setupFilteredDataLines("#actSVG", actGData, groupColor, "group-line");
-setupFilteredDataLines("#socSVG", socGData, groupColor, "group-line");
-setupFilteredDataLines("#regSVG", regGData, groupColor, "group-line");
+    /* TODO !!! These need to be done*/
+    setupFilteredDataLines("#sleepSVG", sleepGData, groupColor, "group-line");
+    setupFilteredDataLines("#medsSVG", medsGData, groupColor, "group-line");
+    setupFilteredDataLines("#glucSVG", glucGData, groupColor, "group-line");
+    setupFilteredDataLines("#goalSVG", goalGData, groupColor, "group-line");
+ }
 
-/* TODO !!! These need to be done*/
-setupFilteredDataLines("#sleepSVG", sleepGData, groupColor, "group-line");
-setupFilteredDataLines("#medsSVG", medsGData, groupColor, "group-line");
-setupFilteredDataLines("#glucSVG", glucGData, groupColor, "group-line");
-setupFilteredDataLines("#goalSVG", goalGData, groupColor, "group-line");
+//setupCharts(dayCutoff);
+
+var CLASS_CUTOFF_MAPPING = {'day-line': dayCutoff,
+                            'week-line': weekCutoff,
+                            'month-line': monthCutoff}
 
 $(".filter-button").click(function() {
-   $("svg").hide();
-   $("." + $(this).attr("id")).show();
-   $(".button-selected").removeClass("button-selected");
-   $(this).addClass("button-selected");
-}).eq(0).click();
+    //$("svg").hide();
+    console.log('clicked cutoff button: ', $(this).attr('id'));
+    dateCutoff = CLASS_CUTOFF_MAPPING[$(this).attr("id")];
+    console.log('updating for cutoff: ', dateCutoff);
+    if ($(".group-results-button").hasClass('g-on')) {
+        toggleGroups(dateCutoff);
+    } else {
+        updateCharts(dateCutoff);
+    }
+    $(".button-selected").removeClass("button-selected");
+    $(this).addClass("button-selected");
+ }).eq(0).click();
 
+
+var groupAlreadyShown = false;
 $(".group-results-button").click(function() {
-      if ($(this).hasClass('g-on')) {
-	    $(this).removeClass('g-on').text("Off");
-	    $(".group-line").hide();
-      } else {
-	    $(this).addClass('g-on').text("On");
-	    $(".group-line").show();
-      }
-});
+    console.log('Group button clicked...');
+    console.log("groupalreadyshown:", groupAlreadyShown);
+    dateCutoff = $('.button-selected').attr('id');
+    dateCutoff = CLASS_CUTOFF_MAPPING[dateCutoff];
+    if ($(this).hasClass('g-on')) {
+	      $(this).removeClass('g-on').text("Off");
+        updateCharts(dateCutoff);
+    } else {
+	      $(this).addClass('g-on').text("On");
+        toggleGroups(dateCutoff);
+    }
+ });
 
 </script>
 {% endblock %}
