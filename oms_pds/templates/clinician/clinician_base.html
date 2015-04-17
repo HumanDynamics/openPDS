@@ -1,0 +1,62 @@
+{% load straight_include %}
+{% load verbatim %}
+{% load crocodile %}
+
+<html>
+  <script src="/static/mgh/components/platform/platform.js"></script>
+	
+	<!-- jQuery/jQuery Mobile -->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+  <head>
+      <title>
+          {% block title %}
+          openPDS
+          {% endblock %}
+      </title>
+
+	    {% block jquerymobile %}
+	    <script src="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.js"></script>
+	    <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.css" />
+	    {% endblock %}
+
+      <link rel="stylesheet" href="{{ STATIC_URL }}/mgh/contents/clinician-stylesheet.css" />
+      <link rel="import" href="/static/mgh/components/font-roboto/roboto.html">
+      <link rel="import" href="/static/mgh/components/core-toolbar/core-toolbar.html">
+      <link rel="import" href="/static/mgh/components/core-icon-button/core-icon-button.html">
+      {% block css %}
+      {% endblock %}
+
+      
+      <script src="http://d3js.org/d3.v3.min.js"></script>
+	    {% block scripts %}
+	    {% endblock %}
+
+	    <meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <meta name="description" content="">
+	    <meta name="author" content="">
+
+  </head>
+  <body>
+      <!-- Page starts here -->
+      <div data-role="page" data-theme="a" id="pageDiv">
+          
+          <core-toolbar id="title-bar">
+              <core-icon-button icon="menu" on-tap="{{menuAction}}"></core-icon-button>
+              <div flex>
+		              <img id="Logo" src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
+              </div>
+          </core-toolbar>
+          
+          <div id="content" data-role="content" style="padding: 0px">
+              <div class="scontainer">
+                  {% block content %}
+                  {% endblock %}
+              </div>
+          </div>
+      </div>
+  </body>
+
+  <script type="text/javascript" src="http://cdn.rawgit.com/jashkenas/coffeescript/master/extras/coffee-script.js"> </script>
+</html>

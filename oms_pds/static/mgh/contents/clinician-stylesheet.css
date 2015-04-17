@@ -1,0 +1,60 @@
+html,body {
+	background-color:#f6f6f6
+
+}
+core-header-panel {
+	height: 100%;
+}
+
+paper-tabs {
+	width: 100%;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+.scontainer {
+	width: 75%;
+	margin: 50px auto;
+	font-family: 'RobotoDraft', sans-serif;
+  color: #1A2F46
+}
+
+.bar rect {
+  shape-rendering: crispEdges;
+}
+
+#title-bar {
+  background-color: #fff;
+}
+
+#group-chart {
+  border-style: solid;
+  border-width: 2px;
+  border-color: #c5c5c5;
+  min-height: 300px;
+  min-width: 700px;
+}
+
+#group-overview {
+  margin-bottom: 5%;
+}
+
+#patients {
+  min-width: 800px;
+  min-height: 800px;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #c5c5c5;
+
+  margin-top: 5%;
+}
+
+.patient {
+  min-height: 200px;
+}
+
+.arc path {
+  stroke: #f6f6f6;
+  stroke-width: 3px;
+}
