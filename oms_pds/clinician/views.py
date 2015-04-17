@@ -18,11 +18,11 @@ import random
 ####
 def breakdown_history_test(scores):
     scores = [{'score': random.random() * 100} for r in xrange(100)]
-    return breakdown_history(scores)
+    return breakdown_history(scores, accessor='score')
 ###############
 
 
-def breakdown_history(scores):
+def breakdown_history(scores, accessor=None):
     """breaks down the users' scores to individual percentages for
     "good", "medium", and "bad".
 
@@ -31,13 +31,81 @@ def breakdown_history(scores):
     'medium': <percent_medium>
     'bad': <percent_bad>}
     """
-    scores = [s['score'] for s in scores]
+    if accessor:
+        scores = [s[accessor] for s in scores]
     percents = {'good': [s for s in scores if s >= 70],
                 'medium': [s for s in scores if s >= 50 and s < 70],
                 'bad': [s for s in scores if s < 50]}
 
     return [{'status': k,
              'score': len(v) / float(len(scores))} for k, v in percents.items()]
+
+def get_participant_scores(p):
+    """Get a summary object of this participants' scores of the form:
+    {<aspect>: [{'timestamp': <timestamp>, 'score': <score>}], ...}
+    """
+    goal_map = {'f': 'Foot Care',
+                's': 'Smoking',
+                'e': 'Eating Healthy',
+                't': 'Stress Level'}
+
+    ids = getInternalDataStore(p, "MGH smartCATCH", "Social Health Tracker", "")
+
+    sleepScoreHistory = ids.getAnswerList("sleepScoreHistory")[0]['value']
+    glucoseScoreHistory = ids.getAnswerList("glucoseScoreHistory")[0]['value']
+    medsScoreHistory = ids.getAnswerList("medsScoreHistory")[0]['value']
+    activityScoreHistory = ids.getAnswerList("activityScoreHistory")[0]['value']
+    socialScoreHistory = ids.getAnswerList("socialScoreHistory")[0]['value']
+    focusScoreHistory = ids.getAnswerList("focusScoreHistory")[0]['value']
+    goalScoreHistory = ids.getAnswerList("goalScoreHistory")[0]['value']
+
+    obj = {'Sleep': sleepScoreHistory,
+           'Glucose': glucoseScoreHistory,
+           'Medications': medsScoreHistory,
+           'Activity': activityScoreHistory,
+           'Social': socialScoreHistory,
+           'Focus': focusScoreHistory,
+           goal_map[p.goal]: goalScoreHistory}
+    return obj
+
+
+def get_participant_object(p):
+    """ Get object corresponding to this participant of the form:
+
+    {<aspect>: {'good': %,
+                'bad': %,
+                'medium': %'}}
+    """
+    scores = get_participant_scores(p)
+    # dict of {key: {'good': <%> 'medium': <%>, 'bad': <%>}, ...}
+    obj = {k: breakdown_history_test(v) for k, v in scores.items()}
+    obj['uid'] = p.uuid
+    return obj
+
+
+def aggregate_scores(participants):
+    """Get an aggregate time-series object of all participants' scores of the form:
+    [{'timestamp': <timestamp, 'good': <good %>, 'bad': <bad %>, 'medium': <medium %>}]
+    """
+    all_scores = {}
+    for p in participants:
+        scores = get_participant_scores(p)
+        scores = [v for k, v in scores.items()]
+        scores = [item for sublist in scores for item in sublist] #flatten
+        for obj in scores:
+            time = obj['time']
+            score = obj['score']
+            if time in all_scores.keys():
+                all_scores[time].append(score)
+            else:
+                all_scores[time] = [score]
+
+    obj = []
+    for time, scores in all_scores.items():
+        status = {s['status']: s['score'] for s in breakdown_history(scores)}
+        status['time'] = time
+        obj.append(status)
+    return obj
 
 
 def groupOverview(request):
@@ -58,46 +126,24 @@ def groupOverview(request):
 
     allParticipants = Profile.objects.filter(study_status__in=['i', 'c'])
 
-    goal_map = {'f': 'Foot Care',
-                's': 'Smoking',
-                'e': 'Eating Healthy',
-                't': 'Stress Level'}
-
     participant_data = []
     for p in allParticipants:
-        ids = getInternalDataStore(p, "MGH smartCATCH", "Social Health Tracker", "")
         try:
-            sleepScoreHistory = ids.getAnswerList("sleepScoreHistory")[0]['value']
-            glucoseScoreHistory = ids.getAnswerList("glucoseScoreHistory")[0]['value']
-            medsScoreHistory = ids.getAnswerList("medsScoreHistory")[0]['value']
-            activityScoreHistory = ids.getAnswerList("activityScoreHistory")[0]['value']
-            socialScoreHistory = ids.getAnswerList("socialScoreHistory")[0]['value']
-            focusScoreHistory = ids.getAnswerList("focusScoreHistory")[0]['value']
-            goalScoreHistory = ids.getAnswerList("goalScoreHistory")[0]['value']
+            participant_data.append(get_participant_object(p))
         except:
             continue
 
-        obj = {'Sleep': sleepScoreHistory,
-               'Glucose': glucoseScoreHistory,
-               'Medications': medsScoreHistory,
-               'Activity': activityScoreHistory,
-               'Social': socialScoreHistory,
-               'Focus': focusScoreHistory,
-               goal_map[p.goal]: goalScoreHistory}
+    for n in xrange(10):
+        obj2 = participant_data[0].copy()
+        obj2['uid'] = "test-{}".format(n)
+        participant_data.append(obj2)
 
-        # dict of {key: {'good': <%> 'medium': <%>, 'bad': <%>}, ...}
-        obj = {k: breakdown_history_test(v) for k, v in obj.items()}
-        obj['uid'] = p.uuid
-
-        participant_data.append(obj)
-        for n in xrange(10):
-            obj2 = obj.copy()
-            obj2['uid'] = "test-{}".format(n)
-            participant_data.append(obj2)
+    all_scores = aggregate_scores(allParticipants)
 
     return render_to_response("clinician/group_overview.html",
                               {'num_participants': len(participant_data),
-                               'participant_data': json.dumps(participant_data)},
+                               'participant_data': json.dumps(participant_data),
+                               'aggregate_scores': json.dumps(all_scores)},
                               context_instance=RequestContext(request))
 
 def patientInfo():

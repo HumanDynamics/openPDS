@@ -20,6 +20,36 @@ paper-tabs {
   color: #1A2F46
 }
 
+
+.d3-tip {
+  padding: 12px;
+  background: rgba(26, 47, 70, 0.80);
+  color: #fff;
+  border-radius: 2px;
+	font-family: 'RobotoDraft', sans-serif;
+  font-size: 1em;
+  font-weight: 300;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  width: 100%;
+  line-height: 1;
+  color: rgba(26, 47, 70, 0.80);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
 .bar rect {
   shape-rendering: crispEdges;
 }
@@ -51,7 +81,12 @@ paper-tabs {
 }
 
 .patient {
-  min-height: 200px;
+  margin-bottom: 30px;
+}
+
+.patient-name {
+  margin-bottom: 5px;
+  margin-top: 10px;
 }
 
 .arc path {
