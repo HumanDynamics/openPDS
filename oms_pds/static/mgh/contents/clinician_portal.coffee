@@ -4,7 +4,7 @@ class Pie
     @colors = colors
     @width = width
     @height = width
-    @radius = Math.min(@width, @height) / 2;
+    @radius = Math.min(@width, @height) / 2
     @name = name
 
     @arc = d3.svg.arc()
@@ -15,15 +15,26 @@ class Pie
       .sort null
       .value (d) -> d.score
 
+    @tip = d3.tip()
+      .attr "class", "d3-tip"
+      .offset([-10, 0])
+      .html (d) ->
+        '<span>' + d.data.status + ': ' +
+        Math.floor(d.data.score * 100) + '%</span>'
+
   render: (id) ->
     @svg = d3.select(id)
       .append("g")
-      .attr("transform", "translate(" + @width / 2 + "," + @height / 2 + ")");
+      .attr("transform", "translate(" + @width / 2 + "," + @height / 2 + ")")
+
+    @svg.call(@tip)
 
     @g = @svg.selectAll('.arc')
       .data @pie(@data)
       .enter().append("g")
       .attr "class", "arc"
+      .on "mouseover", @tip.show
+      .on "mouseout", @tip.hide
 
     @g.append("path")
       .attr "d", @arc
@@ -38,21 +49,15 @@ class Pie
       .text (d) => @name
 
 
-participantHtml = (uid) ->
-  '<div class="patient" id=' + uid + '>' +
-    '<h4 class="patient-name">' + uid + '</h4>' +
-    '<svg id="goal-' + uid + '"></svg>' +
-    '<svg id="activity-' + uid + '"></svg>' +
-    '<svg id="social-' + uid + '"></svg>' +
-    '<svg id="focus-' + uid + '"></svg>' +
-    '<svg id="glucose-' + uid + '"></svg>' +
-    '<svg id="meds-' + uid + '"></svg>' +
-    '<svg id="sleep-' + uid + '"></svg>' +
-  '</div>'
-
+participantHtml = (participant) ->
+  html = '<div class="patient" id=' + participant.uid + '>' + '<h3 class="patient-name">' + participant.uid + '</h3>'
+  aspects = (k for k in Object.keys(participant) when k != 'uid')
+  for aspect in aspects
+    html += '<svg id="' + aspect + '-' + participant.uid + '"></svg>'
+  html += '</div>'
 
 for participant in participant_data
-  $("#patients").append participantHtml(participant.uid)
+  $("#patients").append participantHtml(participant)
 
 
 aspects = ['goal', 'activity', 'social', 'focus', 'glucose', 'meds', 'sleep']
@@ -63,7 +68,9 @@ colors = d3.scale.ordinal()
 
 margins = {'left': 10, 'right': 10}
 
+
 for participant in participant_data
+  aspects = (k for k in Object.keys(participant) when k != 'uid')
   for aspect in aspects
     id = "#" + aspect + "-" + participant.uid
     width = $('#patients').width() - margins.left - margins.right

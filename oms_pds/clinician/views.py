@@ -36,7 +36,8 @@ def breakdown_history(scores):
                 'medium': [s for s in scores if s >= 50 and s < 70],
                 'bad': [s for s in scores if s < 50]}
 
-    return {k: len(v) / float(len(scores)) for k, v in percents.items()}
+    return [{'status': k,
+             'score': len(v) / float(len(scores))} for k, v in percents.items()]
 
 
 def groupOverview(request):
@@ -57,6 +58,11 @@ def groupOverview(request):
 
     allParticipants = Profile.objects.filter(study_status__in=['i', 'c'])
 
+    goal_map = {'f': 'Foot Care',
+                's': 'Smoking',
+                'e': 'Eating Healthy',
+                't': 'Stress Level'}
+
     participant_data = []
     for p in allParticipants:
         ids = getInternalDataStore(p, "MGH smartCATCH", "Social Health Tracker", "")
@@ -71,22 +77,27 @@ def groupOverview(request):
         except:
             continue
 
-        obj = {'sleep': sleepScoreHistory,
-               'glucose': glucoseScoreHistory,
-               'meds': medsScoreHistory,
-               'activity': activityScoreHistory,
-               'social': socialScoreHistory,
-               'focus': focusScoreHistory,
-               p.goal: goalScoreHistory}
+        obj = {'Sleep': sleepScoreHistory,
+               'Glucose': glucoseScoreHistory,
+               'Medications': medsScoreHistory,
+               'Activity': activityScoreHistory,
+               'Social': socialScoreHistory,
+               'Focus': focusScoreHistory,
+               goal_map[p.goal]: goalScoreHistory}
 
         # dict of {key: {'good': <%> 'medium': <%>, 'bad': <%>}, ...}
         obj = {k: breakdown_history_test(v) for k, v in obj.items()}
         obj['uid'] = p.uuid
 
         participant_data.append(obj)
+        for n in xrange(10):
+            obj2 = obj.copy()
+            obj2['uid'] = "test-{}".format(n)
+            participant_data.append(obj2)
 
-    return render_to_response("clinician/clinician_base.html",
-                              {'participant_data': json.dumps(participant_data)},
+    return render_to_response("clinician/group_overview.html",
+                              {'num_participants': len(participant_data),
+                               'participant_data': json.dumps(participant_data)},
                               context_instance=RequestContext(request))
 
 def patientInfo():
