@@ -1,3 +1,101 @@
+class StackedChart
+  constructor: (data, colors, width, height) ->
+    @data = data
+    @colors = colors
+    @margin = {'top': 20, 'right': 20, 'bottom': 30, 'left': 50}
+    @width = width - @margin.left - @margin.right
+    @height = height - @margin.top - @margin.bottom
+
+    # @comparator = (a, b) ->
+    #   if a.time < b.time
+    #     -1
+    #   if a.time > b.time
+    #     1
+    #   else
+    #     0
+
+    @formatPercent = d3.format ".0%"
+    @parseDate = d3.time.format('%m/%d/%y').parse
+
+    for d in @data
+      d['time'] = @parseDate(d['time'])
+
+
+    @stack = d3.layout.stack()
+      .values (d) -> d.values
+    @statuses = @stack @colors.domain().map( (name) =>
+      {
+        name: name,
+        values: @data.map((d) ->
+          {
+            time: d.time,
+            y: d[name]
+          })
+      }
+      )
+
+    console.log @statuses
+
+    @x = d3.time.scale()
+      .domain d3.extent @data, (d) -> d.time
+      .range([0, @width])
+
+    console.log @x.domain()
+
+    @y = d3.scale.linear()
+      .range([@height, 0])
+
+    @xAxis = d3.svg.axis()
+      .scale @x
+      .orient "bottom"
+      .ticks d3.time.month
+      .tickFormat d3.time.format('%B')
+
+    @yAxis = d3.svg.axis()
+      .scale @y
+      .orient 'left'
+      .tickFormat @formatPercent
+
+    @area = d3.svg.area()
+      .x (d) => @x(d.time)
+      .y0 (d) => @y(d.y0)
+      .y1 (d) => @y(d.y0 + d.y)
+
+
+  render: (id) ->
+    @chart = d3.select(id)
+      .append "svg"
+      .attr "class", "agg-chart"
+      .attr "width", @width + @margin.left + @margin.right
+      .attr "height", @height + @margin.top + @margin.bottom
+      .append "g"
+      .attr "transform", "translate(" + @margin.left + "," + @margin.top + ")"
+
+    @chartBody = @chart.append("g")
+      .attr "width", @width
+      .attr "height", @height
+
+    @status = @chartBody.selectAll('.status')
+      .data(@statuses)
+      .enter().append("g")
+      .attr "class", "status"
+
+    @status.append("path")
+      .attr "class", "area"
+      .attr "d", (d) => @area d.values
+      .style "fill", (d) => @colors d.name
+
+    @chart.append("g")
+      .attr "class", "axis"
+      .attr "transform", "translate(0," + @height + ")"
+      .call @xAxis
+
+    @chart.append("g")
+      .attr "class", "axis"
+      .attr "transform", "translate(0,0)"
+      .call @yAxis
+
+
 class Pie
   constructor: (data, name, colors, width) ->
     @data = data
@@ -63,8 +161,8 @@ for participant in participant_data
 aspects = ['goal', 'activity', 'social', 'focus', 'glucose', 'meds', 'sleep']
 
 colors = d3.scale.ordinal()
-  .domain(['good', 'medium', 'bad'])
-  .range(['#3FE963', '#F5C700', '#F34D4F'])
+  .domain(['bad', 'medium', 'good'])
+  .range(['#F34D4F', '#F5C700', '#3FE963'])
 
 margins = {'left': 10, 'right': 10}
 
@@ -82,3 +180,6 @@ for participant in participant_data
     data = participant[aspect]
     pie = new Pie(data, aspect, colors, chart_width)
     pie.render(id)
+
+stacked = new StackedChart(aggregate_data, colors, 700, 300)
+stacked.render('#group-chart')

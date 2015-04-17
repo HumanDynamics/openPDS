@@ -19,8 +19,10 @@
 
 {% block scripts %}
 <script>
-    var participant_data = {{participant_data|safe}};
-    console.log(participant_data);
+ var participant_data = {{participant_data|safe}};
+ console.log(participant_data);
+ var aggregate_data = {{aggregate_scores|safe}};
+ console.log(aggregate_data);
 </script>
 <script type="text/coffeescript" src="/static/mgh/contents/clinician_portal.coffee"></script
 {% endblock %}

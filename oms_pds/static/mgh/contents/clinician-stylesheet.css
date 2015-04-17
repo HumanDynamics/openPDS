@@ -59,9 +59,9 @@ paper-tabs {
 }
 
 #group-chart {
-  border-style: solid;
-  border-width: 2px;
-  border-color: #c5c5c5;
+  /* border-style: solid; */
+  /* border-width: 2px; */
+  /* border-color: #c5c5c5; */
   min-height: 300px;
   min-width: 700px;
 }
@@ -73,9 +73,9 @@ paper-tabs {
 #patients {
   min-width: 800px;
   min-height: 800px;
-  border-style: solid;
-  border-width: 2px;
-  border-color: #c5c5c5;
+  /* border-style: solid; */
+  /* border-width: 2px; */
+  /* border-color: #c5c5c5; */
 
   margin-top: 5%;
 }
@@ -92,4 +92,11 @@ paper-tabs {
 .arc path {
   stroke: #f6f6f6;
   stroke-width: 3px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #c5c5c5;
+  shape-rendering: crispEdges;
 }

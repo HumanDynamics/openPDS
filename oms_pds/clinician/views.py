@@ -93,7 +93,8 @@ def aggregate_scores(participants):
         scores = [v for k, v in scores.items()]
         scores = [item for sublist in scores for item in sublist] #flatten
         for obj in scores:
-            time = obj['time']
+            time = datetime.datetime.fromtimestamp(obj['time'])
+            time = time.strftime('%x')
             score = obj['score']
             if time in all_scores.keys():
                 all_scores[time].append(score)
@@ -174,9 +175,9 @@ def patientInfo():
         goalScoreGroupHistory = internalDataStore.getAnswerList("goalScoreGroupHistory")[0]['value']
     except:
         return HttpResponse("Not enough data collected. Please wait.")
-        
+
     currentTime = time.time();
-    
+
     return render_to_response("visualization/smartcatch_history.html", {
         'socialhealth': socialhealth,
         'surveyscores': surveyscores,
@@ -188,7 +189,7 @@ def patientInfo():
         'avgMeds': avgs["meds"],
         'avgGoal': avgs["goal"],
         'sleepScoreHistory': sleepScoreHistory,
-        'glucoseScoreHistory': glucoseScoreHistory, 
+        'glucoseScoreHistory': glucoseScoreHistory,
         'medsScoreHistory': medsScoreHistory,
         'activityScoreHistory': activityScoreHistory,
         'socialScoreHistory': socialScoreHistory,
