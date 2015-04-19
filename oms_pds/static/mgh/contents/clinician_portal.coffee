@@ -1,46 +1,39 @@
 class StackedChart
   constructor: (data, colors, width, height) ->
-    @data = data
     @colors = colors
     @margin = {'top': 20, 'right': 20, 'bottom': 30, 'left': 50}
     @width = width - @margin.left - @margin.right
     @height = height - @margin.top - @margin.bottom
-
-    # @comparator = (a, b) ->
-    #   if a.time < b.time
-    #     -1
-    #   if a.time > b.time
-    #     1
-    #   else
-    #     0
-
     @formatPercent = d3.format ".0%"
     @parseDate = d3.time.format('%m/%d/%y').parse
+    @data = data
+
+    console.log "raw data:"
+    console.log data
 
     for d in @data
-      d['time'] = @parseDate(d['time'])
+      d['date'] = @parseDate(d['date'])
 
+    @dates = d3.extent @data, (d) -> d.date
+
+    @data = d3.nest()
+      .key (d) -> d['key']
+      .entries(@data)
 
     @stack = d3.layout.stack()
+      .offset "zero"
       .values (d) -> d.values
-    @statuses = @stack @colors.domain().map( (name) =>
-      {
-        name: name,
-        values: @data.map((d) ->
-          {
-            time: d.time,
-            y: d[name]
-          })
-      }
-      )
+      .x (d) -> d.date
+      .y (d) -> d.value
 
+    @statuses = @stack @data
+
+    console.log "stacked:"
     console.log @statuses
 
     @x = d3.time.scale()
-      .domain d3.extent @data, (d) -> d.time
+      .domain @dates
       .range([0, @width])
-
-    console.log @x.domain()
 
     @y = d3.scale.linear()
       .range([@height, 0])
@@ -57,7 +50,11 @@ class StackedChart
       .tickFormat @formatPercent
 
     @area = d3.svg.area()
-      .x (d) => @x(d.time)
+      .interpolate("cardinal")
+      .x (d) =>
+        console.log "date:", d.date
+        console.log (@x d.date)
+        @x(d.date)
       .y0 (d) => @y(d.y0)
       .y1 (d) => @y(d.y0 + d.y)
 
@@ -83,7 +80,7 @@ class StackedChart
     @status.append("path")
       .attr "class", "area"
       .attr "d", (d) => @area d.values
-      .style "fill", (d) => @colors d.name
+      .style "fill", (d) => @colors d.key
 
     @chart.append("g")
       .attr "class", "axis"
@@ -121,6 +118,7 @@ class Pie
         Math.floor(d.data.score * 100) + '%</span>'
 
   render: (id) ->
+    console.log "rendering on id:" + id
     @svg = d3.select(id)
       .append("g")
       .attr("transform", "translate(" + @width / 2 + "," + @height / 2 + ")")
@@ -144,12 +142,13 @@ class Pie
       .attr "y", (d, i) => @height - 50
       .style "color", '#1A2F46'
       .style "font-weight", 200
-      .text (d) => @name
+      .text (d) => @name.replace('-', ' ')
 
 
 participantHtml = (participant) ->
   html = '<div class="patient" id=' + participant.uid + '>' + '<h3 class="patient-name">' + participant.uid + '</h3>'
   aspects = (k for k in Object.keys(participant) when k != 'uid')
+  aspects = aspects.sort()
   for aspect in aspects
     html += '<svg id="' + aspect + '-' + participant.uid + '"></svg>'
   html += '</div>'
@@ -157,8 +156,6 @@ participantHtml = (participant) ->
 for participant in participant_data
   $("#patients").append participantHtml(participant)
 
-
-aspects = ['goal', 'activity', 'social', 'focus', 'glucose', 'meds', 'sleep']
 
 colors = d3.scale.ordinal()
   .domain(['bad', 'medium', 'good'])

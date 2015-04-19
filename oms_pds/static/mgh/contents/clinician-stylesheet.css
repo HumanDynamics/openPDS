@@ -94,6 +94,11 @@ paper-tabs {
   stroke-width: 3px;
 }
 
+.status path {
+  stroke: #f6f6f6;
+  stroke-width: 3px;
+}
+
 .axis path,
 .axis line {
   fill: none;

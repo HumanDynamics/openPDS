@@ -65,7 +65,7 @@ def get_participant_scores(p):
            'Activity': activityScoreHistory,
            'Social': socialScoreHistory,
            'Focus': focusScoreHistory,
-           goal_map[p.goal]: goalScoreHistory}
+           goal_map[p.goal].replace(' ', '-'): goalScoreHistory}
     return obj
 
 
@@ -76,20 +76,20 @@ def get_participant_object(p):
                 'bad': %,
                 'medium': %'}}
     """
-    scores = get_participant_scores(p)
     # dict of {key: {'good': <%> 'medium': <%>, 'bad': <%>}, ...}
-    obj = {k: breakdown_history_test(v) for k, v in scores.items()}
-    obj['uid'] = p.uuid
+    obj = {k: breakdown_history_test(v) for k, v in p['scores'].items()}
+    obj['uid'] = p['uid']
     return obj
 
 
-def aggregate_scores(participants):
+def aggregate_scores(all_participant_scores):
     """Get an aggregate time-series object of all participants' scores of the form:
     [{'timestamp': <timestamp, 'good': <good %>, 'bad': <bad %>, 'medium': <medium %>}]
     """
     all_scores = {}
-    for p in participants:
-        scores = get_participant_scores(p)
+    for p in all_participant_scores:
+        uid = p['uid']
+        scores = p['scores']
         scores = [v for k, v in scores.items()]
         scores = [item for sublist in scores for item in sublist] #flatten
         for obj in scores:
@@ -103,10 +103,11 @@ def aggregate_scores(participants):
 
     obj = []
     for time, scores in all_scores.items():
-        status = {s['status']: s['score'] for s in breakdown_history(scores)}
-        status['time'] = time
-        obj.append(status)
-    return obj
+        for s in breakdown_history(scores):
+            obj.append({'value': s['score'],
+                        'date': time,
+                        'key': s['status']})
+    return sorted(obj, key=lambda s: s['date'])
 
 
 def groupOverview(request):
@@ -127,19 +128,21 @@ def groupOverview(request):
 
     allParticipants = Profile.objects.filter(study_status__in=['i', 'c'])
 
+    data = [{'uid': p.uuid, 'scores': get_participant_scores(p)} for p in allParticipants]
+
     participant_data = []
-    for p in allParticipants:
-        try:
-            participant_data.append(get_participant_object(p))
-        except:
-            continue
+    for p in data:
+        participant_data.append(get_participant_object(p))
+        # try:
+        # except:
+        #     continue
 
-    for n in xrange(10):
-        obj2 = participant_data[0].copy()
-        obj2['uid'] = "test-{}".format(n)
-        participant_data.append(obj2)
+    # for n in xrange(10):
+    #     obj2 = participant_data[0].copy()
+    #     obj2['uid'] = "test-{}".format(n)
+    #     participant_data.append(obj2)
 
-    all_scores = aggregate_scores(allParticipants)
+    all_scores = aggregate_scores(data)
 
     return render_to_response("clinician/group_overview.html",
                               {'num_participants': len(participant_data),

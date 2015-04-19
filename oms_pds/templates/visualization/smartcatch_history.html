@@ -72,7 +72,7 @@ smartCATCH
 	    <div id="day-line" class="filter-button">Today</div>
 	    <div id="week-line" class="filter-button">This Week</div>
 	    <div id="month-line" class="filter-button">This Month</div>
-	    <div id="full-line" class="filter-button">Complete</div>
+	    <div id="full-line" class="filter-button">Complete</div>q
       </div>
   </div>
 
@@ -232,17 +232,6 @@ switch(goalType){
 		goalQuestion="Rate your eating today on a scale of 1  (I really made bad food choices today)  to 10 (I ate really healthy-today)"
 		goalOption='<input class="eatingQ" type="range" data-show-value="true" min="0" max="10"></br>'
 		break;
-	case "t":
-	        goal = 'stress level';
-		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/stress_01.png";
-		console.log(goal+ "4");
-		goalQuestion="Rate your stress reduction techniques today on a scale of 1 (I practiced very good techniques to reduce my feelings of stress today) to 10 ( I was very stressed out and I did nothing to help myself calm down). "
-		goalOption='<input class="stressQ" type="range" data-show-value="true" min="0" max="10"></br>'
-		break;
-	}
-$('#goalCardLine .graphPic').attr('src',goalImage);
-$('#goalCardLine .lineLabel').append(goal);
-
 //how well text
 var doingWell="You are doing well / ";
 var doingokay="You can do better / ";
@@ -382,15 +371,20 @@ var monthCutoff = {{ monthCutoff }} * 1000;
 
 function cleanData(data) {
     var newlist = []
-    for (d in data) {
+    for (d in data) {        
         var newx = data[d]['x'] * 1000;
-        newlist.push({'x': newx,
-                      'y': data[d]['y']});
+    var now = (new Date).getTime();
+    var starttime = now - (1000 * 60 * 60 * 24 * 10);
+    while (starttime < now) {
+        newlist.push({'x': starttime,
+                      'y': 0});
+        starttime += 10000;
 //	      data[d]["x"] *= 1000; //convert from s to ms
 	      //newlist.push(data[d]);
     }
 //    console.log(newlist);
     return newlist;
+    }
 }
 
 function filterPoints(data, cutoff) {
@@ -569,16 +563,16 @@ function getData(chartID, dateCutoff, group) {
     }
 
     //TEMP - for testing
-    /* var new_data = [];
-       var item;
-       for (item in data) {
-       new_data.push({'x': data[item].x,
-       'y': Math.floor(Math.random() * 100)});
-       }
-       return new_data; */
+    var new_data = [];
+    var item;
+    for (item in data) {
+        new_data.push({'x': data[item].x,
+                       'y': Math.floor(Math.random() * 100)});
+    }
+    return new_data;
     //TEMP
     //console.log(data);
-    return data;
+    //return data;
  }
 
 
