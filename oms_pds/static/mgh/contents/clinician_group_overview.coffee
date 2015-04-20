@@ -157,16 +157,11 @@ participantHtml = (participant) ->
 for participant in participant_data
   $("#patients").append participantHtml(participant)
 
-for uid, name of uid_name_map
-  html = "<paper-item><a href=/patients/" + uid + ">" + name + "</a></paper-item>"
-  $('#patient-menu').append(html)
-
 colors = d3.scale.ordinal()
   .domain(['bad', 'medium', 'good'])
   .range(['#F34D4F', '#F5C700', '#3FE963'])
 
 margins = {'left': 10, 'right': 10}
-
 
 for participant in participant_data
   aspects = (k for k in Object.keys(participant) when k != 'uid')

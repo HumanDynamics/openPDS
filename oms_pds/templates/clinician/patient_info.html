@@ -1,0 +1,23 @@
+{% extends "clinician/clinician_base.html" %}
+
+{% block content %}
+
+
+<div horizontal center-justified layout id="group-overview">
+    <div layout vertical>
+        <h2> patient {{uid}}</h2>
+    </div>
+</div>
+
+<hr>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+ var uid = {{uid|safe}};
+ console.log(uid)
+</script>
+<!-- <script type="text/coffeescript" src="/static/mgh/contents/clinician_portal.coffee"></script> -->
+
+{% endblock %}

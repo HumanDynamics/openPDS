@@ -110,6 +110,16 @@ def aggregate_scores(all_participant_scores):
     return sorted(obj, key=lambda s: s['date'])
 
 
+def uid_name_map():
+    allParticipants = Profile.objects.filter(study_status__in=['i', 'c'])
+    # map of UID -> "Patient X"
+    uid_name_map = {}
+    uids = [p.uuid for p in allParticipants]
+    for n, uid in enumerate(uids):
+        uid_name_map[uid] = "Patient {}".format(n + 1)
+    return uid_name_map
+
+
 def groupOverview(request):
     """gets the group overview page.
 
@@ -130,12 +140,6 @@ def groupOverview(request):
 
     data = [{'uid': p.uuid, 'scores': get_participant_scores(p)} for p in allParticipants]
 
-    # map of UID -> "Patient X"
-    uid_name_map = {}
-    uids = [p.uuid for p in allParticipants]
-    for n, uid in enumerate(uids):
-        uid_name_map[uid] = "Patient {}".format(n + 1)
-
     participant_data = []
     for p in data:
         participant_data.append(get_participant_object(p))
@@ -154,67 +158,75 @@ def groupOverview(request):
                               {'num_participants': len(participant_data),
                                'participant_data': json.dumps(participant_data),
                                'aggregate_scores': json.dumps(all_scores),
-                               'uid_name_map': json.dumps(uid_name_map)},
+                               'uid_name_map': uid_name_map(),
+                               'uid_name_map_json': json.dumps(uid_name_map())
+                           },
                               context_instance=RequestContext(request))
 
-def patientInfo():
-    uid = request.GET['user_id']
+def patientInfo(request, uid=None):
 
-    # shot in the dark
-    profile = Profile.objects.filter(uuid__in=['i', 'c'])
 
-    internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
+    profile = Profile.objects.filter(uuid__in=[uid])
+    return render_to_response("clinician/patient_info.html",
+                              {
+                                  'uid': uid,
+                                  'uid_name_map': uid_name_map(),
+                                  'uid_name_map_json': json.dumps(uid_name_map())
+                              },
+                              context_instance=RequestContext(request))
 
-    try:
-        avgs = internalDataStore.getAnswer("socialhealthavgs")[0]['value']
-        socialhealth = internalDataStore.getAnswer("socialhealth")[0]['value']
-        surveyscores = internalDataStore.getAnswer("surveyscores")[0]['value']
-        sleepScoreHistory = internalDataStore.getAnswerList("sleepScoreHistory")[0]['value']
-        glucoseScoreHistory = internalDataStore.getAnswerList("glucoseScoreHistory")[0]['value']
-        medsScoreHistory = internalDataStore.getAnswerList("medsScoreHistory")[0]['value']
-        activityScoreHistory = internalDataStore.getAnswerList("activityScoreHistory")[0]['value']
-        socialScoreHistory = internalDataStore.getAnswerList("socialScoreHistory")[0]['value']
-        focusScoreHistory = internalDataStore.getAnswerList("focusScoreHistory")[0]['value']
-        goalScoreHistory = internalDataStore.getAnswerList("goalScoreHistory")[0]['value']
-        activityScoreGroupHistory = internalDataStore.getAnswerList("activityScoreGroupHistory")[0]['value']
-        socialScoreGroupHistory = internalDataStore.getAnswerList("socialScoreGroupHistory")[0]['value']
-        focusScoreGroupHistory = internalDataStore.getAnswerList("focusScoreGroupHistory")[0]['value']
-        sleepScoreGroupHistory = internalDataStore.getAnswerList("sleepScoreGroupHistory")[0]['value']
-        glucoseScoreGroupHistory = internalDataStore.getAnswerList("glucoseScoreGroupHistory")[0]['value']
-        medsScoreGroupHistory = internalDataStore.getAnswerList("medsScoreGroupHistory")[0]['value']
-        goalScoreGroupHistory = internalDataStore.getAnswerList("goalScoreGroupHistory")[0]['value']
-    except:
-        return HttpResponse("Not enough data collected. Please wait.")
+    # internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", "")
 
-    currentTime = time.time();
+    # try:
+    #     avgs = internalDataStore.getAnswer("socialhealthavgs")[0]['value']
+    #     socialhealth = internalDataStore.getAnswer("socialhealth")[0]['value']
+    #     surveyscores = internalDataStore.getAnswer("surveyscores")[0]['value']
+    #     sleepScoreHistory = internalDataStore.getAnswerList("sleepScoreHistory")[0]['value']
+    #     glucoseScoreHistory = internalDataStore.getAnswerList("glucoseScoreHistory")[0]['value']
+    #     medsScoreHistory = internalDataStore.getAnswerList("medsScoreHistory")[0]['value']
+    #     activityScoreHistory = internalDataStore.getAnswerList("activityScoreHistory")[0]['value']
+    #     socialScoreHistory = internalDataStore.getAnswerList("socialScoreHistory")[0]['value']
+    #     focusScoreHistory = internalDataStore.getAnswerList("focusScoreHistory")[0]['value']
+    #     goalScoreHistory = internalDataStore.getAnswerList("goalScoreHistory")[0]['value']
+    #     activityScoreGroupHistory = internalDataStore.getAnswerList("activityScoreGroupHistory")[0]['value']
+    #     socialScoreGroupHistory = internalDataStore.getAnswerList("socialScoreGroupHistory")[0]['value']
+    #     focusScoreGroupHistory = internalDataStore.getAnswerList("focusScoreGroupHistory")[0]['value']
+    #     sleepScoreGroupHistory = internalDataStore.getAnswerList("sleepScoreGroupHistory")[0]['value']
+    #     glucoseScoreGroupHistory = internalDataStore.getAnswerList("glucoseScoreGroupHistory")[0]['value']
+    #     medsScoreGroupHistory = internalDataStore.getAnswerList("medsScoreGroupHistory")[0]['value']
+    #     goalScoreGroupHistory = internalDataStore.getAnswerList("goalScoreGroupHistory")[0]['value']
+    # except:
+    #     return HttpResponse("Not enough data collected. Please wait.")
 
-    return render_to_response("visualization/smartcatch_history.html", {
-        'socialhealth': socialhealth,
-        'surveyscores': surveyscores,
-        'avgActivity': avgs["activity"],
-        'avgSocial': avgs["social"],
-        'avgFocus': avgs["focus"],
-        'avgSleep': avgs["sleep"],
-        'avgGlucose': avgs["glucose"],
-        'avgMeds': avgs["meds"],
-        'avgGoal': avgs["goal"],
-        'sleepScoreHistory': sleepScoreHistory,
-        'glucoseScoreHistory': glucoseScoreHistory,
-        'medsScoreHistory': medsScoreHistory,
-        'activityScoreHistory': activityScoreHistory,
-        'socialScoreHistory': socialScoreHistory,
-        'focusScoreHistory': focusScoreHistory,
-        'goalScoreHistory': goalScoreHistory,
-        'activityScoreGroupHistory': activityScoreGroupHistory,
-        'socialScoreGroupHistory': socialScoreGroupHistory,
-        'focusScoreGroupHistory': focusScoreGroupHistory,
-        'goalScoreGroupHistory': goalScoreGroupHistory,
-        'medsScoreGroupHistory': medsScoreGroupHistory,
-        'glucoseScoreGroupHistory': glucoseScoreGroupHistory,
-        'sleepScoreGroupHistory': sleepScoreGroupHistory,
-        'dayCutoff': currentTime - 24 * 3600,
-        'weekCutoff': currentTime - 7 * 24 * 3600,
-        'monthCutoff': currentTime - 30 * 24 * 3600,
-        'goaltype': profile.goal,
-        'control': profile.study_status == 'c',
-    }, context_instance=RequestContext(request))
+    # currentTime = time.time();
+
+    # return render_to_response("visualization/smartcatch_history.html", {
+    #     'socialhealth': socialhealth,
+    #     'surveyscores': surveyscores,
+    #     'avgActivity': avgs["activity"],
+    #     'avgSocial': avgs["social"],
+    #     'avgFocus': avgs["focus"],
+    #     'avgSleep': avgs["sleep"],
+    #     'avgGlucose': avgs["glucose"],
+    #     'avgMeds': avgs["meds"],
+    #     'avgGoal': avgs["goal"],
+    #     'sleepScoreHistory': sleepScoreHistory,
+    #     'glucoseScoreHistory': glucoseScoreHistory,
+    #     'medsScoreHistory': medsScoreHistory,
+    #     'activityScoreHistory': activityScoreHistory,
+    #     'socialScoreHistory': socialScoreHistory,
+    #     'focusScoreHistory': focusScoreHistory,
+    #     'goalScoreHistory': goalScoreHistory,
+    #     'activityScoreGroupHistory': activityScoreGroupHistory,
+    #     'socialScoreGroupHistory': socialScoreGroupHistory,
+    #     'focusScoreGroupHistory': focusScoreGroupHistory,
+    #     'goalScoreGroupHistory': goalScoreGroupHistory,
+    #     'medsScoreGroupHistory': medsScoreGroupHistory,
+    #     'glucoseScoreGroupHistory': glucoseScoreGroupHistory,
+    #     'sleepScoreGroupHistory': sleepScoreGroupHistory,
+    #     'dayCutoff': currentTime - 24 * 3600,
+    #     'weekCutoff': currentTime - 7 * 24 * 3600,
+    #     'monthCutoff': currentTime - 30 * 24 * 3600,
+    #     'goaltype': profile.goal,
+    #     'control': profile.study_status == 'c',
+    # }, context_instance=RequestContext(request))

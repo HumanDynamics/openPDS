@@ -62,6 +62,9 @@
                               <paper-dropdown-menu label="Select a Patient">
                                   <paper-dropdown class="dropdown">
                                       <core-menu class="menu" id="patient-menu">
+                                          {% for uid, name in uid_name_map.items %}
+                                          <paper-item> <a href="/clinician/patients/{{uid}}">{{name}}</a></paper-item>
+                                          {% endfor %}
                                       </core-menu>
                                   </paper-dropdown>
                               </paper-dropdown-menu>
@@ -82,7 +85,10 @@
           </div>
       </div>
   </body>
-
+  <script>
+   var uid_name_map = {{uid_name_map_json|safe}};
+   console.log(uid_name_map);
+  </script>
   <script type="text/javascript" src="http://cdn.rawgit.com/jashkenas/coffeescript/master/extras/coffee-script.js"> </script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.3/d3-tip.min.js"></script>
 </html>
