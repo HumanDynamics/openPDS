@@ -10,5 +10,5 @@ from views import groupOverview
 # admin.autodiscover()
 
 urlpatterns = patterns('oms_pds.clinician.views',
-                       (r'^group_overview', cache_page(60 * 15)(groupOverview)),
+                       (r'^group_overview', groupOverview),
 )

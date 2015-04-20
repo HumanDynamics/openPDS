@@ -47,6 +47,7 @@ class StackedChart
     @yAxis = d3.svg.axis()
       .scale @y
       .orient 'left'
+      .ticks 1
       .tickFormat @formatPercent
 
     @area = d3.svg.area()
@@ -88,7 +89,7 @@ class StackedChart
       .call @xAxis
 
     @chart.append("g")
-      .attr "class", "axis"
+      .attr "class", "y axis"
       .attr "transform", "translate(0,0)"
       .call @yAxis
 
@@ -150,7 +151,7 @@ participantHtml = (participant) ->
   aspects = (k for k in Object.keys(participant) when k != 'uid')
   aspects = aspects.sort()
   for aspect in aspects
-    html += '<svg id="' + aspect + '-' + participant.uid + '"></svg>'
+    html += '<svg class="pie" id="' + aspect + '-' + participant.uid + '"></svg>'
   html += '</div>'
 
 for participant in participant_data
