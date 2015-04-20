@@ -79,6 +79,15 @@ paper-tabs {
   text-decoration: none;
 }
 
+a:link {
+  color: rgba(26, 47, 70, 0.80);
+  text-decoration: none;
+}
+
+a:hover {
+  color: rgba(26, 47, 70, 1);
+}
+
 #spacer {
   min-width: 100px;
 }

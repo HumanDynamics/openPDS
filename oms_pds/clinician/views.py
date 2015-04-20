@@ -130,6 +130,12 @@ def groupOverview(request):
 
     data = [{'uid': p.uuid, 'scores': get_participant_scores(p)} for p in allParticipants]
 
+    # map of UID -> "Patient X"
+    uid_name_map = {}
+    uids = [p.uuid for p in allParticipants]
+    for n, uid in enumerate(uids):
+        uid_name_map[uid] = "Patient {}".format(n + 1)
+
     participant_data = []
     for p in data:
         participant_data.append(get_participant_object(p))
@@ -147,7 +153,8 @@ def groupOverview(request):
     return render_to_response("clinician/group_overview.html",
                               {'num_participants': len(participant_data),
                                'participant_data': json.dumps(participant_data),
-                               'aggregate_scores': json.dumps(all_scores)},
+                               'aggregate_scores': json.dumps(all_scores),
+                               'uid_name_map': json.dumps(uid_name_map)},
                               context_instance=RequestContext(request))
 
 def patientInfo():
