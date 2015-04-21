@@ -6,6 +6,8 @@
 <div horizontal center-justified layout id="group-overview">
     <div layout vertical>
         <h2> patient {{uid}}</h2>
+        <div id="chart">
+        </div>
     </div>
 </div>
 
@@ -15,9 +17,38 @@
 
 {% block scripts %}
 <script>
- var uid = {{uid|safe}};
- console.log(uid)
+
+ var userHistory = {{userHistory|safe}};
+ var groupHistory = {{groupHistory|safe}};
+ 
+ var goalType = "{{goalType}}";
+
+ var dayCutoff = new Date({{ dayCutoff }} * 1000);
+ var weekCutoff = new Date({{ weekCutoff }} * 1000);
+ var monthCutoff = new Date({{ monthCutoff }} * 1000);
+
+ var goalD=[{{ surveyscores.goal }}];//data for goal //data inputs here
+ var goalAvgD=[ {{ avgGoal }}];//goal average
+ var socD=[{{ socialhealth.user.social }}];//data for social
+ var socAvgD=[ {{ avgSocial }} ];//for social average
+ var actD=[{{ socialhealth.user.activity }}];//for activity
+ var actAvgD=[ {{ avgActivity }} ];//for activity average
+ var slpD=[{{ surveyscores.sleep }}];//for sleep
+ var slpAvgD=[{{ avgSleep }}];//for sleep average
+ var regD=[{{ socialhealth.user.focus }}];//for regularity
+ var regAvgD=[{{ avgFocus }}];//for regularity average
+ var gluD=[{{ surveyscores.glucose }}];// glucose
+ var gluAvgD=[{{ avgGlucose }}];//glucose average
+ var medD=[{{ surveyscores.meds }}];// medication
+ var medAvgD=[{{ avgMeds }}];//medication average
+ var gluGAvgD=[98,90,29,87,54]
+ var medGAvgD= [76,89,95,86,45]
+ var socGAvgD=[{{socialhealth.user_group.social}}];//for social average
+ var actGAvgD=[{{socialhealth.user_group.activity}}];//for activity group average
+ var regGAvgD=[{{socialhealth.user_group.focus}}];//for regularity average
+ var slpGAvgD=[12,96,24,91];
+ var uid = "{{uid|safe}}";
 </script>
-<!-- <script type="text/coffeescript" src="/static/mgh/contents/clinician_portal.coffee"></script> -->
+<script type="text/coffeescript" src="/static/mgh/contents/clinician_patient_view.coffee"></script>
 
 {% endblock %}

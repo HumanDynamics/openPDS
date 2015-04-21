@@ -48,14 +48,12 @@ class StackedChart
       .scale @y
       .orient 'left'
       .ticks 1
+      .tickSize 0
       .tickFormat @formatPercent
 
     @area = d3.svg.area()
       .interpolate("cardinal")
-      .x (d) =>
-        console.log "date:", d.date
-        console.log (@x d.date)
-        @x(d.date)
+      .x (d) => @x(d.date)
       .y0 (d) => @y(d.y0)
       .y1 (d) => @y(d.y0 + d.y)
 
@@ -140,7 +138,7 @@ class Pie
     @svg.append("text")
       .attr "class", "pietext"
       .attr "text-anchor", "middle"
-      .attr "y", (d, i) => @height - 50
+      .attr "y", (d, i) => @height - 40
       .style "color", '#1A2F46'
       .style "font-weight", 200
       .text (d) => @name.replace('-', ' ')

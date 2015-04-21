@@ -56,6 +56,9 @@ paper-tabs {
 
 #title-bar {
   background-color: #fff;
+  -moz-box-shadow: 0 0 1px 1px #999;
+  -webkit-box-shadow: 0 0 1px 1px #999;
+  min-height:70px;
 }
 
 #title-bar-div {
@@ -79,12 +82,15 @@ paper-tabs {
   text-decoration: none;
 }
 
-a:link {
+a:link !important {
   color: rgba(26, 47, 70, 0.80);
   text-decoration: none;
 }
+a:visited !important {
+  color: rgba(26, 47, 70, 0.50);
+}
 
-a:hover {
+a:hover !important {
   color: rgba(26, 47, 70, 1);
 }
 
@@ -105,8 +111,8 @@ a:hover {
 }
 
 #patients {
-  min-width: 800px;
-  min-height: 800px;
+  min-width: 500px;
+#  min-height: 800px;
   /* border-style: solid; */
   /* border-width: 2px; */
   /* border-color: #c5c5c5; */
