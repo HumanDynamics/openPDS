@@ -1,54 +1,788 @@
 {% extends "clinician/clinician_base.html" %}
 
-{% block content %}
-
-
-<div horizontal center-justified layout id="group-overview">
-    <div layout vertical>
-        <h2> patient {{uid}}</h2>
-        <div id="chart">
-        </div>
-    </div>
-</div>
-
-<hr>
-
+{% block scripts %}
+<link rel="import" href="/static/mgh/contents/line_graph.html">
 {% endblock %}
 
-{% block scripts %}
+
+{% block custom-scripts %}
+<style>
+	html{
+		width:350px;
+		overflow-x: hidden;
+	}
+	html,body {
+		background-color:#f6f6f6
+		font-family: 'RobotoDraft', sans-serif;
+	  }
+	  core-header-panel {
+		height: 100%;
+	  }
+	  core-toolbar {
+		background: #03a9f4;
+		color: white;
+	  }
+	  paper-tabs {
+		width: 100%;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	  }
+	  .scontainer {
+		width: 80%;
+		margin: 50px auto;
+	  }
+	  @media (min-width: 481px) {
+		    paper-tabs {
+		        width: 45em;
+		    }
+		    .scontainer {
+		        width: 350px;
+		    }
+	  }
+
+   .bar rect {
+       shape-rendering: crispEdges;
+   }
+</style>
+
 <script>
+var goalD=[{{ surveyscores.goal }}];//data for goal //data inputs here
+var goalAvgD=[ {{ avgGoal }}];//goal average
+var socD=[{{ socialhealth.user.social }}];//data for social
+var socAvgD=[ {{ avgSocial }} ];//for social average
+var actD=[{{ socialhealth.user.activity }}];//for activity
+var actAvgD=[ {{ avgActivity }} ];//for activity average
+var slpD=[{{ surveyscores.sleep }}];//for sleep
+var slpAvgD=[{{ avgSleep }}];//for sleep average
+var regD=[{{ socialhealth.user.focus }}];//for regularity
+var regAvgD=[{{ avgFocus }}];//for regularity average
+var gluD=[{{ surveyscores.glucose }}];// glucose
+var gluAvgD=[{{ avgGlucose }}];//glucose average
+var medD=[{{ surveyscores.meds }}];// medication
+var medAvgD=[{{ avgMeds }}];//medication average
+var gluGAvgD=[98,90,29,87,54]
+var medGAvgD= [76,89,95,86,45]
+var socGAvgD=[{{socialhealth.user_group.social}}];//for social average
+var actGAvgD=[{{socialhealth.user_group.activity}}];//for activity group average
+var regGAvgD=[{{socialhealth.user_group.focus}}];//for regularity average
+var slpGAvgD=[12,96,24,91];
 
- var userHistory = {{userHistory|safe}};
- var groupHistory = {{groupHistory|safe}};
- 
- var goalType = "{{goalType}}";
 
- var dayCutoff = new Date({{ dayCutoff }} * 1000);
- var weekCutoff = new Date({{ weekCutoff }} * 1000);
- var monthCutoff = new Date({{ monthCutoff }} * 1000);
+// date
+var d = new Date();
+var day = d.getDate();
+var month = d.getMonth();
+var dayOfWeek= d.getDay();
+var weeks=1;
+var months=["Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Oct"," Nov","Dec"];
+if(dayOfWeek==0){
+	weeks++};
 
- var goalD=[{{ surveyscores.goal }}];//data for goal //data inputs here
- var goalAvgD=[ {{ avgGoal }}];//goal average
- var socD=[{{ socialhealth.user.social }}];//data for social
- var socAvgD=[ {{ avgSocial }} ];//for social average
- var actD=[{{ socialhealth.user.activity }}];//for activity
- var actAvgD=[ {{ avgActivity }} ];//for activity average
- var slpD=[{{ surveyscores.sleep }}];//for sleep
- var slpAvgD=[{{ avgSleep }}];//for sleep average
- var regD=[{{ socialhealth.user.focus }}];//for regularity
- var regAvgD=[{{ avgFocus }}];//for regularity average
- var gluD=[{{ surveyscores.glucose }}];// glucose
- var gluAvgD=[{{ avgGlucose }}];//glucose average
- var medD=[{{ surveyscores.meds }}];// medication
- var medAvgD=[{{ avgMeds }}];//medication average
- var gluGAvgD=[98,90,29,87,54]
- var medGAvgD= [76,89,95,86,45]
- var socGAvgD=[{{socialhealth.user_group.social}}];//for social average
- var actGAvgD=[{{socialhealth.user_group.activity}}];//for activity group average
- var regGAvgD=[{{socialhealth.user_group.focus}}];//for regularity average
- var slpGAvgD=[12,96,24,91];
- var uid = "{{uid|safe}}";
+$(".date").text(months[month]+" "+day + " / week " + weeks);
+//averages data
+var Avg=function(data){
+	var sum=0;
+	for(var x = 0; x<data.length;x++)
+		{sum+=data[x]};
+	var avg=sum/data.length;
+	return Math.round(avg);
+	};
+
+var numCompare= function(present, average){
+	var diff= Avg(present)-Avg(average);
+	var percentChange=((diff/Avg(average))*100);
+	return percentChange
+};
+
+//person goal stuff
+var goalType = "{{ goaltype }}";
+var goal="none selected";
+var goalImage="";
+var goalQuestion="";
+var goalOptions="";
+switch(goalType){
+	case "f":
+	        goal = 'feet care';
+		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/feet_01.png";
+		console.log(goal+ "1");
+		goalQuestion="Have you checked your feet today?";
+		goalOptions='<div class="qNum feetQNum" ></div><div class="questionText feetQ"></div><br><input class="feetQ" type="radio" name="feetQ" value="yes" id="feetY"><label for="feetY" class="feetQ"><div class="qButton feetButton">Yes</div></label><input class="feetQ" type="radio" name="feetQ" value="no" id="feetN"><label for="feetN" class="feetQ"><div class="qButton feetButton">No</div><br>'
+		break;
+	case "s":
+	        goal = 'smoking';
+		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/smoking_01.png";
+		console.log(goal+ "2");
+		goalQuestion="Rate how many less cigarettes you smoked today compared to yesterday on a scale of 0 ( I smoked the same or more today) to 40 less than yesterday. "
+		goalOption='<input class="smokingQ" type="range" data-show-value="true" min="0" max="40"></br>'
+		break;
+	case "e":
+	        goal = 'eating healthy';
+		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/eathealthy_01.png";
+		console.log(goal+ "3");
+		goalQuestion="Rate your eating today on a scale of 1  (I really made bad food choices today)  to 10 (I ate really healthy-today)"
+		goalOption='<input class="eatingQ" type="range" data-show-value="true" min="0" max="10"></br>'
+		break;
+	case "t":
+	        goal = 'stress level';
+		goalImage="/static/mgh/SmartCatch_design_app/Img/category_icons/stress_01.png";
+		console.log(goal+ "4");
+		goalQuestion="Rate your stress reduction techniques today on a scale of 1 (I practiced very good techniques to reduce my feelings of stress today) to 10 ( I was very stressed out and I did nothing to help myself calm down). "
+		goalOption='<input class="stressQ" type="range" data-show-value="true" min="0" max="10"></br>'
+		break;
+	}
+$('#goalCardLine .graphPic').attr('src',goalImage);
+$('#goalCardLine .lineLabel').append(goal);
+
+//how well text
+var doingWell="You are doing well / ";
+var doingokay="You can do better / ";
+var doingPoor="Not that great / ";
+//color change for bars
+var socialColor= 'white';
+var activityColor='white';
+var regularityColor='white';
+var goalColor='white';
+var sleepColor="white";
+var glucoseColor='white';
+var medicationColor="white";
+
+if(Avg(socD)<=50){
+	socialColor='#Fc4c4c';
+	$('#socAvg').addClass('stripe-r');
+	}
+else if(Avg(socD)>=70){
+	socialColor='#27dc84';
+	$('#socAvg').addClass('stripe-g');}
+else{
+	socialColor='#f9ce20';
+	$('#socAvg').addClass('stripe-y');};
+
+if(Avg(actD)<=50){
+	activityColor='#Fc4c4c';
+	$('#actAvg').addClass('stripe-r');}
+else if(Avg(actD)>=70){
+	activityColor='#27dc84';
+	$('#actAvg').addClass('stripe-g');}
+else{
+	activityColor='#f9ce20';
+	$('#actAvg').addClass('stripe-y');};
+
+if(Avg(regD)<=50){
+	regularityColor='#Fc4c4c';
+	$('#regAvg').addClass('stripe-r');}
+else if(Avg(regD)>=70){
+	regularityColor='#27dc84';
+	$('#regAvg').addClass('stripe-g');}
+else{
+	regularityColor='#f9ce20';
+	$('#regAvg').addClass('stripe-y');};
+
+if(Avg(slpD)<=50){
+	sleepColor='#fc4c4c';
+	$('#slpAvg').addClass('stripe-r');}
+else if(Avg(slpD)>=70){
+	sleepColor='#27dc84';
+	$('#slpAvg').addClass('stripe-g');}
+else{
+	sleepColor='#f9ce20';
+	$('#slpAvg').addClass('stripe-y');};
+
+if(Avg(gluD)<=50){
+	glucoseColor='#Fc4c4c';
+	$('#gluAvg').addClass('stripe-r');}
+else if(Avg(gluD)>=70){
+	glucoseColor='#27dc84';
+	$('#gluAvg').addClass('stripe-g');}
+else{
+	glucoseColor='#f9ce20';
+	$('#gluAvg').addClass('stripe-y');};
+
+if(Avg(medD)<=50){
+	medicationColor='#Fc4c4c';
+	$('#medAvg').addClass('stripe-r');}
+else if(Avg(medD)>=70){
+	medicationColor='#27dc84';
+	$('#medAvg').addClass('stripe-g');}
+else{
+	medicationColor='#f9ce20';
+	$('#medAvg').addClass('stripe-y');};
+
+if(Avg(goalD)<=50){
+	goalColor='#Fc4c4c';
+	$('#goalAvg').addClass('stripe-r');}
+else if(Avg(slpD)>=70){
+	goalColor='#27dc84';
+	$('#goalAvg').addClass('stripe-g');}
+else{
+	goalColor='#f9ce20';
+	$('#goalAvg').addClass('stripe-y');};
+
+$('#socWeekScore').text(Avg(socD)).css('color',socialColor);
+$('#actWeekScore').text(Avg(actD)).css('color',activityColor);
+$('#regWeekScore').text(Avg(regD)).css('color',regularityColor);
+$('#slpWeekScore').text(Avg(slpD)).css('color',sleepColor);
+$('#goalWeekScore').text(Avg(goalD)).css('color',goalColor);
+$('#medWeekScore').text(Avg(medD)).css('color',medicationColor);
+$('#gluWeekScore').text(Avg(gluD)).css('color',glucoseColor);
+$('#regAvgScore').text(Avg(regAvgD)).css('color',regularityColor);
+$('#goalAvgScore').text(Avg(goalAvgD)).css('color',goalColor);
+$('#socAvgScore').text(Avg(socAvgD)).css('color',socialColor);
+$('#actAvgScore').text(Avg(actAvgD)).css('color',activityColor);
+$('#slpAvgScore').text(Avg(slpAvgD)).css('color',sleepColor);
+$('#medAvgScore').text(Avg(medAvgD)).css('color',medicationColor);
+$('#gluAvgScore').text(Avg(gluAvgD)).css('color', glucoseColor);
+$('#actGroupScore').text(Avg(actGAvgD));
+$('#regGroupScore').text(Avg(regGAvgD));
+$('#socGroupScore').text(Avg(socGAvgD));
+$('#slpGroupScore').text(Avg(slpGAvgD));
+$('#medGroupScore').text(Avg(medGAvgD));
+$('#gluGroupScore').text(Avg(gluGAvgD));
+
+$('.socialBars').css('background-color',socialColor);
+$('.activityBars').css('background-color',activityColor);
+$('.regularityBars').css('background-color',regularityColor);
+$('.sleepBars').css('background-color',sleepColor)
+$('.medicationBars').css('background-color',medicationColor)
+$('.glucoseBars').css('background-color',glucoseColor)
+$('.goalBars').css('background-color',goalColor)
+
+var margin=[50,20,50,20];
+var wid=620;
+var height=266;
+var socData = [{% for s in socialScoreHistory %}{x:{{s.time}},y:{{ s.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];//data entered here, must have at least 7 in one of them
+var actData = [{% for a in activityScoreHistory %}{x:{{a.time}},y:{{ a.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];//or it will show decimals
+var regData = [{% for f in focusScoreHistory %}{x:{{f.time}},y:{{ f.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+var slpData = [{% for s in sleepScoreHistory %}{x:{{s.time}},y:{{ s.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+var gluData = [{% for g in glucoseScoreHistory %}{x:{{g.time}},y:{{ g.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+var medData = [{% for m in medsScoreHistory %}{x:{{m.time}},y:{{ m.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+var goalData = [{% for m in goalScoreHistory %}{x:{{m.time}},y:{{ m.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+var socGData = [{% for s in socialScoreGroupHistory %}{x:{{s.time}},y:{{ s.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];//data entered here, must have at least 7 in one of them
+var actGData = [{% for a in activityScoreGroupHistory %}{x:{{a.time}},y:{{ a.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];//or it will show decimals
+var regGData = [{% for f in focusScoreGroupHistory %}{x:{{f.time}},y:{{ f.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+var sleepGData = [{% for f in sleepScoreGroupHistory %}{x:{{f.time}},y:{{ f.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+var glucGData = [{% for f in glucoseScoreGroupHistory %}{x:{{f.time}},y:{{ f.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+var medsGData = [{% for f in medsScoreGroupHistory %}{x:{{f.time}},y:{{ f.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+var goalGData = [{% for f in goalScoreGroupHistory %}{x:{{f.time}},y:{{ f.score }}}{% if not forloop.last %},{% endif %}{% endfor %}];
+
+var dayCutoff = {{ dayCutoff }} * 1000;
+var weekCutoff = {{ weekCutoff }} * 1000;
+var monthCutoff = {{ monthCutoff }} * 1000;
+
+
+
+
+function cleanData(data) {
+    var newlist = [];
+    for (d in data) {
+        var newx = data[d]['x'] * 1000;
+    var now = (new Date).getTime();
+    var starttime = now - (1000 * 60 * 60 * 24 * 10);
+    while (starttime < now) {
+        newlist.push({'x': starttime,
+                      'y': 0});
+        starttime += 10000;
+//	      data[d]["x"] *= 1000; //convert from s to ms
+	      //newlist.push(data[d]);
+    }
+//    console.log(newlist);
+    return newlist;
+    }
+}
+
+
+function filterPoints(data, cutoff) {
+      var newlist = [];
+      for (d in data) {
+	        if (data[d]["x"] >= cutoff) {
+		          newlist.push(data[d]);
+	        }
+      }
+    return newlist;
+}
+
+
+var CHART_WIDTH = 622;
+var CHART_HEIGHT = 267;
+var CHART_MARGINS = {
+  top: 0,
+  right: 35,
+  bottom: 0,
+  left: 40
+};
+
+var CHART_Y_RANGE = d3.scale.linear().range([CHART_HEIGHT - CHART_MARGINS.top, CHART_MARGINS.bottom]).domain([0,100]);
+
+var SVG_IDS = ['#actSVG', '#socSVG', '#regSVG', '#sleepSVG', '#medsSVG', '#glucSVG', '#goalSVG'];
+
+var SVG_GROUP_DATA_MAPPING = {'#actSVG': actGData,
+                              '#socSVG': socGData,
+                              '#regSVG': regGData,
+                              '#sleepSVG': sleepGData,
+                              '#medsSVG': medsGData,
+                              '#glucSVG': glucGData,
+                              '#goalSVG': goalGData};
+
+var SVG_DATA_MAPPING = {'#actSVG': actData,
+                        '#socSVG': socData,
+                        '#regSVG': regData,
+                        '#sleepSVG': slpData,
+                        '#medsSVG': medData,
+                        '#glucSVG': gluData,
+                        '#goalSVG': goalData};
+
+var SVG_COLOR_MAPPING = {'#actSVG': activityColor,
+                         '#socSVG': socialColor,
+                         '#regSVG': regularityColor,
+                         '#sleepSVG': sleepColor,
+                         '#medsSVG': medicationColor,
+                         '#glucSVG': glucoseColor,
+                         '#goalSVG': goalColor};
+
+function getDateFormatForCutoff(cutoff) {
+    if (cutoff == monthCutoff) {
+        return d3.time.format('%b %d')
+    } else if (cutoff == weekCutoff) {
+        return d3.time.format('%b %d')
+    } else if (cutoff == dayCutoff) {
+        return d3.time.format('%b %d, %H:00')
+    } else {
+        return d3.time.format('%b %d')
+    }
+ }
+
+// aggregate data for the given date/month cutoff.
+// The cutoff will determine the key we use when aggregating.
+function aggregateData(data, cutoff) {
+    var keyFunc = getDateFormatForCutoff(cutoff);
+
+    // aggregate it to the right cutoff
+    var data = d3.nest()
+                 .key(function(d) { return keyFunc(new Date(d.x));})
+                 .rollup(function(d) {
+                     return d3.mean(d, function(g) {return g.y; });
+                 }).entries(data);
+
+    // nest renames the objects, let's fix the keys.
+    data.forEach(function(d) {
+        d.x = d.key;
+        d.y = d.values;
+        delete d.key;
+        delete d.values;
+    });
+
+    return data;
+ }
+
+function createAxis(svg, x, cutoff) {
+    // create axis, format the date
+    //var formatDate = d3.time.format("%d/%m/%y");
+    var formatDate = getDateFormatForCutoff(cutoff);
+
+    // Most of the axis configs should be fine, but when we have lots of
+    // data being shown, we should add another in the middle
+    tickValues = [];
+    var first_val = x.domain()[0];
+    var last_val = x.domain().slice(-1)[0];
+    var middle_index = Math.floor(x.domain().length / 2);
+    var middle_val = x.domain().slice(middle_index)[0];
+    if (cutoff == null && x.domain().length > 30) {
+        tickValues = [first_val, middle_val, last_val];
+    } else {
+        tickValues = [first_val, last_val];
+    }
+
+    // construct the axis
+    xAxis = d3.svg.axis()
+                  .scale(x)
+                  .tickSize(0)
+                  .tickValues(tickValues)
+                  .orient("bottom");
+
+    svg.append('svg:g')
+       .style("opacity",0)
+       .attr('class', 'x axis')
+       .attr('transform', 'translate(0, 300)')
+       .attr('font-size', '13pt')
+       .attr('font-family', 'Roboto Light')
+        .transition()
+        .duration(1000)
+        .style('opacity', 100)
+       .call(xAxis);
+ }
+
+
+function getXScale(dateCutoff, data) {
+    var parseDate = getDateFormatForCutoff(dateCutoff);
+    console.log('getting x scale for cutoff:', new Date(dateCutoff));
+    // if there's no cutoff, we don't want to change the axis range.
+    if (dateCutoff == null) {
+        xRange = d3.scale.ordinal()
+                         .domain(data.map(function(d) {
+                             return parseDate(new Date(d.x));
+                         }))
+                         .rangeRoundBands([CHART_MARGINS.left,
+                                           CHART_WIDTH - CHART_MARGINS.right],
+                                           0.15);
+    } else {
+	      xRange = d3.scale.ordinal()
+                         .domain([new Date(dateCutoff), new Date()])
+                         .domain(data.map(function(d) {
+                             return parseDate(new Date(d.x));
+                         }))
+                         .rangeRoundBands([CHART_MARGINS.left,
+                                           CHART_WIDTH - CHART_MARGINS.right],
+                                           0.15);
+    }
+    return xRange;
+ }
+
+
+
+function getData(chartID, dateCutoff, group) {
+    console.log('getting data for chart ID: ', chartID, " and date cutoff: ", dateCutoff);
+    if (group) {
+        var data = SVG_GROUP_DATA_MAPPING[chartID];
+    } else {
+        var data = SVG_DATA_MAPPING[chartID];
+    }
+    var data = cleanData(data);
+
+    var monthData = filterPoints(data, monthCutoff);
+    var weekData = filterPoints(monthData, weekCutoff);
+    var dayData = filterPoints(weekData, dayCutoff);
+
+    if (dateCutoff == monthCutoff) {
+        console.log("getting month data for", chartID);
+        data = monthData;
+    } else if (dateCutoff == weekCutoff) {
+        console.log("getting week data for", chartID);
+        data = weekData;
+    } else if (dateCutoff == dayCutoff) {
+        console.log("getting day data for", chartID);
+        data = dayData;
+    } else {
+        console.log("getting all data for", chartID);
+        console.log("date cutoff:", new Date(dateCutoff));
+    }
+
+    //TEMP - for testing
+    var new_data = [];
+    var item;
+    for (item in data) {
+        new_data.push({'x': data[item].x,
+                       'y': Math.floor(Math.random() * 100)});
+    }
+    return new_data;
+    //TEMP
+    //console.log(data);
+    //return data;
+ }
+
+
+var group_showing = false;
+function toggleGroups(dateCutoff) {
+    for (i in SVG_IDS) {
+        var svg = d3.select(SVG_IDS[i]);
+
+        var user_data = getData(SVG_IDS[i], dateCutoff);
+        user_data = aggregateData(user_data, dateCutoff);
+
+        var group_data = getData(SVG_IDS[i], dateCutoff, true);
+        group_data = aggregateData(group_data, dateCutoff);
+
+        var compare = function(a, b) {
+            var a_date = new Date(a.x);
+            var b_date = new Date(b.x);
+            if (a_date < b_date)
+                return -1;
+            if (a_date > b_date)
+                return 1;
+            return 0;
+        };
+
+        user_data.sort(compare);
+        group_data.sort(compare);
+
+        data = [];
+        for (d in user_data) {
+            obj = {'x': user_data[d].x,
+                   'data':[{'name': 'user',
+                            'value': user_data[d].y},
+                           {'name': 'group',
+                            'value': group_data[d].y}
+                   ]};
+            data.push(obj);
+        }
+
+//        var data = user_data.concat(group_data);
+
+        var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
+        var label = "user";
+
+        var parseDate = getDateFormatForCutoff(dateCutoff);
+
+        var y = d3.scale.linear()
+                        .domain([0, 100])
+                        .range([CHART_HEIGHT, 0]);
+        var x = getXScale(dateCutoff, data);
+
+        var barTypes = ['user', 'group'];
+        // second axis for groups
+        var x1 = d3.scale.ordinal()
+                         .domain(barTypes)
+                         .rangeRoundBands([0, x.rangeBand()]);
+
+        var color_map = {'user': SVG_COLOR_MAPPING[SVG_IDS[i]],
+                         'group': groupColor};
+
+
+        console.log('x axis:', x.domain());
+
+        // replace axis
+        svg.selectAll('g.x.axis')
+            .transition()
+            .duration(500)
+            .style("opacity",0)
+            .remove();
+
+        createAxis(svg, x, dateCutoff);
+
+        // remove the bars
+        svg.selectAll('.user')
+           .transition()
+           .duration(500)
+           .attr('y', CHART_HEIGHT - 0.5)
+           .attr("height", 0)
+           .remove();
+
+
+        var ticks = svg.selectAll('.time')
+                       .data(data)
+                       .enter().append('g')
+                       .attr('class', 'g')
+                       .attr('transform', function(d) { return 'translate(' + x(parseDate(new Date(d.x))) + ',0)';});
+
+        // bring back with new data
+        ticks.selectAll("rect")
+           .data(function(d) { return d.data})
+           .enter().append("rect")
+           .attr('width', x1.rangeBand())
+           .attr('x', function(d) { return x1(d.name); })
+           //.attr("x", function(d) { return x(parseDate(new Date(d.x))); })
+           .attr("height", function(d) { return 0;})
+           .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
+           .attr('fill', function(d) { return color_map[d.name];})
+           .attr('class', label)
+           .transition()
+           .delay(100) // stops colliding bars
+           .duration(1000)
+           .attr("y", function(d) { return y(d.value); })
+           .attr("height", function(d) { return CHART_HEIGHT - y(d.value); });
+    }
+ }
+
+function updateCharts(dateCutoff) {
+    for (i in SVG_IDS) {
+        var svg = d3.selectAll(SVG_IDS[i]);
+        var data = getData(SVG_IDS[i], dateCutoff);
+        console.log('updated data:', data);
+        console.log('updated date cutoff:', dateCutoff);
+        data = aggregateData(data, dateCutoff);
+        var color = SVG_COLOR_MAPPING[SVG_IDS[i]];
+        var label = "user";
+
+        var parseDate = getDateFormatForCutoff(dateCutoff);
+
+        var y = d3.scale.linear()
+                        .domain([0, 100])
+                        .range([CHART_HEIGHT, 0]);
+        var x = getXScale(dateCutoff, data);
+
+        console.log('x axis:', x.domain());
+
+        // replace axis
+        svg.selectAll('g.x.axis')
+            .transition()
+            .duration(500)
+            .style("opacity",0)
+            .remove();
+
+        createAxis(svg, x, dateCutoff);
+
+        // remove the bars
+        svg.selectAll('.user')
+           .transition()
+           .duration(500)
+           .attr('y', CHART_HEIGHT - 0.5)
+           .attr("height", 0)
+           .remove();
+
+        // bring back with new data
+        svg.selectAll(".bar")
+           .data(data)
+           .enter()
+           .append("rect")
+           .attr("width", xRange.rangeBand())
+           .attr("x", function(d) { return x(parseDate(new Date(d.x))); })
+           .attr("height", function(d) { return 0;})
+           .attr("y", function(d) { return CHART_HEIGHT - 0.5;})
+           .attr('fill', color)
+           .attr('class', label)
+           .transition()
+           .delay(100) // stops colliding bars
+           .duration(1000)
+           .attr("y", function(d) { return y(d.y); })
+           .attr("height", function(d) { return CHART_HEIGHT - y(d.y); });
+    }
+ }
+
+
+var groupColor = "#7092a2";
+function showGroupBars() {
+    setupFilteredDataLines("#actSVG", actGData, groupColor, "group-line");
+    setupFilteredDataLines("#socSVG", socGData, groupColor, "group-line");
+    setupFilteredDataLines("#regSVG", regGData, groupColor, "group-line");
+
+    /* TODO !!! These need to be done*/
+    setupFilteredDataLines("#sleepSVG", sleepGData, groupColor, "group-line");
+    setupFilteredDataLines("#medsSVG", medsGData, groupColor, "group-line");
+    setupFilteredDataLines("#glucSVG", glucGData, groupColor, "group-line");
+    setupFilteredDataLines("#goalSVG", goalGData, groupColor, "group-line");
+ }
+
+//setupCharts(dayCutoff);
+
+var CLASS_CUTOFF_MAPPING = {'day-line': dayCutoff,
+                            'week-line': weekCutoff,
+                            'month-line': monthCutoff};
+
+
+$(".filter-button").click(function() {
+    //$("svg").hide();
+    console.log('clicked cutoff button: ', $(this).attr('id'));
+    dateCutoff = CLASS_CUTOFF_MAPPING[$(this).attr("id")];
+    console.log('updating for cutoff: ', dateCutoff);
+    if ($(".group-results-button").hasClass('g-on')) {
+        toggleGroups(dateCutoff);
+    } else {
+        updateCharts(dateCutoff);
+    }
+    $(".button-selected").removeClass("button-selected");
+    $(this).addClass("button-selected");
+ }).eq(0).click();
+
+
+var groupAlreadyShown = false;
+$(".group-results-button").click(function() {
+    console.log('Group button clicked...');
+    console.log("groupalreadyshown:", groupAlreadyShown);
+    dateCutoff = $('.button-selected').attr('id');
+    dateCutoff = CLASS_CUTOFF_MAPPING[dateCutoff];
+    if ($(this).hasClass('g-on')) {
+	      $(this).removeClass('g-on').text("Off");
+        updateCharts(dateCutoff);
+    } else {
+	      $(this).addClass('g-on').text("On");
+        toggleGroups(dateCutoff);
+    }
+ });
 </script>
-<script type="text/coffeescript" src="/static/mgh/contents/clinician_patient_view.coffee"></script>
+{% endblock %}
 
+
+{% block content %}
+<div horizontal center-justified layout id="subheader1">
+
+    <div horizontal layout>
+	      <div id="day-line" class="filter-button">Today</div>
+	      <div id="week-line" class="filter-button">This Week</div>
+	      <div id="month-line" class="filter-button">This Month</div>
+	      <div id="full-line" class="filter-button">Complete</div>
+    </div>
+
+    <div self-end class="group-results-history">
+        <div class="group-results-button">Off</div>
+    </div>
+
+</div>
+
+<div class="chart-container">
+	  {% if goaltype != 'n' %}
+		<div id="goalCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/interactions_01.png" /></div>
+			  {% if not control %}
+			  <div class="yaxis"><div>100</div><div>0</div></div>
+			  <div class="lineBack"></div>
+			  <div class="lineBorder"></div>
+        <svg id="goalSVG" width="622" height="320"></svg>
+			  {% endif %}
+		</div>
+		{% endif %}
+
+		<div id="gluCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/blood_01.png" />Glucose</div>
+			  {% if not control %}
+			  <div class="yaxis"><div>100</div><div>0</div></div>
+			  <div class="lineBack"></div>
+			  <div class="lineBorder"></div>
+			  <svg id="glucSVG" width="622" height="320"></svg>
+
+			  {% endif %}
+		</div>
+
+		<div id="medCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/drugs_01.png" />Medication Adherence</div>
+			  {% if not control %}
+			  <div class="yaxis"><div>100</div><div>0</div></div>
+			  <div class="lineBack"></div>
+			  <div class="lineBorder"></div>
+			  <svg id="medsSVG" width="622" height="320"></svg>
+			  {% endif %}
+		</div>
+
+		<div id="slpCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/sleep_01.png" />Sleep</div>
+			  {% if not control %}
+			  <div class="yaxis"><div>100</div><div>0</div></div>
+			  <div class="lineBack"></div>
+			  <div class="lineBorder"></div>
+			  <svg id="sleepSVG" width="622" height="320"></svg>
+			  {% endif %}
+		</div>
+
+		<div id="socCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/interactions_01.png" />Social</div>
+			  {% if not control %}
+			  <div class="yaxis"><div>100</div><div>0</div></div>
+			  <div class="lineBack"></div>
+			  <div class="lineBorder"></div>
+			  <svg id="socSVG" width="622" height="320"></svg>
+			  {% endif %}
+		</div>
+
+		<div id="actCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/activity_01.png" />Activity</div>
+			  {% if not control %}
+			  <div class="yaxis"><div>100</div><div>0</div></div>
+			  <div class="lineBack"></div>
+			  <div class="lineBorder"></div>
+			  <svg id="actSVG" width="622" height="320"></svg>
+			  {% endif %}
+		</div>
+
+		<div id="regCardLine" class="lineGraph">
+			  <div class="lineLabel"><img class="graphPic" src="/static/mgh/SmartCatch_design_app/Img/category_icons/regularity_01.png" />Routine</div>
+			  {% if not control %}
+			  <div class="yaxis"><div>100</div><div>0</div></div>
+			  <div class="lineBack"></div>
+			  <div class="lineBorder"></div>
+			  <svg id="regSVG" width="622" height="320"></svg>
+			  {% endif %}
+		</div>
+</div>
+
+<div id="footer"></div>
 {% endblock %}

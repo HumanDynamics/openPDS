@@ -78,10 +78,8 @@
           </core-toolbar>
 
           <div id="content" data-role="content" style="padding: 0px">
-              <div class="scontainer">
-                  {% block content %}
-                  {% endblock %}
-              </div>
+              {% block content %}
+              {% endblock %}
           </div>
       </div>
   </body>
@@ -89,6 +87,9 @@
    var uid_name_map = {{uid_name_map_json|safe}};
    console.log(uid_name_map);
   </script>
+
+  {% block custom-scripts %}
+  {% endblock %}
   <script type="text/javascript" src="http://cdn.rawgit.com/jashkenas/coffeescript/master/extras/coffee-script.js"> </script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.3/d3-tip.min.js"></script>
 </html>
