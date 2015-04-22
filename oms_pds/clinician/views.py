@@ -190,29 +190,30 @@ def patientInfo(request, uid=None):
         return HttpResponse("Not enough data collected. Please wait.")
 
     currentTime = time.time();
+    #currentTime = 1425186000
 
     return render_to_response("clinician/patient_info.html", {
         'uid': uid,
         'uid_name_map': uid_name_map(),
         'uid_name_map_json': json.dumps(uid_name_map()),
 
-        'userHistory': json.dumps({'sleep': sleepScoreHistory,
-                                   'glucose': glucoseScoreHistory,
-                                   'meds': medsScoreHistory,
-                                   'activity': activityScoreHistory,
-                                   'social': socialScoreHistory,
-                                   'focus': focusScoreHistory,
-                                   'goal': goalScoreHistory
-                               }),
-        'groupHistory': json.dumps({'sleep': activityScoreGroupHistory,
-                                    'glucose': glucoseScoreGroupHistory,
-                                    'meds': medsScoreGroupHistory,
-                                    'activity': activityScoreGroupHistory,
-                                    'social': socialScoreGroupHistory,
-                                    'focus': focusScoreGroupHistory,
-                                    'goal': goalScoreGroupHistory,
+        'userHistory': {'sleep': sleepScoreHistory,
+                        'glucose': glucoseScoreHistory,
+                        'meds': medsScoreHistory,
+                        'activity': activityScoreHistory,
+                        'social': socialScoreHistory,
+                        'focus': focusScoreHistory,
+                        'goal': goalScoreHistory
+                    },
+        'groupHistory': {'sleep': activityScoreGroupHistory,
+                         'glucose': glucoseScoreGroupHistory,
+                         'meds': medsScoreGroupHistory,
+                         'activity': activityScoreGroupHistory,
+                         'social': socialScoreGroupHistory,
+                         'focus': focusScoreGroupHistory,
+                         'goal': goalScoreGroupHistory,
 
-                                }),
+                                },
         'socialhealth': socialhealth,
         'surveyscores': surveyscores,
         'avgActivity': avgs["activity"],
