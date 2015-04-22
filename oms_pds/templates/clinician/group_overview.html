@@ -22,9 +22,10 @@
 {% block scripts %}
 <script>
  var participant_data = {{participant_data|safe}};
- console.log(participant_data);
+ console.log("participant data:", participant_data);
  var aggregate_data = {{aggregate_scores|safe}};
  console.log(aggregate_data);
+ var status = "{{status|safe}}";
 </script>
 <script type="text/coffeescript" src="/static/mgh/contents/clinician_group_overview.coffee"></script>
 

@@ -122,17 +122,26 @@ def uid_name_map():
     uids = [p.uuid for p in allParticipants]
     for n, uid in enumerate(uids):
         uid_name_map[uid] = "Patient {}".format(n + 1)
+    uid_name_map['pretend-uid'] = "Patient X"
     return uid_name_map
 
 
-def groupOverview(request):
+def groupOverview(request, status='all'):
     """renders the group overview page.
+    status is one of {'all', 'intervention', 'control'}
     """
     # patient_status = [request.GET['patient_status']]
     # if patient_status == ['b']:
     #     patient_status = ['i', 'c']
 
-    allParticipants = Profile.objects.filter(study_status__in=['i', 'c'])
+    if status == 'all':
+        study_status = ['i', 'c']
+    elif status == 'intervention':
+        study_status = ['i']
+    elif status == 'control':
+        study_status = ['c']
+
+    allParticipants = Profile.objects.filter(study_status__in=study_status)
 
     data = [{'uid': p.uuid, 'scores': get_participant_scores(p)} for p in allParticipants]
 
@@ -150,12 +159,15 @@ def groupOverview(request):
 
     all_scores = aggregate_scores(data)
 
+    print "data:", participant_data
+
     return render_to_response("clinician/group_overview.html",
                               {'num_participants': len(participant_data),
                                'participant_data': json.dumps(participant_data),
                                'aggregate_scores': json.dumps(all_scores),
                                'uid_name_map': uid_name_map(),
-                               'uid_name_map_json': json.dumps(uid_name_map())
+                               'uid_name_map_json': json.dumps(uid_name_map()),
+                               'status': status
                            },
                               context_instance=RequestContext(request))
 

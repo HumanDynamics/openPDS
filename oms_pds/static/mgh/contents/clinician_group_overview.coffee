@@ -175,5 +175,6 @@ for participant in participant_data
     pie = new Pie(data, aspect, colors, chart_width)
     pie.render(id)
 
+
 stacked = new StackedChart(aggregate_data, colors, 700, 300)
 stacked.render('#group-chart')

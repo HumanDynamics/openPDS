@@ -10,6 +10,6 @@ from views import groupOverview, patientInfo
 # admin.autodiscover()
 
 urlpatterns = patterns('oms_pds.clinician.views',
-                       (r'^group_overview', groupOverview),
+                       (r'^group_overview/(?P<status>\w+)$', groupOverview),
                        (r'^patients/(?P<uid>\b[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\b)$', patientInfo),
 )

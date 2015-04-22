@@ -17,17 +17,17 @@
       <link rel="import" href="/static/mgh/clinician-components/core-menu/core-menu.html" rel="import">
       <link rel="import" href="/static/mgh/clinician-components/core-toolbar/core-toolbar.html" rel="import">
       <link rel="import" href="/static/mgh/clinician-components/core-icon-button/core-icon-button.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-dropdown/core-dropdown.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-dropdown-menu/core-dropdown-menu.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-item/core-item.html" rel="import">
       <link rel="import" href="/static/mgh/clinician-components/paper-dropdown/paper-dropdown.html" rel="import">
       <link rel="import" href="/static/mgh/clinician-components/paper-item/paper-item.html" rel="import">
       <link rel="import" href="/static/mgh/clinician-components/paper-dropdown-menu/paper-dropdown-menu.html" rel="import">
 
 
 	    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-	    <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
-	    {% block jquerymobile %}
-	    <script src="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.js"></script>
-	    <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.css" />
-	    {% endblock %}
+      <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.css" />
+	    <!-- <script src="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.js"></script> -->
 
       <script src="http://d3js.org/d3.v3.min.js"></script>
       <link rel="stylesheet" href="{{ STATIC_URL }}/mgh/contents/clinician-stylesheet.css" />
@@ -46,41 +46,54 @@
 
   </head>
   <body>
-      <!-- Page starts here -->
-      <div data-role="page" data-theme="a" id="pageDiv">
+      <core-toolbar id="title-bar">
+          <div layout horizontal justified center id="title-bar-div">
+              <div flex three id="logo">
+		              <a href="/clinician/group_overview/all">
+                      <img src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
+                  </a>
+              </div>
 
-          <core-toolbar id="title-bar">
-              <core-icon-button icon="menu"></core-icon-button>
-              <div layout horizontal justified center id="title-bar-div">
-                  <div flex three id="logo">
-		                  <img src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
-                  </div>
+              <div self-end>
+                  <div layout horizontal center justified id="menu-dropdowns">
 
-                  <div self-end>
-                      <div layout horizontal center justified>
-                          <div id="patient-select">
-                              <paper-dropdown-menu label="Select a Patient">
-                                  <paper-dropdown class="dropdown">
-                                      <core-menu class="menu" id="patient-menu">
-                                          {% for uid, name in uid_name_map.items %}
-                                          <paper-item class="patient-item"> <a href="/clinician/patients/{{uid}}">{{name}}</a></paper-item>
-                                          {% endfor %}
-                                      </core-menu>
-                                  </paper-dropdown>
-                              </paper-dropdown-menu>
-                          </div>
-                          <div id="overview-link">
-                              <a href="/clinician/group_overview">Group Overview</a>
-                          </div>
+                      <div id="patient-select">
+                          <paper-dropdown-menu label="Select a Patient" relative layout inline horizontal center>
+                              <paper-dropdown class="dropdown">
+                                  <core-menu class="menu" id="patient-menu", selected="{{uid}}">
+                                      {% for uid, name in uid_name_map.items %}
+                                      <paper-item class="patient-item" name="{{uid}}">
+                                          <a href="/clinician/patients/{{uid}}">{{name}}</a>
+                                      </paper-item>
+                                      {% endfor %}
+                                  </core-menu>
+                              </paper-dropdown>
+                          </paper-dropdown-menu>
                       </div>
+
+                      <div id="overview-select">
+                          <paper-dropdown-menu label="Group Overview" name="group-dropdown">
+                              <paper-dropdown class="dropdown">
+                                  <core-menu class="menu" id="overview" valueattr="name" name="groupselect" selected="{{status}}" >
+                                      <paper-item name="intervention"> <a href="/clinician/group_overview/intervention">Intervention</a></paper-item>
+                                      <paper-item name="control"> <a href="/clinician/group_overview/control">Control</a></paper-item>
+                                      <paper-item name="all"> <a href="/clinician/group_overview/all">All</a></paper-item>
+                                  </core-menu>
+                              </paper-dropdown>
+
+                          </paper-dropdown-menu>
+                      </div>
+                      <!-- <div id="overview-link">
+                      <a href="/clinician/group_overview">Group Overview</a>
+                      </div> -->
                   </div>
               </div>
-          </core-toolbar>
-
-          <div id="content" data-role="content" style="padding: 0px">
-              {% block content %}
-              {% endblock %}
           </div>
+      </core-toolbar>
+
+      <div id="content" data-role="content" style="padding: 0px">
+          {% block content %}
+          {% endblock %}
       </div>
   </body>
   <script>

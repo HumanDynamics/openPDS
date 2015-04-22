@@ -1,4 +1,7 @@
 html,body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
 	background-color:#f6f6f6
 }
 
@@ -41,10 +44,6 @@ paper-tabs {
   color: rgba(26, 47, 70, 0.50) !important;
 }
 
-.patient-item {
-  
-}
-
 .scontainer {
 	width: 75%;
 	margin: 50px auto;
@@ -82,6 +81,25 @@ paper-tabs {
   left: 0;
 }
 
+#menu-dropdowns {
+  margin-right: 30px;
+}
+
+.dropdown {
+  color: rgba(26, 47, 70, 0.80);
+}
+
+paper-item {
+  color: rgba(26, 47, 70, 0.80) !important;
+  font-weight: bold;
+  max-height: 40px;
+}
+
+paper-item a {
+  max-height: 40px;
+  color: rgba(26, 47, 70, 0.80) !important;
+}
+
 .bar rect {
   shape-rendering: crispEdges;
 }
@@ -114,15 +132,17 @@ paper-tabs {
   text-decoration: none;
 }
 
-a:link !important {
+paper-item a:link !important {
   color: rgba(26, 47, 70, 0.80);
   text-decoration: none;
+  max-height: 30px;
 }
-a:visited !important {
+
+paper-item a:visited !important {
   color: rgba(26, 47, 70, 0.50);
 }
 
-a:hover !important {
+paper-item a:hover !important {
   color: rgba(26, 47, 70, 1);
 }
 
