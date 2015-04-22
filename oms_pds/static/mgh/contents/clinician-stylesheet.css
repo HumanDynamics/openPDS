@@ -21,6 +21,30 @@ paper-tabs {
 	-ms-user-select: none;
 	user-select: none;
 }
+
+.ui-link {
+  max-height: 20px;
+  text-decoration: none;
+  color: rgba(26, 47, 70, 0.80);
+}
+
+.ui-link:link {
+  color: rgba(26, 47, 70, 0.80) !important;
+}
+
+.ui-link:hover {
+  color: rgba(26, 47, 70, 1) !important;
+  text-decoration: underline;
+}
+
+.ui-link:visited {
+  color: rgba(26, 47, 70, 0.50) !important;
+}
+
+.patient-item {
+  
+}
+
 .scontainer {
 	width: 75%;
 	margin: 50px auto;

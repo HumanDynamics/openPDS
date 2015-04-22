@@ -63,7 +63,7 @@
                                   <paper-dropdown class="dropdown">
                                       <core-menu class="menu" id="patient-menu">
                                           {% for uid, name in uid_name_map.items %}
-                                          <paper-item> <a href="/clinician/patients/{{uid}}">{{name}}</a></paper-item>
+                                          <paper-item class="patient-item"> <a href="/clinician/patients/{{uid}}">{{name}}</a></paper-item>
                                           {% endfor %}
                                       </core-menu>
                                   </paper-dropdown>
