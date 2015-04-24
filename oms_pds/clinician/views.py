@@ -122,7 +122,8 @@ def uid_name_map():
     uids = [p.uuid for p in allParticipants]
     for n, uid in enumerate(uids):
         uid_name_map[uid] = "Patient {}".format(n + 1)
-    uid_name_map['pretend-uid'] = "Patient X"
+    for i in xrange(40):
+        uid_name_map['pretend-uid-{}'.format(i)] = "Patient {}".format(i)
     return uid_name_map
 
 

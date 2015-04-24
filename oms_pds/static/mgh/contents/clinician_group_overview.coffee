@@ -1,10 +1,10 @@
 class StackedChart
   constructor: (data, colors, width, height) ->
     @colors = colors
-    @margin = {'top': 20, 'right': 20, 'bottom': 30, 'left': 50}
+    @margin = {'top': 10, 'right': 30, 'bottom': 50, 'left': 0}
     @width = width - @margin.left - @margin.right
     @height = height - @margin.top - @margin.bottom
-    @formatPercent = d3.format ".0%"
+    @formatPercent = (d) -> d * 100
     @parseDate = d3.time.format('%m/%d/%y').parse
     @data = data
 
@@ -42,11 +42,12 @@ class StackedChart
       .scale @x
       .orient "bottom"
       .ticks d3.time.month
+      .tickSize 0
       .tickFormat d3.time.format('%B')
 
     @yAxis = d3.svg.axis()
       .scale @y
-      .orient 'left'
+      .orient 'right'
       .ticks 1
       .tickSize 0
       .tickFormat @formatPercent
@@ -83,12 +84,16 @@ class StackedChart
 
     @chart.append("g")
       .attr "class", "axis"
-      .attr "transform", "translate(0," + @height + ")"
+      .attr "transform", "translate(0," + (@height + 10) + ")"
+      .style "fill", 'rgba(26, 47, 70, 0.80)'
       .call @xAxis
+      .selectAll "text"
+      .attr "y", "10px"
 
     @chart.append("g")
-      .attr "class", "y axis"
-      .attr "transform", "translate(0,0)"
+      .attr "class", "y-axis"
+      .attr "transform", "translate(" + @width + ",0)"
+      .style "fill", '#bcbcbc'
       .call @yAxis
 
 
@@ -139,13 +144,14 @@ class Pie
       .attr "class", "pietext"
       .attr "text-anchor", "middle"
       .attr "y", (d, i) => @height - 40
-      .style "color", '#1A2F46'
+      .style "color", 'rgba(26, 47, 70, 0.80)'
       .style "font-weight", 200
       .text (d) => @name.replace('-', ' ')
 
 
 participantHtml = (participant) ->
-  html = '<div class="patient" id=' + participant.uid + '>' + '<h3 class="patient-name">' + participant.uid + '</h3>'
+  name = uid_name_map[participant.uid]
+  html = '<div class="patient" id=' + participant.uid + '>' + '<a href="/clinician/patients/' + participant.uid + '"><h3 class="patient-name">' + name + '</h3></a>'
   aspects = (k for k in Object.keys(participant) when k != 'uid')
   aspects = aspects.sort()
   for aspect in aspects
@@ -176,5 +182,5 @@ for participant in participant_data
     pie.render(id)
 
 
-stacked = new StackedChart(aggregate_data, colors, 700, 300)
+stacked = new StackedChart(aggregate_data, colors, 700, 350)
 stacked.render('#group-chart')

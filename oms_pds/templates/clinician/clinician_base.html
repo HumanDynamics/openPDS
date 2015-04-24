@@ -57,6 +57,19 @@
               <div self-end>
                   <div layout horizontal center justified id="menu-dropdowns">
 
+
+                      <div id="overview-select">
+                          <paper-dropdown-menu label="Group Overview" name="group-dropdown">
+                              <paper-dropdown class="dropdown">
+                                  <core-menu class="menu" id="overview" valueattr="name" name="groupselect" selected="{{status}}" >
+                                      <paper-item name="intervention"> <a href="/clinician/group_overview/intervention">Intervention</a></paper-item>
+                                      <paper-item name="control"> <a href="/clinician/group_overview/control">Control</a></paper-item>
+                                      <paper-item name="all"> <a href="/clinician/group_overview/all">All</a></paper-item>
+                                  </core-menu>
+                              </paper-dropdown>
+                          </paper-dropdown-menu>
+                      </div>
+
                       <div id="patient-select">
                           <paper-dropdown-menu label="Select a Patient" relative layout inline horizontal center>
                               <paper-dropdown class="dropdown">
@@ -71,18 +84,6 @@
                           </paper-dropdown-menu>
                       </div>
 
-                      <div id="overview-select">
-                          <paper-dropdown-menu label="Group Overview" name="group-dropdown">
-                              <paper-dropdown class="dropdown">
-                                  <core-menu class="menu" id="overview" valueattr="name" name="groupselect" selected="{{status}}" >
-                                      <paper-item name="intervention"> <a href="/clinician/group_overview/intervention">Intervention</a></paper-item>
-                                      <paper-item name="control"> <a href="/clinician/group_overview/control">Control</a></paper-item>
-                                      <paper-item name="all"> <a href="/clinician/group_overview/all">All</a></paper-item>
-                                  </core-menu>
-                              </paper-dropdown>
-
-                          </paper-dropdown-menu>
-                      </div>
                       <!-- <div id="overview-link">
                       <a href="/clinician/group_overview">Group Overview</a>
                       </div> -->
