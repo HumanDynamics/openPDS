@@ -1,14 +1,21 @@
 from django.shortcuts import render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
-from rdflib import Graph
-from SPARQLWrapper import SPARQLWrapper, JSON
-import rdflib
-from oms_pds.pds.internal import getInternalDataStore
-import pdb, datetime, re, time, math
-from oms_pds.pds.models import Profile, QuestionInstance, QuestionType
 from django.core.urlresolvers import reverse
 from django.db.models import Avg, StdDev
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
+from rdflib import Graph
+from SPARQLWrapper import SPARQLWrapper, JSON
+from oms_pds.pds.internal import getInternalDataStore
+from oms_pds.pds.models import Profile, QuestionInstance, QuestionType
+
+import rdflib
+import pdb
+import datetime
+import re
+import time
+import math
 import json
 import random
 
@@ -20,6 +27,13 @@ def breakdown_history_test(scores):
     scores = [{'score': random.random() * 100} for r in xrange(100)]
     return breakdown_history(scores, accessor='score')
 ###############
+
+
+class JsonResponse(HttpResponse):
+    def __init__(self, content={}, mimetype=None, status=None,
+             content_type='application/json'):
+        super(JsonResponse, self).__init__(json.dumps(content), mimetype=mimetype,
+                                           status=status, content_type=content_type)
 
 
 def breakdown_history(scores, accessor=None):
@@ -127,6 +141,7 @@ def uid_name_map():
     return uid_name_map
 
 
+@login_required(login_url='/clinician/login')
 def groupOverview(request, status='all'):
     """renders the group overview page.
     status is one of {'all', 'intervention', 'control'}
@@ -173,6 +188,7 @@ def groupOverview(request, status='all'):
                               context_instance=RequestContext(request))
 
 
+@login_required(login_url='/clinician/login')
 def patientInfo(request, uid=None):
     """ Renders a patient info page for the patient with uid <uid>.
     """
@@ -243,3 +259,51 @@ def patientInfo(request, uid=None):
         'goaltype': profile.goal,
         'control': profile.study_status == 'c',
     }, context_instance=RequestContext(request))
+
+
+@login_required(login_url='/clinician/login')
+def clinician_logout(request):
+    logout(request)
+    return HttpResponseRedirect('login')
+
+
+def clinician_login(request):
+    logout(request)
+
+    msg = ""
+    next = '/clinician/group_overview/all'
+    state = True
+    if request.GET:
+        try:
+            next = request.GET['next']
+        except:
+            next = '/clinician/group_overview/all'
+
+    if request.POST:
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+                return login_clinician(msg, state, next)
+            else:
+                msg = "Your account has been disabled. Please contact the site admin."
+                state = False
+                return login_clinician(msg, state, next)
+        else:
+            msg = "Username or Password is incorrect."
+            state = False
+            return login_clinician(msg, state, next)
+
+    # return JsonResponse({'state': state, 'next': next})
+    return render_to_response('clinician/login.html',
+                              {'msg': msg,
+                               'state': state,
+                               'next': next},
+                              context_instance=RequestContext(request))
+
+
+def login_clinician(msg, state, next):
+    resp = {'msg': msg, 'state': state, 'next': next}
+    return JsonResponse(resp)

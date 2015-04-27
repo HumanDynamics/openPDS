@@ -1,0 +1,133 @@
+{% load straight_include %}
+{% load verbatim %}
+{% load crocodile %}
+
+<html>
+
+  <head>
+      <title>
+          {% block title %}
+          Clinician Portal
+          {% endblock %}
+      </title>
+
+      <script src="/static/mgh/clinician-components/webcomponentsjs/webcomponents.js"></script>
+      <link rel="import" href="/static/mgh/clinician-components/font-roboto/roboto.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-collapse/core-collapse.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-menu/core-menu.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-toolbar/core-toolbar.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-icon-button/core-icon-button.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-dropdown/core-dropdown.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-dropdown-menu/core-dropdown-menu.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-item/core-item.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/paper-dropdown/paper-dropdown.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/paper-item/paper-item.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/paper-dropdown-menu/paper-dropdown-menu.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/polymer/polymer.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/paper-input/paper-input.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/paper-button/paper-button.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-ajax/core-ajax.html" rel="import">
+
+
+	    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+      <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.css" />
+	    <!-- <script src="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.js"></script> -->
+
+      <script src="http://d3js.org/d3.v3.min.js"></script>
+      <link rel="stylesheet" href="{{ STATIC_URL }}/mgh/contents/clinician-stylesheet.css" />
+
+	    <meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <meta name="description" content="">
+	    <meta name="author" content="">
+
+      <script>
+          var state = "{{state}}";
+          var next = "{{next}}";
+      </script>
+
+  </head>
+  <body>
+      <core-toolbar id="title-bar">
+          <div layout horizontal justified center id="title-bar-div">
+              <div flex three id="logo">
+		              <a href="/clinician/group_overview/all">
+                      <img src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
+                  </a>
+              </div>
+          </div>
+      </core-toolbar>
+
+      <div id="content" data-role="content" style="padding: 0px">
+          {% verbatim %}
+          <div class="scontainer">
+              <div horizontal center-justified layout>
+                  <div vertical center-justified layout id="login-div">
+                      <div self-center>
+                          <h1>Clinician Login</h1>
+                      </div>
+                      <polymer-element name="clinician-login" attributes="url item">
+                          <template>
+                              <style>
+                               paper-button.colored {
+                                   background: rgba(26, 47, 70, 0.80);
+                                   color: #fff;
+                               }
+                               #login-button {
+                                   padding-top: 30px;
+                               }
+                              </style>
+                              <form id="form_1" vertical layout self-center>
+                                  <paper-input floatingLabel label="Username:" value="{{item.username}}"></paper-input>
+                                  <core-a11y-keys target="{{}}" keys="enter" on-keys-pressed="{{doSend}}"></core-a11y-keys>
+                                  <br>
+                                  <paper-input-decorator id='pass' label='Password:' error='error' value="{{item.password}}" floatingLabel>
+                                      <input is='core-input' type="password" value='{{item.password}}'>
+                                  </paper-input-decorator>
+                                  <div self-center>
+                                      <div id="login-button">
+                                          <paper-button on-tap="{{doSend}}" raisedButton class="colored" label="Login">Login</paper-button>
+                                      </div>
+                                  </div>
+                              </form>
+                              <core-ajax id="ajax" method="POST" url="{{url}}" params="{{item}}" response="{{response}}" handleAs="json" on-core-response="{{handleResponse}}"></core-ajax>
+                          </template repeat="{{response}}"></template>
+                          <script>
+                           Polymer('clinician-login', {
+                               url: "login",
+
+                               created: function() {
+                                   this.item = {};
+                               },
+
+                               doSend: function() {
+                                   this.$.ajax.go();
+                               },
+
+                               handleResponse: function(e) {
+                                   /* console.log(e.detail);
+                                      console.log(e.detail.response.state); */
+                                   if (!e.detail.response.state) {
+                                       var passDecorator = this.$.pass
+                                       passDecorator.error = e.detail.response.msg;
+                                       passDecorator.isInvalid = true;
+                                   } else {
+                                       window.location.href = e.detail.response.next;
+                                   }
+                               }
+                           });
+                          </script>
+                      </polymer-element>
+                      <div>
+                          <clinician-login></clinician-login>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          {% endverbatim %}
+      </div>
+  </body>
+
+  <script type="text/javascript" src="http://cdn.rawgit.com/jashkenas/coffeescript/master/extras/coffee-script.js"> </script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.3/d3-tip.min.js"></script>
+</html>

@@ -357,3 +357,7 @@ a:hover {
 .tick {
 	font-family: "Roboto";
 }
+
+#login-div {
+  max-width: 30%;
+}
