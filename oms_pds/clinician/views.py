@@ -92,8 +92,11 @@ def get_participant_object(p):
     "uid": <uid> }
     """
     # dict of {key: {'good': <%> 'medium': <%>, 'bad': <%>}, ...}
-    obj = {k: breakdown_history_test(v) for k, v in p['scores'].items()}
+    obj = {}
+    obj['scores'] = {k: breakdown_history_test(v) for k, v in p['scores'].items()}
+    #obj['scores'] = scores
     obj['uid'] = p['uid']
+    obj['study_status'] = p['study_status']
     return obj
 
 
@@ -146,9 +149,6 @@ def groupOverview(request, status='all'):
     """renders the group overview page.
     status is one of {'all', 'intervention', 'control'}
     """
-    # patient_status = [request.GET['patient_status']]
-    # if patient_status == ['b']:
-    #     patient_status = ['i', 'c']
 
     if status == 'all':
         study_status = ['i', 'c']
@@ -159,14 +159,13 @@ def groupOverview(request, status='all'):
 
     allParticipants = Profile.objects.filter(study_status__in=study_status)
 
-    data = [{'uid': p.uuid, 'scores': get_participant_scores(p)} for p in allParticipants]
+    data = [{'uid': p.uuid,
+             'scores': get_participant_scores(p),
+             'study_status': p.study_status} for p in allParticipants]
 
     participant_data = []
     for p in data:
         participant_data.append(get_participant_object(p))
-        # try:
-        # except:
-        #     continue
 
     # for n in xrange(10):
     #     obj2 = participant_data[0].copy()

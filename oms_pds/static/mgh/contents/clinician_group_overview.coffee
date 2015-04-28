@@ -152,7 +152,7 @@ class Pie
 participantHtml = (participant) ->
   name = uid_name_map[participant.uid]
   html = '<div class="patient" id=' + participant.uid + '>' + '<a href="/clinician/patients/' + participant.uid + '"><h3 class="patient-name">' + name + '</h3></a>'
-  aspects = (k for k in Object.keys(participant) when k != 'uid')
+  aspects = (k for k in Object.keys(participant.scores))
   aspects = aspects.sort()
   for aspect in aspects
     html += '<svg class="pie" id="' + aspect + '-' + participant.uid + '"></svg>'
@@ -168,7 +168,8 @@ colors = d3.scale.ordinal()
 margins = {'left': 10, 'right': 10}
 
 for participant in participant_data
-  aspects = (k for k in Object.keys(participant) when k != 'uid')
+  console.log "participant:", participant
+  aspects = (k for k in Object.keys(participant.scores))
   for aspect in aspects
     id = "#" + aspect + "-" + participant.uid
     width = $('#patients').width() - margins.left - margins.right
@@ -178,7 +179,7 @@ for participant in participant_data
     chart_width = width / aspects.length
     $(id).width(chart_width)
     $(id).height(chart_width + 20)
-    data = participant[aspect]
+    data = participant.scores[aspect]
     pie = new Pie(data, aspect, colors, chart_width)
     pie.render(id)
 
