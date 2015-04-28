@@ -150,8 +150,8 @@ paper-item a:hover !important {
   min-width: 100px;
 }
 
-#group-chart {
-  min-height: 350px;
+.group-chart {
+  min-height: 300px;
   min-width: 700px;
 }
 

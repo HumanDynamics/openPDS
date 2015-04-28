@@ -1,11 +1,12 @@
 class StackedChart
-  constructor: (data, colors, width, height) ->
+  constructor: (data, colors, label, width, height) ->
     @colors = colors
-    @margin = {'top': 10, 'right': 30, 'bottom': 50, 'left': 0}
+    @margin = {'top': 30, 'right': 30, 'bottom': 50, 'left': 0}
     @width = width - @margin.left - @margin.right
     @height = height - @margin.top - @margin.bottom
     @formatPercent = (d) -> d * 100
     @parseDate = d3.time.format('%m/%d/%y').parse
+    @label = label
     @data = data
 
     console.log "raw data:"
@@ -60,9 +61,11 @@ class StackedChart
 
 
   render: (id) ->
-    @chart = d3.select(id)
+    @svg = d3.select(id)
       .append "svg"
       .attr "class", "agg-chart"
+
+    @chart = @svg
       .attr "width", @width + @margin.left + @margin.right
       .attr "height", @height + @margin.top + @margin.bottom
       .append "g"
@@ -95,6 +98,16 @@ class StackedChart
       .attr "transform", "translate(" + @width + ",0)"
       .style "fill", '#bcbcbc'
       .call @yAxis
+
+    @svg.append("text")
+      .attr "class", "group-overview-title"
+      .attr "text-anchor", "left"
+      .attr "y", (d, i) => @margin.top / 2
+      .attr "x", (d, i) => @margin.left
+      .style "color", 'rgba(26, 47, 70, 0.80)'
+      .style "font-weight", 300
+      .style "font-size", '1.2em'
+      .text (d) => @label
 
 
 class Pie
@@ -184,5 +197,12 @@ for participant in participant_data
     pie.render(id)
 
 
-stacked = new StackedChart(aggregate_data, colors, 700, 350)
-stacked.render('#group-chart')
+
+# group charts
+$("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
+$("#group-charts").append('<div flex class="group-chart" id="control-chart"></div>')
+
+
+label = "Intervention Arm:"
+stacked = new StackedChart(aggregate_data, colors, label, 700, 300)
+stacked.render('#intervention-chart')
