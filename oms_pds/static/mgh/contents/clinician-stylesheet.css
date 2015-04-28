@@ -166,6 +166,7 @@ paper-item a:hover !important {
 
 .patient {
   margin-bottom: 30px;
+  height: auto;
 }
 
 #patient-menu {

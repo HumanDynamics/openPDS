@@ -108,7 +108,7 @@ class Pie
 
     @arc = d3.svg.arc()
       .outerRadius @radius - 10
-      .innerRadius @radius - 70
+      # .innerRadius @radius - 70
 
     @pie = d3.layout.pie()
       .sort null
@@ -143,7 +143,7 @@ class Pie
     @svg.append("text")
       .attr "class", "pietext"
       .attr "text-anchor", "middle"
-      .attr "y", (d, i) => @height - 40
+      .attr "y", (d, i) => (@height / 2) + 20
       .style "color", 'rgba(26, 47, 70, 0.80)'
       .style "font-weight", 200
       .text (d) => @name.replace('-', ' ')
@@ -177,6 +177,7 @@ for participant in participant_data
     $('.patient-name').css('margin-left', margins.left + "px")
     chart_width = width / aspects.length
     $(id).width(chart_width)
+    $(id).height(chart_width + 20)
     data = participant[aspect]
     pie = new Pie(data, aspect, colors, chart_width)
     pie.render(id)
