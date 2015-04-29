@@ -7,13 +7,16 @@ class window.StackedChart
     @formatPercent = (d) -> d * 100
     @parseDate = d3.time.format('%m/%d/%y').parse
     @label = label
-    @data = data
+    @rawData = data
 
-    console.log "raw data:"
-    console.log data
+    #console.log "raw data:"
+    #console.log data
 
-    for d in @data
-      d['date'] = @parseDate(d['date'])
+    # circumvents the 'copying' problem
+    @data = []
+    for d in @rawData
+      obj = {'date': @parseDate(d['date']), 'key': d.key, 'value': d.value}
+      @data.push(obj)
 
     @dates = d3.extent @data, (d) -> d.date
 
@@ -29,8 +32,8 @@ class window.StackedChart
 
     @statuses = @stack @data
 
-    console.log "stacked:"
-    console.log @statuses
+    #console.log "stacked:"
+    #console.log @statuses
 
     @x = d3.time.scale()
       .domain @dates
@@ -58,20 +61,6 @@ class window.StackedChart
       .x (d) => @x(d.date)
       .y0 (d) => @y(d.y0)
       .y1 (d) => @y(d.y0 + d.y)
-
-  updateData: (data) ->
-    @data = data
-    for d in @data
-      d['date'] = @parseDate(d['date'])
-
-    @dates = d3.extent @data, (d) -> d.date
-
-    @data = d3.nest()
-      .key (d) -> d['key']
-      .entries(@data)
- 
-    @chartBody.selectAll('.status')
-      .data(@statuses)
 
   render: (id) ->
     @svg = d3.select(id)
@@ -148,7 +137,7 @@ class window.Pie
         Math.floor(d.data.score * 100) + '%</span>'
 
   render: (id) ->
-    console.log "rendering on id:" + id
+    #console.log "rendering on id:" + id
     @svg = d3.select(id)
       .append("g")
       .attr("transform", "translate(" + @width / 2 + "," + @height / 2 + ")")
@@ -194,7 +183,6 @@ colors = d3.scale.ordinal()
 margins = {'left': 10, 'right': 10}
 
 for participant in participant_data
-  console.log "participant:", participant
   aspects = (k for k in Object.keys(participant.scores))
   for aspect in aspects
     id = "#" + aspect + "-" + participant.uid
@@ -217,7 +205,6 @@ gHeight = 300
 gWidth = 750
 
 for status in ['i', 'c']
-  console.log aggregate_data['all'][status]
   if status == 'i'
     label = "Intervention Arm:"
     $("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
@@ -247,13 +234,15 @@ window.changeAggCharts = (aspect) ->
   # create new intervention and control charts
   $("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
   $("#intervention-chart").hide()
-  iStacked = new StackedChart(aggregate_data[aspect]['i'], colors, "Intervention Arm", gWidth, gHeight)
-  iStacked.render('#intervention-chart')
+  iData = aggregate_data[aspect]['i']
+  console.log iData
+  window.iStacked = new StackedChart(iData, colors, "Intervention Arm", gWidth, gHeight)
+  window.iStacked.render('#intervention-chart')
 
   $("#group-charts").append('<div flex class="group-chart" id="control-chart"></div>')
   $("#control-chart").hide()
-  cStacked = new StackedChart(aggregate_data[aspect]['c'], colors, "Control Group", gWidth, gHeight)
-  cStacked.render('#control-chart')
+  window.cStacked = new StackedChart(aggregate_data[aspect]['c'], colors, "Control Group", gWidth, gHeight)
+  window.cStacked.render('#control-chart')
 
   # fade them in
   $("#intervention-chart").fadeIn(500)
