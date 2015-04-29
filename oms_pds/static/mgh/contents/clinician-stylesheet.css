@@ -195,7 +195,7 @@ a:hover {
 
 .arc path {
   stroke: #f6f6f6;
-  stroke-width: 3px;
+  stroke-width: 4px;
 }
 
 .status path {
@@ -371,4 +371,5 @@ a:hover {
 #group-overview-title {
   font-size: 1.7em;
   font-weight: 600px;
+  margin-left: -20px;
 }

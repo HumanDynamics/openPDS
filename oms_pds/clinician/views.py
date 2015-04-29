@@ -5,6 +5,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Avg, StdDev
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.cache import cache_page
 from rdflib import Graph
 from SPARQLWrapper import SPARQLWrapper, JSON
 from oms_pds.pds.internal import getInternalDataStore
@@ -168,6 +169,7 @@ all_aspects = ['Sleep',
                'Stress Level']
 
 
+#@cache_page(24 * 60 * 60)
 @login_required(login_url='/clinician/login')
 def groupOverview(request, status='all'):
     """renders the group overview page.
@@ -209,7 +211,7 @@ def groupOverview(request, status='all'):
     #all_scores = get_aggregate_scores(data, study_status)
 
     agg_scores = {aspect: get_aggregate_scores(data, study_status, [aspect]) for aspect in all_aspects}
-    agg_scores['all'] = get_aggregate_scores(data, study_status)
+    agg_scores['All Categories'] = get_aggregate_scores(data, study_status)
 
     return render_to_response("clinician/group_overview.html",
                               {'num_participants': len(participant_data),

@@ -208,12 +208,12 @@ for status in ['i', 'c']
   if status == 'i'
     label = "Intervention Arm:"
     $("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
-    window.iStacked = new StackedChart(aggregate_data['all'][status], colors, label, gWidth, gHeight)
+    window.iStacked = new StackedChart(aggregate_data['All Categories'][status], colors, label, gWidth, gHeight)
     window.iStacked.render('#intervention-chart')
   else if status == 'c'
     label = "Control Group:"
     $("#group-charts").append('<div flex class="group-chart" id="control-chart"></div>')
-    window.cStacked = new StackedChart(aggregate_data['all'][status], colors, label, gWidth, gHeight)
+    window.cStacked = new StackedChart(aggregate_data['All Categories'][status], colors, label, gWidth, gHeight)
     window.cStacked.render('#control-chart')
 
 
