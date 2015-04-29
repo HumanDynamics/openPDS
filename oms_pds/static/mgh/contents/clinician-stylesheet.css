@@ -45,7 +45,7 @@ paper-tabs {
 }
 
 .scontainer {
-	width: 75%;
+	width: 80%;
 	margin: 50px auto;
 	font-family: 'RobotoDraft', sans-serif;
   color: #1A2F46
@@ -153,6 +153,7 @@ paper-item a:hover !important {
 .group-chart {
   min-height: 300px;
   min-width: 700px;
+  margin-bottom: 20px;
 }
 
 #group-overview {
@@ -361,4 +362,13 @@ a:hover {
 
 #login-div {
   max-width: 30%;
+}
+
+#agg-select {
+  padding-right: 30px;
+}
+
+#group-overview-title {
+  font-size: 1.7em;
+  font-weight: 600px;
 }

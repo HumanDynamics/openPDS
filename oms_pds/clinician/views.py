@@ -100,15 +100,23 @@ def get_participant_object(p):
     return obj
 
 
-def aggregate_scores(all_participant_scores):
+def aggregate_scores(all_participant_scores, study_status=['i', 'c'], aspects=None):
     """Get an aggregate time-series object of all participants' scores of the form:
     [{'date': <date>, 'value': <%>, 'key': <{'good', 'bad', 'medium'}>}]
     """
     all_scores = {}
     for p in all_participant_scores:
+        if p['study_status'] not in study_status:
+            continue
         uid = p['uid']
         scores = p['scores']
-        scores = [v for k, v in scores.items()]
+
+        # get only scores in the aspects we're interested in
+        if not aspects:
+            scores = [v for k, v in scores.items()]
+        else:
+            scores = [v for k, v in scores.items() if k in aspects]
+
         scores = [item for sublist in scores for item in sublist] #flatten
         for obj in scores:
             time = datetime.datetime.fromtimestamp(obj['time'])
@@ -128,6 +136,10 @@ def aggregate_scores(all_participant_scores):
     return sorted(obj, key=lambda s: s['date'])
 
 
+def get_aggregate_scores(participant_scores, study_statuses, aspects=None):
+    return {status: aggregate_scores(participant_scores, [status], aspects) for status in study_statuses}
+
+
 def uid_name_map():
     """ Returns a map of users' UID's to temporary patient names:
     {<uid>: "Patient X"}
@@ -142,6 +154,18 @@ def uid_name_map():
     for i in xrange(40):
         uid_name_map['pretend-uid-{}'.format(i)] = "Patient {}".format(i)
     return uid_name_map
+
+
+all_aspects = ['Sleep',
+               'Glucose',
+               'Meds',
+               'Activity',
+               'Social',
+               'Focus',
+               'Smoking',
+               'Eating Healthy',
+               'Foot Care',
+               'Stress Level']
 
 
 @login_required(login_url='/clinician/login')
@@ -163,6 +187,16 @@ def groupOverview(request, status='all'):
              'scores': get_participant_scores(p),
              'study_status': p.study_status} for p in allParticipants]
 
+    # TODO: remove
+    ###### TESTING
+    for i in xrange(10):
+        tmp = {}
+        tmp['uid'] = "uid-{}".format(i)
+        tmp['scores'] = data[0]['scores']
+        tmp['study_status'] = random.choice(['c', 'i'])
+        data.append(tmp)
+    ###### TESTING
+
     participant_data = []
     for p in data:
         participant_data.append(get_participant_object(p))
@@ -172,14 +206,15 @@ def groupOverview(request, status='all'):
     #     obj2['uid'] = "test-{}".format(n)
     #     participant_data.append(obj2)
 
-    all_scores = aggregate_scores(data)
+    #all_scores = get_aggregate_scores(data, study_status)
 
-    print "data:", participant_data
+    agg_scores = {aspect: get_aggregate_scores(data, study_status, [aspect]) for aspect in all_aspects}
+    agg_scores['all'] = get_aggregate_scores(data, study_status)
 
     return render_to_response("clinician/group_overview.html",
                               {'num_participants': len(participant_data),
                                'participant_data': json.dumps(participant_data),
-                               'aggregate_scores': json.dumps(all_scores),
+                               'aggregate_scores': json.dumps(agg_scores),
                                'uid_name_map': uid_name_map(),
                                'uid_name_map_json': json.dumps(uid_name_map()),
                                'status': status

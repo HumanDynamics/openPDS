@@ -1,4 +1,5 @@
 {% extends "clinician/clinician_base.html" %}
+{% load verbatim %}
 
 {% block content %}
 
@@ -6,8 +7,43 @@
 <div class="scontainer">
     <div horizontal center-justified layout id="group-overview">
         <div layout vertical id="group-charts">
-            <h2> Group Overview </h2>
-            <!-- <div flex class="group-chart"> </div> -->
+            <div layout horizontal>
+                <div flex self-center>
+                    <span id="group-overview-title">Group Overview</span>
+                </div>
+                {% verbatim %}
+                <div id="agg-select" self-start>
+                    <polymer-element name="agg-select" attributes="aspects">
+                        <template>
+                            <paper-dropdown-menu label="All Categories" name="agg-dropdown">
+                                <paper-dropdown class="dropdown">
+                                    <core-menu class="menu" id="agg" valueattr="name" name="agg-select" on-core-select="{{selectAction}}" selected="{{selectedAspect}}">
+                                        <template repeat="{{aspect in aspects}}">
+                                            <paper-item name="{{aspect}}" label="{{aspect}}">{{aspect}}</paper-item>
+                                        </template>
+                                    </core-menu>
+                                </paper-dropdown>
+                            </paper-dropdown-menu>
+                        </template>
+                        <script>
+                         Polymer('agg-select', {
+                             aspects: Object.keys(aggregate_data),
+
+                             ready: function() {
+                                 console.log(">>>>data::", aggregate_data);
+                             },
+
+                             selectAction: function(e, detail) {
+                                 console.log(detail.item.attributes.name.value);
+                                 changeAggCharts(detail.item.attributes.name.value);
+                             },
+                         });
+                        </script>
+                    </polymer-element>
+                    <agg-select></agg-select>
+                </div>
+                {% endverbatim %}
+            </div>
         </div>
     </div>
 

@@ -1,4 +1,4 @@
-class StackedChart
+class window.StackedChart
   constructor: (data, colors, label, width, height) ->
     @colors = colors
     @margin = {'top': 30, 'right': 30, 'bottom': 50, 'left': 0}
@@ -59,6 +59,19 @@ class StackedChart
       .y0 (d) => @y(d.y0)
       .y1 (d) => @y(d.y0 + d.y)
 
+  updateData: (data) ->
+    @data = data
+    for d in @data
+      d['date'] = @parseDate(d['date'])
+
+    @dates = d3.extent @data, (d) -> d.date
+
+    @data = d3.nest()
+      .key (d) -> d['key']
+      .entries(@data)
+ 
+    @chartBody.selectAll('.status')
+      .data(@statuses)
 
   render: (id) ->
     @svg = d3.select(id)
@@ -110,7 +123,7 @@ class StackedChart
       .text (d) => @label
 
 
-class Pie
+class window.Pie
   constructor: (data, name, colors, width) ->
     @data = data
     @colors = colors
@@ -199,10 +212,49 @@ for participant in participant_data
 
 
 # group charts
-$("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
-$("#group-charts").append('<div flex class="group-chart" id="control-chart"></div>')
+
+gHeight = 300
+gWidth = 750
+
+for status in ['i', 'c']
+  console.log aggregate_data['all'][status]
+  if status == 'i'
+    label = "Intervention Arm:"
+    $("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
+    window.iStacked = new StackedChart(aggregate_data['all'][status], colors, label, gWidth, gHeight)
+    window.iStacked.render('#intervention-chart')
+  else if status == 'c'
+    label = "Control Group:"
+    $("#group-charts").append('<div flex class="group-chart" id="control-chart"></div>')
+    window.cStacked = new StackedChart(aggregate_data['all'][status], colors, label, gWidth, gHeight)
+    window.cStacked.render('#control-chart')
 
 
-label = "Intervention Arm:"
-stacked = new StackedChart(aggregate_data, colors, label, 700, 300)
-stacked.render('#intervention-chart')
+# add dropdown items for aggregate data
+for aspect in Object.keys(aggregate_data)
+  $('#agg').append('<paper-item name="' + aspect + '">' + aspect + '</paper-item>')
+
+
+window.changeAggCharts = (aspect) ->
+  console.log aspect
+
+  # remove charts
+  $('#intervention-chart').fadeOut(500)
+  $('#control-chart').fadeOut(500)
+  $('#control-chart').remove()
+  $('#intervention-chart').remove()
+
+  # create new intervention and control charts
+  $("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
+  $("#intervention-chart").hide()
+  iStacked = new StackedChart(aggregate_data[aspect]['i'], colors, "Intervention Arm", gWidth, gHeight)
+  iStacked.render('#intervention-chart')
+
+  $("#group-charts").append('<div flex class="group-chart" id="control-chart"></div>')
+  $("#control-chart").hide()
+  cStacked = new StackedChart(aggregate_data[aspect]['c'], colors, "Control Group", gWidth, gHeight)
+  cStacked.render('#control-chart')
+
+  # fade them in
+  $("#intervention-chart").fadeIn(500)
+  $("#control-chart").fadeIn(500)
