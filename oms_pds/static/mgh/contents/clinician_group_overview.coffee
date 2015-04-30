@@ -183,12 +183,14 @@ for participant in participant_data
   width = 200
   text_margin = 40;
   id = "#aggChart-" + participant.uid
-  $(id).height(200 + text_margin);
-  $('.patient-agg-charts').height(width);
+  width = $('#patients').width() - margins.left - margins.right
+  chart_width = width / 4
+  $(id).width(chart_width)
+  $(id).height(chart_width + 20)
   data = participant['agg_scores']
   console.log data
   console.log id
-  pie = new Pie(data, "Aggregate", colors, width)
+  pie = new Pie(data, "Aggregate", colors, chart_width)
   pie.render(id)
 
   aspects = (k for k in Object.keys(participant.scores))
