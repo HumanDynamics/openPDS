@@ -167,6 +167,10 @@ paper-item a:hover !important {
 
 .patient {
   margin-bottom: 30px;
+  min-height: 300px;
+}
+
+.patient-agg-charts {
   height: auto;
 }
 
@@ -176,8 +180,11 @@ paper-item a:hover !important {
 }
 
 .patient-name {
+  padding-left: 50px;
   margin-bottom: 5px;
   margin-top: 10px;
+  font-size: 1.2em;
+  font-weight: 500px;
 }
 
 a:link {
@@ -372,4 +379,9 @@ a:hover {
   font-size: 1.7em;
   font-weight: 600px;
   margin-left: -20px;
+}
+
+.patient-category-charts {
+  display: none;
+  visibility: hidden;
 }

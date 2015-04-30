@@ -164,17 +164,7 @@ class window.Pie
       .text (d) => @name.replace('-', ' ')
 
 
-participantHtml = (participant) ->
-  name = uid_name_map[participant.uid]
-  html = '<div class="patient" id=' + participant.uid + '>' + '<a href="/clinician/patients/' + participant.uid + '"><h3 class="patient-name">' + name + '</h3></a>'
-  aspects = (k for k in Object.keys(participant.scores))
-  aspects = aspects.sort()
-  for aspect in aspects
-    html += '<svg class="pie" id="' + aspect + '-' + participant.uid + '"></svg>'
-  html += '</div>'
-
-for participant in participant_data
-  $("#patients").append participantHtml(participant)
+# patient pie charts
 
 colors = d3.scale.ordinal()
   .domain(['bad', 'medium', 'good'])
@@ -182,14 +172,31 @@ colors = d3.scale.ordinal()
 
 margins = {'left': 10, 'right': 10}
 
+$('.patient').width($('#patients').width() / 2)
+
 for participant in participant_data
+
+  $('.patient-name').css('margin-left', margins.left + "px")
+
+
+  # aggregate pie charts
+  width = 200
+  text_margin = 40;
+  id = "#aggChart-" + participant.uid
+  $(id).height(200 + text_margin);
+  $('.patient-agg-charts').height(width);
+  data = participant['agg_scores']
+  console.log data
+  console.log id
+  pie = new Pie(data, "Aggregate", colors, width)
+  pie.render(id)
+
   aspects = (k for k in Object.keys(participant.scores))
   for aspect in aspects
     id = "#" + aspect + "-" + participant.uid
     width = $('#patients').width() - margins.left - margins.right
-    parent = '#' + participant.uid
+    parent = '#' + participant.uid + '-categories'
     $(parent).css('margin-left', margins.left + "px")
-    $('.patient-name').css('margin-left', margins.left + "px")
     chart_width = width / aspects.length
     $(id).width(chart_width)
     $(id).height(chart_width + 20)
@@ -199,7 +206,9 @@ for participant in participant_data
 
 
 
-# group charts
+
+
+# group aggregate charts
 
 gHeight = 300
 gWidth = 750

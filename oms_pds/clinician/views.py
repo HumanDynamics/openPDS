@@ -36,6 +36,12 @@ class JsonResponse(HttpResponse):
         super(JsonResponse, self).__init__(json.dumps(content), mimetype=mimetype,
                                            status=status, content_type=content_type)
 
+from django.template.defaulttags import register
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
+
 
 def breakdown_history(scores, accessor=None):
     """breaks down the users' scores to individual percentages for
@@ -83,7 +89,7 @@ def overall_patient_history(category_scores):
     for status, score in agg_scores.items():
         agg_scores[status] = score / float(total)
 
-    return agg_scores
+    return [{'score': score, 'status': status} for status, score in agg_scores.items()]
 
 
 def get_participant_scores(p):
@@ -246,7 +252,8 @@ def groupOverview(request, status='all'):
 
     return render_to_response("clinician/group_overview.html",
                               {'num_participants': len(participant_data),
-                               'participant_data': json.dumps(participant_data),
+                               'participant_data': participant_data,
+                               'participant_data_json': json.dumps(participant_data),
                                'aggregate_scores': json.dumps(agg_scores),
                                'uid_name_map': uid_name_map(),
                                'uid_name_map_json': json.dumps(uid_name_map()),

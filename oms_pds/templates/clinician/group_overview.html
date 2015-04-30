@@ -56,7 +56,26 @@
 
     <hr>
 
-    <div layout vertical id="patients">
+    <!-- <div layout vertical id="patients"> -->
+    <div horizontal layout wrap id="patients">
+        {% for participant in participant_data %}
+        <div layout vertical center-justified class="patient" id="{{participant.uid}}">
+            <a class="patient-name" href="/clinician/patients/{{participant.uid}}">
+                {{uid_name_map|get_item:participant.uid}}
+            </a>
+
+            <div layout horizontal center-justified class="patient-agg-charts" id="{{participant.uid}}-agg">
+                <svg class="pie" id="aggChart-{{participant.uid}}"></svg>
+            </div>
+
+            <div class="patient-category-charts" id="{{participant.uid}}-categories">
+                {% for category, vals in participant.scores.items %}
+                <svg class="pie" id="{{category}}-{{participant.uid}}"></svg>
+                {% endfor %}
+            </div>
+
+        </div>
+        {% endfor %}
     </div>
 </div>
 
@@ -64,7 +83,7 @@
 
 {% block scripts %}
 <script>
- var participant_data = {{participant_data|safe}};
+ var participant_data = {{participant_data_json|safe}};
  console.log("participant data:", participant_data);
  var aggregate_data = {{aggregate_scores|safe}};
  console.log(aggregate_data);
