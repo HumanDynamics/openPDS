@@ -1,8 +1,22 @@
 {% extends "clinician/clinician_base.html" %}
 {% load verbatim %}
 
-{% block content %}
 
+{% block scripts %}
+<script>
+ var participant_data = {{participant_data_json|safe}};
+ console.log("participant data:", participant_data);
+ var aggregate_data = {{aggregate_scores|safe}};
+ console.log(aggregate_data);
+ var status = "{{status|safe}}";
+</script>
+<script type="text/coffeescript" src="/static/mgh/contents/clinician_group_overview.coffee"></script>
+
+{% endblock %}
+
+{% block content %}
+<link rel="import" href="/static/mgh/clinician-custom-components/agg-select.html" rel="import">
+<link rel="import" href="/static/mgh/clinician-custom-components/group-patient-select.html" rel="import">
 
 <div class="scontainer">
     <div horizontal center-justified layout id="group-overview">
@@ -11,45 +25,9 @@
                 <div flex self-center>
                     <span id="group-overview-title">Group General Overview</span>
                 </div>
-                {% verbatim %}
                 <div id="agg-select" self-start>
-                    <polymer-element name="agg-select" attributes="aspects">
-                        <template>
-                            <style>
-                             #label {
-                                 padding-right: 10px;
-                                 color: #757575;
-                             }
-                             #agg {
-                                 max-height: 300px;
-                                 overflow: scroll;
-                             }
-                            </style>
-                            <span id="label">Show me:</span>
-                            <paper-dropdown-menu label="All Categories" name="agg-dropdown">
-                                <paper-dropdown class="dropdown">
-                                    <core-menu class="menu" id="agg" valueattr="name" name="agg-select" on-core-select="{{selectAction}}" selected="{{selectedAspect}}">
-                                        <template repeat="{{aspect in aspects}}">
-                                            <paper-item name="{{aspect}}" label="{{aspect}}">{{aspect}}</paper-item>
-                                        </template>
-                                    </core-menu>
-                                </paper-dropdown>
-                            </paper-dropdown-menu>
-                        </template>
-                        <script>
-                         Polymer('agg-select', {
-                             aspects: Object.keys(aggregate_data),
-
-                             selectAction: function(e, detail) {
-                                 changeAggCharts(detail.item.attributes.name.value);
-                             },
-                         });
-                        </script>
-                    </polymer-element>
-
                     <agg-select></agg-select>
                 </div>
-                {% endverbatim %}
             </div>
         </div>
     </div>
@@ -60,9 +38,12 @@
     <div horizontal layout wrap id="patients">
         {% for participant in participant_data %}
         <div layout vertical center-justified class="patient" id="{{participant.uid}}">
-            <a class="patient-name" href="/clinician/patients/{{participant.uid}}">
-                {{uid_name_map|get_item:participant.uid}}
-            </a>
+            <div layout horizontal>
+                <a self-center class="patient-name" href="/clinician/patients/{{participant.uid}}">
+                    {{uid_name_map|get_item:participant.uid}} /
+                </a>
+                <group-patient-select self-center selected="overall" uid="{{participant.uid}}"></group-patient-select>
+            </div>
 
             <div layout horizontal center-justified class="patient-agg-charts" id="{{participant.uid}}-agg">
                 <svg self-center class="pie" id="aggChart-{{participant.uid}}"></svg>
@@ -78,17 +59,5 @@
         {% endfor %}
     </div>
 </div>
-
-{% endblock %}
-
-{% block scripts %}
-<script>
- var participant_data = {{participant_data_json|safe}};
- console.log("participant data:", participant_data);
- var aggregate_data = {{aggregate_scores|safe}};
- console.log(aggregate_data);
- var status = "{{status|safe}}";
-</script>
-<script type="text/coffeescript" src="/static/mgh/contents/clinician_group_overview.coffee"></script>
 
 {% endblock %}

@@ -1,0 +1,74 @@
+<polymer-element name="group-patient-select" attributes="uid items prev">
+    <template>
+        <style>
+         :host {
+             padding-left: 10px;
+         }
+         #label {
+             padding-right: 10px;
+             color: #757575;
+         }
+         #agg {
+             max-height: 300px;
+             overflow: scroll;
+         }
+         paper-item {
+             font-size: .8em;
+         }
+        </style>
+        <!-- <span id="label">Show me:</span> -->
+        <paper-dropdown-menu label="Overall" name="agg-dropdown">
+            <paper-dropdown class="dropdown">
+                <core-menu class="menu" id="patientView" valueattr="name" name="agg-select" selected="{{selected_item}}" on-core-select="{{selectAction}}">
+                    <paper-item name="overall" label="Overall">Overall</paper-item>
+                    <paper-item name="control" label="Control">Control</paper-item>
+                    <paper-item name="intervention" label="Intervention">Intervention</paper-item>
+                    <paper-item name="all-categories" label="All Categories">All Categories</paper-item>
+                </core-menu>
+            </paper-dropdown>
+        </paper-dropdown-menu>
+    </template>
+    <script>
+     Polymer('group-patient-select', {
+         // keeps track of previously selected element
+         prev: 'overall',
+         
+         selectAction: function(e, detail) {
+             console.log("selected");
+             selected_item = detail.item.attributes.name.value;
+             
+             //changePatientChart(this.uid, selected_item, this.prev);
+             var elem_map = {
+                 'overall': '#aggChart-' + this.uid,
+                 'control': '#control-' + this.uid,
+                 'intervention': '#intervention-' + this.uid,
+                 'all-categories': '#' + this.uid + '-categories'};
+             var shown_id = elem_map[this.prev];
+             var hidden_id = elem_map[selected_item];
+             var uid = this.uid;
+
+             // all these .hide()s are super annoying but I kept having
+             // trouble with hiding the previous chart...
+             $(shown_id).fadeOut(500, function() {
+                 $(shown_id).css({'visibility': 'hidden',
+                                  'display': 'none !important'});
+                 $(shown_id).hide();
+                 if (selected_item == 'all-categories') {
+                     width = $('#patients').width();
+                     $('#' + uid).width(width);
+                 } else {
+                     width = $('#patients').width() / 2;
+                     $('#' + uid).width(width)
+                 }
+                 $(shown_id).hide();
+                 $(hidden_id).css('visibility','visible').hide().fadeIn(300, function() {
+                     $(shown_id).hide();
+                 });
+
+             });
+             console.log("is", shown_id, "hidden?");
+             this.prev = selected_item;
+         },
+     });
+    </script>
+</polymer-element>

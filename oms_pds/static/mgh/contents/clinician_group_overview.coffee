@@ -170,14 +170,12 @@ colors = d3.scale.ordinal()
   .domain(['bad', 'medium', 'good'])
   .range(['#F34D4F', '#F5C700', '#3FE963'])
 
-margins = {'left': 10, 'right': 10}
+window.margins = {'left': 10, 'right': 10}
 
 $('.patient').width($('#patients').width() / 2)
 
 for participant in participant_data
-
   $('.patient-name').css('margin-left', margins.left + "px")
-
 
   # aggregate pie charts
   width = 200
@@ -199,15 +197,28 @@ for participant in participant_data
     width = $('#patients').width() - margins.left - margins.right
     parent = '#' + participant.uid + '-categories'
     $(parent).css('margin-left', margins.left + "px")
-    chart_width = width / aspects.length
+    chart_width = (width / aspects.length) - 5
     $(id).width(chart_width)
     $(id).height(chart_width + 20)
     data = participant.scores[aspect]
     pie = new Pie(data, aspect, colors, chart_width)
     pie.render(id)
 
+# changes the displayed patient chart.
+# uid is the uid of the patient
+# view_selection is one of {overall, control, intervention, all-categories}
+window.changePatientChart = (uid, view_selection, prev_selection) ->
+  elem_map = {
+    'overall': 'aggChart-' + uid,
+    'control': 'control-' + uid,
+    'intervention': 'intervention-' + uid,
+    'all-categories': uid + '-categories'}
 
+  shown_id = elem_map[prev_selection]
+  hidden_id = elem_map[view_selection]
 
+  $(shown_id).fadeOut(500);
+  $(hidden_id).fadeIn(500);
 
 
 # group aggregate charts
