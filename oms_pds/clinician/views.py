@@ -55,6 +55,37 @@ def breakdown_history(scores, accessor=None):
     return [{'status': k,
              'score': len(v) / float(len(scores))} for k, v in percents.items()]
 
+def overall_patient_history(category_scores):
+    """Compute aggregate scores over all categories.
+
+    Takes a dict of scores of the form: {'category': {'good': %, ...}, ...}
+
+    Returns a dictionary of the form {'good': %, ...}, averaged over
+    all categories.
+
+    """
+    agg_scores = {'good': [],
+              'medium': [],
+              'bad': []}
+    # create list of scores for each category
+    for category, scores in category_scores.items():
+        for d in scores:
+            status = d['status']
+            score = d['score']
+            agg_scores[status].append(score)
+
+    # aggregate to get total average scores
+    for status, scores in agg_scores.items():
+        agg_scores[status] = sum(scores) / float(len(scores))
+
+    # make sure they add up to 100%
+    total = sum(agg_scores.values())
+    for status, score in agg_scores.items():
+        agg_scores[status] = score / float(total)
+
+    return agg_scores
+
+
 def get_participant_scores(p):
     """Get a summary object of this participants' scores of the form:
     {<aspect>: [{'timestamp': <timestamp>, 'score': <score>}], ...}
@@ -95,7 +126,7 @@ def get_participant_object(p):
     # dict of {key: {'good': <%> 'medium': <%>, 'bad': <%>}, ...}
     obj = {}
     obj['scores'] = {k: breakdown_history_test(v) for k, v in p['scores'].items()}
-    #obj['scores'] = scores
+    obj['agg_scores'] = overall_patient_history(obj['scores'])
     obj['uid'] = p['uid']
     obj['study_status'] = p['study_status']
     return obj
