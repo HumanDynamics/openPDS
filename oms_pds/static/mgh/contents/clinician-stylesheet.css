@@ -381,7 +381,12 @@ a:hover {
   margin-left: -20px;
 }
 
-.patient-category-charts {
-  display: none;
-  visibility: hidden;
+#group-bar {
+  padding-bottom: 20px;
+}
+
+#patient-overviews-title {
+  font-size: 1.7em;
+  font-weight: 600px;
+  margin-left: 50px;
 }

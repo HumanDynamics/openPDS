@@ -21,7 +21,7 @@
 <div class="scontainer">
     <div horizontal center-justified layout id="group-overview">
         <div layout vertical id="group-charts">
-            <div layout horizontal>
+            <div layout horizontal id="group-bar">
                 <div flex self-center>
                     <span id="group-overview-title">Group General Overview</span>
                 </div>
@@ -35,7 +35,11 @@
     <hr>
 
     <!-- <div layout vertical id="patients"> -->
+    <div horizontal layout>
+        <span self-center id="patient-overviews-title">Patient Overviews</span>
+    </div>
     <div horizontal layout wrap id="patients">
+
         {% for participant in participant_data %}
         <div layout vertical center-justified class="patient" id="{{participant.uid}}">
             <div layout horizontal>
@@ -47,6 +51,8 @@
 
             <div layout horizontal center-justified class="patient-agg-charts" id="{{participant.uid}}-agg">
                 <svg self-center class="pie" id="aggChart-{{participant.uid}}"></svg>
+                <svg self-center class="pie" id="conChart-{{participant.uid}}"></svg>
+                <svg self-center class="pie" id="intChart-{{participant.uid}}"></svg>
             </div>
 
             <div class="patient-category-charts" id="{{participant.uid}}-categories">

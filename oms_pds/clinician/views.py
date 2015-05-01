@@ -135,6 +135,9 @@ def get_participant_object(p):
     obj['agg_scores'] = overall_patient_history(obj['scores'])
     obj['uid'] = p['uid']
     obj['study_status'] = p['study_status']
+    #TODO: make this real control and intervention scores
+    obj['control_scores'] = [{'status': 'No Data', 'score': 1}]
+    obj['intervention_scores'] = obj['agg_scores']
     return obj
 
 

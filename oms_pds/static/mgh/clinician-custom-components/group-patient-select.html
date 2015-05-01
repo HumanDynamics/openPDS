@@ -19,7 +19,7 @@
         <!-- <span id="label">Show me:</span> -->
         <paper-dropdown-menu label="Overall" name="agg-dropdown">
             <paper-dropdown class="dropdown">
-                <core-menu class="menu" id="patientView" valueattr="name" name="agg-select" selected="{{selected_item}}" on-core-select="{{selectAction}}">
+                <core-menu class="menu" id="patientView" valueattr="name" name="agg-select" on-core-select="{{selectAction}}">
                     <paper-item name="overall" label="Overall">Overall</paper-item>
                     <paper-item name="control" label="Control">Control</paper-item>
                     <paper-item name="intervention" label="Intervention">Intervention</paper-item>
@@ -34,38 +34,47 @@
          prev: 'overall',
          
          selectAction: function(e, detail) {
-             console.log("selected");
+             console.log(">>>>>selected");
+             if (!detail.isSelected) {
+                 return;
+             }
              selected_item = detail.item.attributes.name.value;
              
              //changePatientChart(this.uid, selected_item, this.prev);
              var elem_map = {
                  'overall': '#aggChart-' + this.uid,
-                 'control': '#control-' + this.uid,
-                 'intervention': '#intervention-' + this.uid,
+                 'control': '#conChart-' + this.uid,
+                 'intervention': '#intChart-' + this.uid,
                  'all-categories': '#' + this.uid + '-categories'};
              var shown_id = elem_map[this.prev];
              var hidden_id = elem_map[selected_item];
              var uid = this.uid;
 
-             // all these .hide()s are super annoying but I kept having
-             // trouble with hiding the previous chart...
-             $(shown_id).fadeOut(500, function() {
-                 $(shown_id).css({'visibility': 'hidden',
-                                  'display': 'none !important'});
-                 $(shown_id).hide();
-                 if (selected_item == 'all-categories') {
+
+             //TODO: change animation for all-categories
+
+
+             if (selected_item == 'all-categories') {
+                 $(shown_id).hide("fade", 300, function() {
                      width = $('#patients').width();
                      $('#' + uid).width(width);
-                 } else {
-                     width = $('#patients').width() / 2;
-                     $('#' + uid).width(width)
-                 }
-                 $(shown_id).hide();
-                 $(hidden_id).css('visibility','visible').hide().fadeIn(300, function() {
-                     $(shown_id).hide();
                  });
+                 $(hidden_id).delay(400).show(300);
+             } if (this.prev == "all-categories") {
+                 /* $(shown_id).hide("drop", {'direction': 'down', 'easing': 'linear'}, 300, function() { */
+                 $(shown_id).hide(500, function() {
+                     width = $('#patients').width() / 2;
+                     $('#' + uid).width(width);
+                 });
+                 $(hidden_id).delay(500).show("fade", 300);
+                 //$(hidden_id).delay(400).show("drop", {"direction": "left", "easing": "linear"}, 300);
+             } else {
+                 $(shown_id).hide("fade", 300);
+                 width = $('#patients').width() / 2;
+                 $('#' + uid).width(width);
+                 $(hidden_id).delay(300).show("fade", 300);
+             }
 
-             });
              console.log("is", shown_id, "hidden?");
              this.prev = selected_item;
          },

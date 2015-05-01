@@ -26,6 +26,9 @@
          aspects: Object.keys(aggregate_data),
 
          selectAction: function(e, detail) {
+             if (!detail.isSelected) {
+                 return;
+             }
              changeAggCharts(detail.item.attributes.name.value);
          },
      });
