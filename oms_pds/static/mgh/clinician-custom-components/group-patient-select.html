@@ -1,0 +1,83 @@
+<polymer-element name="group-patient-select" attributes="uid items prev">
+    <template>
+        <style>
+         :host {
+             padding-left: 10px;
+         }
+         #label {
+             padding-right: 10px;
+             color: #757575;
+         }
+         #agg {
+             max-height: 300px;
+             overflow: scroll;
+         }
+         paper-item {
+             font-size: .8em;
+         }
+        </style>
+        <!-- <span id="label">Show me:</span> -->
+        <paper-dropdown-menu label="Overall" name="agg-dropdown">
+            <paper-dropdown class="dropdown">
+                <core-menu class="menu" id="patientView" valueattr="name" name="agg-select" on-core-select="{{selectAction}}">
+                    <paper-item name="overall" label="Overall">Overall</paper-item>
+                    <paper-item name="control" label="Control">Control</paper-item>
+                    <paper-item name="intervention" label="Intervention">Intervention</paper-item>
+                    <paper-item name="all-categories" label="All Categories">All Categories</paper-item>
+                </core-menu>
+            </paper-dropdown>
+        </paper-dropdown-menu>
+    </template>
+    <script>
+     Polymer('group-patient-select', {
+         // keeps track of previously selected element
+         prev: 'overall',
+         
+         selectAction: function(e, detail) {
+             console.log(">>>>>selected");
+             if (!detail.isSelected) {
+                 return;
+             }
+             selected_item = detail.item.attributes.name.value;
+             
+             //changePatientChart(this.uid, selected_item, this.prev);
+             var elem_map = {
+                 'overall': '#aggChart-' + this.uid,
+                 'control': '#conChart-' + this.uid,
+                 'intervention': '#intChart-' + this.uid,
+                 'all-categories': '#' + this.uid + '-categories'};
+             var shown_id = elem_map[this.prev];
+             var hidden_id = elem_map[selected_item];
+             var uid = this.uid;
+
+
+             //TODO: change animation for all-categories
+
+
+             if (selected_item == 'all-categories') {
+                 $(shown_id).hide("fade", 300, function() {
+                     width = $('#patients').width();
+                     $('#' + uid).width(width);
+                 });
+                 $(hidden_id).delay(400).show(300);
+             } if (this.prev == "all-categories") {
+                 /* $(shown_id).hide("drop", {'direction': 'down', 'easing': 'linear'}, 300, function() { */
+                 $(shown_id).hide(500, function() {
+                     width = $('#patients').width() / 2;
+                     $('#' + uid).width(width);
+                 });
+                 $(hidden_id).delay(500).show("fade", 300);
+                 //$(hidden_id).delay(400).show("drop", {"direction": "left", "easing": "linear"}, 300);
+             } else {
+                 $(shown_id).hide("fade", 300);
+                 width = $('#patients').width() / 2;
+                 $('#' + uid).width(width);
+                 $(hidden_id).delay(300).show("fade", 300);
+             }
+
+             console.log("is", shown_id, "hidden?");
+             this.prev = selected_item;
+         },
+     });
+    </script>
+</polymer-element>

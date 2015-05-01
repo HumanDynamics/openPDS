@@ -1,0 +1,105 @@
+{% load straight_include %}
+{% load verbatim %}
+{% load crocodile %}
+
+<html>
+
+  <head>
+      <title>
+          {% block title %}
+          Clinician Portal
+          {% endblock %}
+      </title>
+
+      <link rel='shortcut icon' type='image/x-icon' href='/static/mgh/contents/clinician-page-icon.ico' />
+
+      <script src="/static/mgh/clinician-components/webcomponentsjs/webcomponents.js"></script>
+      <link rel="import" href="/static/mgh/clinician-components/font-roboto/roboto.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-collapse/core-collapse.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-menu/core-menu.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-toolbar/core-toolbar.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-icon-button/core-icon-button.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-dropdown/core-dropdown.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-dropdown-menu/core-dropdown-menu.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-item/core-item.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/paper-dropdown/paper-dropdown.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/paper-item/paper-item.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/paper-dropdown-menu/paper-dropdown-menu.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-icons/core-icons.html">
+      <link rel="import" href="/static/mgh/clinician-components/paper-dialog/paper-dialog.html">
+
+
+	    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+      <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.css" />
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+	    <!-- <script src="//ajax.googleapis.com/ajax/libs/jquerymobile/1.4.2/jquery.mobile.min.js"></script> -->
+
+      <script src="http://d3js.org/d3.v3.min.js"></script>
+      <link rel="stylesheet" href="{{ STATIC_URL }}/mgh/contents/clinician-stylesheet.css" />
+
+      {% block css %}
+      {% endblock %}
+
+
+	    {% block scripts %}
+	    {% endblock %}
+
+	    <meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <meta name="description" content="">
+	    <meta name="author" content="">
+
+  </head>
+  <body>
+      <core-toolbar id="title-bar">
+          <div layout horizontal justified center id="title-bar-div">
+              <div flex three id="logo">
+		              <a href="/clinician/group_overview/all">
+                      <img src="/static/mgh/SmartCatch_design_app/Img/general/Logo_blue.png"/>
+                  </a>
+              </div>
+
+              <div self-end>
+                  <div layout horizontal center justified id="menu-dropdowns">
+
+                      <div id="patient-select">
+                          <paper-dropdown-menu label="Select a Patient" relative layout inline horizontal center>
+                              <paper-dropdown class="dropdown">
+                                  <core-menu class="menu" id="patient-menu", selected="{{uid}}">
+                                      {% for uid, name in uid_name_map.items %}
+                                      <paper-item class="patient-item" name="{{uid}}">
+                                          <a href="/clinician/patients/{{uid}}">{{name}}</a>
+                                      </paper-item>
+                                      {% endfor %}
+                                  </core-menu>
+                              </paper-dropdown>
+                          </paper-dropdown-menu>
+                      </div>
+
+                      <div id="overview-link">
+                          <a href="/clinician/group_overview/all">Group Overview</a>
+                      </div>
+
+                      <div id="overview-link">
+                          <a href="/clinician/logout">Log Out</a>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </core-toolbar>
+
+      <div id="content" data-role="content" style="padding: 0px">
+          {% block content %}
+          {% endblock %}
+      </div>
+  </body>
+  <script>
+   var uid_name_map = {{uid_name_map_json|safe}};
+   console.log(uid_name_map);
+  </script>
+
+  {% block custom-scripts %}
+  {% endblock %}
+  <script type="text/javascript" src="http://cdn.rawgit.com/jashkenas/coffeescript/master/extras/coffee-script.js"> </script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.3/d3-tip.min.js"></script>
+</html>

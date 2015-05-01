@@ -1,0 +1,398 @@
+html,body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+	background-color:#f6f6f6
+}
+
+body #content {
+	font-family: 'Roboto', Sans-Serif;
+	font-weight: normal;
+	background-color: #f6f6f6;
+	/* zoom: 50%; */
+	color: #1f3f56;
+}
+
+core-header-panel {
+	height: 100%;
+}
+
+paper-tabs {
+	width: 100%;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.ui-link {
+  max-height: 20px;
+  text-decoration: none;
+  color: rgba(26, 47, 70, 0.80);
+}
+
+.ui-link:link {
+  color: rgba(26, 47, 70, 0.80) !important;
+}
+
+.ui-link:hover {
+  color: rgba(26, 47, 70, 1) !important;
+  text-decoration: underline;
+}
+
+.ui-link:visited {
+  color: rgba(26, 47, 70, 0.50) !important;
+}
+
+.scontainer {
+	width: 80%;
+	margin: 50px auto;
+	font-family: 'RobotoDraft', sans-serif;
+  color: #1A2F46
+}
+
+
+.d3-tip {
+  padding: 12px;
+  background: rgba(26, 47, 70, 0.80);
+  color: #fff;
+  border-radius: 2px;
+	font-family: 'RobotoDraft', sans-serif;
+  font-size: 1em;
+  font-weight: 300;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  width: 100%;
+  line-height: 1;
+  color: rgba(26, 47, 70, 0.80);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+#menu-dropdowns {
+  margin-right: 30px;
+}
+
+.dropdown {
+  color: rgba(26, 47, 70, 0.80);
+}
+
+paper-item {
+  color: rgba(26, 47, 70, 0.80) !important;
+  font-weight: bold;
+  max-height: 40px;
+}
+
+paper-item a {
+  max-height: 40px;
+  color: rgba(26, 47, 70, 0.80) !important;
+}
+
+.bar rect {
+  shape-rendering: crispEdges;
+}
+
+#title-bar {
+  background-color: #fff;
+  -moz-box-shadow: 0 0 1px 1px #999;
+  -webkit-box-shadow: 0 0 1px 1px #999;
+  min-height:70px;
+}
+
+#title-bar-div {
+  width: 100%;
+}
+
+#logo {
+  max-width: 300px;
+  padding-right: 30px;
+  margin-left: 30px;
+}
+
+#patient-select {
+  padding-right: 30px;
+  padding-left: 30px;
+}
+
+#overview-link a {
+  color: rgba(26, 47, 70, 0.80);
+  border-bottom: 1px solid rgba(26, 47, 70, 0.80);
+  padding-bottom: 10px;
+  text-decoration: none;
+  margin-right: 30px;
+}
+
+#overview-link a:hover {
+  color: rgba(26, 47, 70, 1);
+}
+
+paper-item a:link !important {
+  color: rgba(26, 47, 70, 0.80);
+  text-decoration: none;
+  max-height: 30px;
+}
+
+paper-item a:visited !important {
+  color: rgba(26, 47, 70, 0.50);
+}
+
+paper-item a:hover !important {
+  color: rgba(26, 47, 70, 1);
+}
+
+#spacer {
+  min-width: 100px;
+}
+
+.group-chart {
+  min-height: 300px;
+  min-width: 700px;
+  margin-bottom: 20px;
+}
+
+#group-overview {
+  margin-bottom: 5%;
+}
+
+#patients {
+  min-width: 500px;
+  margin-top: 5%;
+}
+
+.patient {
+  margin-bottom: 30px;
+  min-height: 300px;
+}
+
+.patient-agg-charts {
+  height: auto;
+}
+
+#patient-menu {
+  max-height: 300px;
+  overflow: scroll;
+}
+
+.patient-name {
+  padding-left: 50px;
+  margin-bottom: 5px;
+  margin-top: 10px;
+  font-size: 1.2em;
+  font-weight: 500px;
+}
+
+a:link {
+  color: rgba(26, 47, 70, 0.80);
+  text-decoration: none;
+}
+
+a:visited {
+  color: rgba(26, 47, 70, 0.80);
+}
+
+a:hover {
+  color: rgba(26, 47, 70, 1);
+}
+
+.arc path {
+  stroke: #f6f6f6;
+  stroke-width: 4px;
+}
+
+.status path {
+  stroke: #f6f6f6;
+  stroke-width: 3px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #c5c5c5;
+  shape-rendering: crispEdges;
+}
+
+.axis path {
+  stroke: rgba(26, 47, 70, 0.80);
+  stroke-width: 2px;
+}
+
+.tick text{
+  color: #bcbcbc;
+}
+
+.pie {
+  padding-bottom: 10px;
+}
+
+.patient-dropdown {
+  min-width: 200px;
+  min-height: 50px;
+  color: #000;
+}
+
+#subheader1 {
+	background-image: url("/static/mgh/SmartCatch_design_app/Img/other/grey_gradient.png");
+	background-repeat: repeat-x;
+	width: 100%;
+  height: 80px;
+  zoom: 50%;
+}
+
+.filter-button {
+  font-size: 2em;
+	padding-bottom: 20px;
+  padding-top: 20px;
+  margin-left: 40px;
+  margin-right: 40px;
+  cursor: pointer;
+}
+
+.button-selected {
+	font-weight: bold;
+}
+
+@font-face {
+	font-family: 'Roboto';
+  src: url('/static/mgh/SmartCatch_design_app/Docs/Font/Roboto/Roboto-Light.ttf') format('truetype');
+  font-weight: 100;
+}
+
+
+.group-results {
+	float: right;
+	color:black;
+	font-weight:200;
+	font-size:23px;
+	margin-top: 24px;
+	padding-top:0px;
+	margin-right: 30px;
+}
+
+.group-results-history {
+	color:black;
+	font-weight:200;
+	font-size:23px;
+	margin-right: 30px;
+  margin-top:10px;
+  padding-left: 10px;
+}
+
+#group-button {
+  float: right;
+  font-size: 1.5em;
+}
+
+#bar-spacer {
+  width: 300px;
+}
+
+.group-results-button {
+  height: 50px;
+  width: 90px;
+	background-image: url("../SmartCatch_design_app/Img/buttons/togglebutton_off.png");
+	background-repeat: no-repeat;
+	float: right;
+	cursor:pointer;
+	padding-left: 22px;
+  padding-top: 5px;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+.group-results-button.g-on {
+	background-image: url("../SmartCatch_design_app/Img/buttons/togglebutton_on.png");
+	padding-left: 53px;
+	width: 59px;
+	color: white;
+}
+
+#sorted-lines {
+	clear: both;
+	margin: 30px;
+}
+
+.lineGraph{
+	margin-bottom: 35px;
+}
+
+.lineLabel{
+	font-size:30px;
+}
+
+.lineLabel img {
+	margin-right: 26px;
+}
+
+.yaxis {
+  position: relative;
+  top: 20px;
+	left: 630px;
+	color: #bcbcbc;
+}
+
+.yaxis div:nth-child(2) {
+	position: absolute;
+	top: 250px;
+}
+
+.lineBack{
+	background-color:white;
+	height:266px;
+	width:620px;
+	margin-bottom: -266px;
+	box-shadow: 0px 0px 10px #dddddd;
+}
+
+.lineBorder {
+	border-bottom: solid #1f3f56 2px;
+	width: 620px;
+	position: absolute;
+	height: 284px;
+}
+
+.chart-container {
+  padding-top: 1%;
+  padding-left: 25%
+}
+
+.tick {
+	font-family: "Roboto";
+}
+
+#login-div {
+  max-width: 30%;
+}
+
+#agg-select {
+  padding-right: 30px;
+}
+
+#group-overview-title {
+  font-size: 1.7em;
+  font-weight: 600px;
+  margin-left: -20px;
+}
+
+#group-bar {
+  padding-bottom: 20px;
+}
+
+#patient-overviews-title {
+  font-size: 1.7em;
+  font-weight: 600px;
+  margin-left: 50px;
+}
