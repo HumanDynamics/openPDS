@@ -1,0 +1,40 @@
+
+<polymer-element name="help-icon" attributes="heading text">
+    <template>
+        <style>
+
+         core-icon {
+             color: #bcbcbc;
+         }
+         core-icon:hover {
+             cursor: pointer;
+             color: rgba(26, 47, 70, 1);
+         }
+         paper-dialog {
+             max-width: 500px;
+         }
+
+        </style>
+        <core-icon icon="help" on-click="{{onClick}}"></core-icon>
+
+        <paper-dialog id="helpDialog" transition="core-transition-center", heading="{{heading}}">
+            <p>{{text}}</p>
+        </paper-dialog>
+
+    </template>
+    <script>
+     Polymer('help-icon', {
+         ready: function() {
+             console.log("Help Icon Ready!");
+             console.log(this.$.helpDialog);
+             $(this.$.helpDialog).close();
+         },
+         onClick: function(e, detail) {
+             console.log("Clicked!");
+             this.$.helpDialog.toggle();
+         }
+     });
+    </script>
+</polymer-element>
+
+

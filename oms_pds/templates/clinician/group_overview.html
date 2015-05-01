@@ -17,13 +17,16 @@
 {% block content %}
 <link rel="import" href="/static/mgh/clinician-custom-components/agg-select.html" rel="import">
 <link rel="import" href="/static/mgh/clinician-custom-components/group-patient-select.html" rel="import">
+<link rel="import" href="/static/mgh/clinician-custom-components/help-icon.html" rel="import">
 
 <div class="scontainer">
     <div horizontal center-justified layout id="group-overview">
         <div layout vertical id="group-charts">
             <div layout horizontal id="group-bar">
                 <div flex self-center>
-                    <span id="group-overview-title">Group General Overview</span>
+                    <span id="group-overview-title">Group General Overview 
+                        <help-icon heading="Group Overview" text="Here, you can see a quick overview of all patients' statuses. Each color band in the overview chart represents the percentage of all patient scores that were 'bad', 'medium', or 'good' at that point in time on the X axis."></help-icon> 
+                    </span>
                 </div>
                 <div id="agg-select" self-start>
                     <agg-select></agg-select>
@@ -36,7 +39,11 @@
 
     <!-- <div layout vertical id="patients"> -->
     <div horizontal layout>
-        <span self-center id="patient-overviews-title">Patient Overviews</span>
+        <span self-center id="patient-overviews-title">
+            Patient Overviews
+            <help-icon heading="Patient Overviews" text="Here, you can see an overview of all patients currently enrolled in the study. By default, each pie chart shows the percentage of 'good', 'bad' and 'medium' scores the patient has achieved throughout the length of the study. 
+                                                         You can use the drop-down next to each patients' name to see more granular data, like the aggregate scores for each of that patients' categories, or their scores from when they were in the control group. You can also click on a patients' name to see their granular history."></help-icon> 
+        </span>
     </div>
     <div horizontal layout wrap id="patients">
 

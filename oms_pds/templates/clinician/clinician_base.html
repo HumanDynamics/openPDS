@@ -11,6 +11,8 @@
           {% endblock %}
       </title>
 
+      <link rel='shortcut icon' type='image/x-icon' href='/static/mgh/contents/clinician-page-icon.ico' />
+
       <script src="/static/mgh/clinician-components/webcomponentsjs/webcomponents.js"></script>
       <link rel="import" href="/static/mgh/clinician-components/font-roboto/roboto.html" rel="import">
       <link rel="import" href="/static/mgh/clinician-components/core-collapse/core-collapse.html" rel="import">
@@ -23,6 +25,8 @@
       <link rel="import" href="/static/mgh/clinician-components/paper-dropdown/paper-dropdown.html" rel="import">
       <link rel="import" href="/static/mgh/clinician-components/paper-item/paper-item.html" rel="import">
       <link rel="import" href="/static/mgh/clinician-components/paper-dropdown-menu/paper-dropdown-menu.html" rel="import">
+      <link rel="import" href="/static/mgh/clinician-components/core-icons/core-icons.html">
+      <link rel="import" href="/static/mgh/clinician-components/paper-dialog/paper-dialog.html">
 
 
 	    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -58,18 +62,6 @@
               <div self-end>
                   <div layout horizontal center justified id="menu-dropdowns">
 
-                      <div id="overview-select">
-                          <paper-dropdown-menu label="Group Overview" name="group-dropdown">
-                              <paper-dropdown class="dropdown">
-                                  <core-menu class="menu" id="overview" valueattr="name" name="groupselect" selected="{{status}}" >
-                                      <paper-item name="intervention"> <a href="/clinician/group_overview/intervention">Intervention</a></paper-item>
-                                      <paper-item name="control"> <a href="/clinician/group_overview/control">Control</a></paper-item>
-                                      <paper-item name="all"> <a href="/clinician/group_overview/all">All</a></paper-item>
-                                  </core-menu>
-                              </paper-dropdown>
-                          </paper-dropdown-menu>
-                      </div>
-
                       <div id="patient-select">
                           <paper-dropdown-menu label="Select a Patient" relative layout inline horizontal center>
                               <paper-dropdown class="dropdown">
@@ -84,7 +76,11 @@
                           </paper-dropdown-menu>
                       </div>
 
-                      <div id="logout-link">
+                      <div id="overview-link">
+                          <a href="/clinician/group_overview/all">Group Overview</a>
+                      </div>
+
+                      <div id="overview-link">
                           <a href="/clinician/logout">Log Out</a>
                       </div>
                   </div>
