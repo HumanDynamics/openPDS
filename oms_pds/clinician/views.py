@@ -131,7 +131,7 @@ def get_participant_object(p):
     """
     # dict of {key: {'good': <%> 'medium': <%>, 'bad': <%>}, ...}
     obj = {}
-    obj['scores'] = {k: breakdown_history_test(v) for k, v in p['scores'].items()}
+    obj['scores'] = {k: breakdown_history(v) for k, v in p['scores'].items()}
     obj['agg_scores'] = overall_patient_history(obj['scores'])
     obj['uid'] = p['uid']
     obj['study_status'] = p['study_status']
@@ -192,8 +192,9 @@ def uid_name_map():
     uids = [p.uuid for p in allParticipants]
     for n, uid in enumerate(uids):
         uid_name_map[uid] = "Patient {}".format(n + 1)
-    for i in xrange(40):
-        uid_name_map['pretend-uid-{}'.format(i)] = "Patient {}".format(i)
+    # TESTING
+    # for i in xrange(40):
+    #     uid_name_map['pretend-uid-{}'.format(i)] = "Patient {}".format(i)
     return uid_name_map
 
 
@@ -230,14 +231,14 @@ def groupOverview(request, status='all'):
              'study_status': p.study_status} for p in allParticipants]
 
     # TODO: remove
-    ###### TESTING
-    for i in xrange(10):
-        tmp = {}
-        tmp['uid'] = "uid-{}".format(i)
-        tmp['scores'] = data[0]['scores']
-        tmp['study_status'] = random.choice(['c', 'i'])
-        data.append(tmp)
-    ###### TESTING
+    # ###### TESTING
+    # for i in xrange(10):
+    #     tmp = {}
+    #     tmp['uid'] = "uid-{}".format(i)
+    #     tmp['scores'] = data[0]['scores']
+    #     tmp['study_status'] = random.choice(['c', 'i'])
+    #     data.append(tmp)
+    # ###### TESTING
 
     participant_data = []
     for p in data:

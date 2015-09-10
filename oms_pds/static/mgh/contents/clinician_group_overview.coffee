@@ -18,6 +18,11 @@ class window.StackedChart
       obj = {'date': @parseDate(d['date']), 'key': d.key, 'value': d.value}
       @data.push(obj)
 
+    sortByDate = (a, b) ->
+      a.date - b.date
+
+    @data = @data.sort(sortByDate)
+    console.log "data:", @data
     @dates = d3.extent @data, (d) -> d.date
 
     @data = d3.nest()
@@ -32,8 +37,8 @@ class window.StackedChart
 
     @statuses = @stack @data
 
-    #console.log "stacked:"
-    #console.log @statuses
+    console.log "stacked:"
+    console.log @statuses
 
     @x = d3.time.scale()
       .domain @dates
@@ -57,7 +62,8 @@ class window.StackedChart
       .tickFormat @formatPercent
 
     @area = d3.svg.area()
-      .interpolate("cardinal")
+      .defined (d) -> d.y != null
+      .interpolate("basis")
       .x (d) => @x(d.date)
       .y0 (d) => @y(d.y0)
       .y1 (d) => @y(d.y0 + d.y)
@@ -193,8 +199,8 @@ for participant in participant_data
     $(id).width(chart_width)
     $(id).height(chart_width + 20)
     data = participant[t]
-    console.log data
-    console.log id
+    # console.log data
+    # console.log id
     pie = new Pie(data, chart_info[t]['name'], colors, chart_width)
     pie.render(id)
     if t != 'agg_scores'
@@ -222,26 +228,32 @@ for participant in participant_data
 gHeight = 300
 gWidth = 750
 
-for status in ['i', 'c']
-  if status == 'i'
-    label = "Intervention Arm:"
-    $("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
-    window.iStacked = new StackedChart(aggregate_data['All Categories'][status], colors, label, gWidth, gHeight)
-    window.iStacked.render('#intervention-chart')
-  else if status == 'c'
-    label = "Control Group:"
-    $("#group-charts").append('<div flex class="group-chart" id="control-chart"></div>')
-    window.cStacked = new StackedChart(aggregate_data['All Categories'][status], colors, label, gWidth, gHeight)
-    window.cStacked.render('#control-chart')
 
 
-# add dropdown items for aggregate data
-for aspect in Object.keys(aggregate_data)
-  $('#agg').append('<paper-item name="' + aspect + '">' + aspect + '</paper-item>')
+setNoData = (id, width, height) ->
+  svg = d3.select(id)
+    .append("svg")
+    .attr("class", "no-data")
+    .attr "width", width
+    .attr "height", height
+
+  r = svg.append("g")
+    .append("rect")
+    .attr "width", width
+    .attr "height", height
+    .style "fill", "#c5c5c5"
+
+  svg.append("text")
+    .attr "class", "no-data-text"
+    .attr "y", (d, i) => height / 2
+    .attr "x", (d, i) => (width / 2) - 50
+    .style "stroke", 'rgba(26, 47, 70, 1)'
+    .style "font-weight", 300
+    .style "font-size", "1.5em"
+    .text "No Data"
 
 
 window.changeAggCharts = (aspect) ->
-  console.log aspect
 
   # remove charts
   $('#intervention-chart').fadeOut(500)
@@ -253,15 +265,30 @@ window.changeAggCharts = (aspect) ->
   $("#group-charts").append('<div flex class="group-chart" id="intervention-chart"></div>')
   $("#intervention-chart").hide()
   iData = aggregate_data[aspect]['i']
-  console.log iData
-  window.iStacked = new StackedChart(iData, colors, "Intervention Arm", gWidth, gHeight)
-  window.iStacked.render('#intervention-chart')
+
+  # if we don't have intervention data
+  if iData.length == 0
+    setNoData('#intervention-chart', gWidth, gHeight)
+  else
+    # console.log iData
+    window.iStacked = new StackedChart(iData, colors, "Intervention Arm", gWidth, gHeight)
+    window.iStacked.render('#intervention-chart')
 
   $("#group-charts").append('<div flex class="group-chart" id="control-chart"></div>')
   $("#control-chart").hide()
-  window.cStacked = new StackedChart(aggregate_data[aspect]['c'], colors, "Control Group", gWidth, gHeight)
-  window.cStacked.render('#control-chart')
+  cData = aggregate_data[aspect]['c']
+  if cData.length == 0
+    setNoData('#control-chart', gWidth, gHeight)
+  else
+    window.cStacked = new StackedChart(cData, colors, "Control Group", gWidth, gHeight)
+    window.cStacked.render('#control-chart')
 
   # fade them in
   $("#intervention-chart").fadeIn(500)
   $("#control-chart").fadeIn(500)
+
+# add dropdown items for aggregate data
+for aspect in Object.keys(aggregate_data)
+  $('#agg').append('<paper-item name="' + aspect + '">' + aspect + '</paper-item>')
+
+changeAggCharts('All Categories')

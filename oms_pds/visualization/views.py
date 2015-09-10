@@ -233,7 +233,7 @@ def smartcatchHelp(request):
     }, context_instance=RequestContext(request))
     
 def smartcatchSummary(request):
-    response = ''
+    response = 'Summary Data<br/>'
     
     now = datetime.datetime.now()
     sevendaysago = now - datetime.timedelta(days=7)
@@ -257,7 +257,7 @@ def smartcatchSummary(request):
     allResponse = QuestionInstance.objects.filter(profile__study_status__in=['c', 'i'], datetime__range=[sevendaysago, now])
     allResponsePercent = float(allResponse.filter(answer__isnull=False).count()) / float(allResponse.count())*100
     controlResponse = QuestionInstance.objects.filter(profile__study_status='c', datetime__range=[sevendaysago, now])
-    controlResponsePercent = float(controlResponse.filter(answer__isnull=False).count()) / float(controlResponse.count())*100 
+    controlResponsePercent = float(controlResponse.filter(answer__isnull=False).count()) / (float(controlResponse.count() if controlResponse.count() > 0 else 1))*100 
     interventionResponse = QuestionInstance.objects.filter(profile__study_status='i', datetime__range=[sevendaysago, now])
     interventionResponsePercent = float(interventionResponse.filter(answer__isnull=False).count()) / float(interventionResponse.count())*100
     response += "Percentage of completed notifications for all participants this week: %s%%<br/>" % (str(allResponsePercent))

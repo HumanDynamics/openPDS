@@ -13,6 +13,9 @@ DEFAULT_PDS_URL = 'http://mgh.media.mit.edu:8080'
 SERVER_UPLOAD_DIR="/var/www/pds/"
 
 ADMINS = (
+    ('Eric Schlossberg', 'orpheuskl@gmail.com'),
+    ('Todd Reid', 'reid1001@gmail.com'),
+    ('Dan Calacci', 'dan@dcalacci.net'),
     # ('Your Name', 'your_email@example.com'),
 )
 

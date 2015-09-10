@@ -16,6 +16,7 @@ from oms_pds.pds.internal import getInternalDataStore
 #from SPARQLWrapper import SPARQLWrapper, JSON
 from collections import Counter
 import sqlite3
+from django.core.mail import send_mail
 
 """the MONGODB_DATABASE_MULTIPDS setting is set by extract-user-middleware in cases where we need multiple PDS instances within one PDS service """
 
@@ -461,7 +462,7 @@ def smartcatchNotifications():
     print "Starting notifications task"
     expireQuestions()
 
-    profiles = Profile.objects.all()
+    profiles = Profile.objects.filter(study_status__in=['c', 'i', 't'])
     for profile in profiles:
 
         if Device.objects.filter(datastore_owner = profile).count() > 0:
@@ -470,6 +471,11 @@ def smartcatchNotifications():
                 try:
                     # add the notification to the D
                     q_params = fetchQuestion(profile, device)
+                except Exception as e:
+                    print "NotificationError1: Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
+                    print e
+                    
+                try:
                     print 'q_params = %s' % q_params
                     if q_params is not None:
                         js = formatNotification(q_params['question'],
@@ -482,9 +488,9 @@ def smartcatchNotifications():
                         print "id=%s, uuid=%s, device=%s" % (profile.id, profile.uuid,device.gcm_reg_id)
                         gcm.plaintext_request(registration_id=device.gcm_reg_id,
                                               data={"action":"notify"},
-                                              time_to_live=GCM_TIME_TO_LIVE)
+                                              collapse_key=q_params['question'])
                 except Exception as e:
-                    print "Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
+                    print "NotificationError2: Issue with sending notification to: %s, %s" % (profile.id, profile.uuid)
                     print e
 
 @task()
@@ -545,13 +551,14 @@ def getToken(profile, app_uuid):
 
 GROUP_LABEL = "_group"
 def socialHealthScores(label, daysago, timeinterval):
-    profiles = Profile.objects.filter(study_status__in=['c','i'])
+    profiles = Profile.objects.filter(study_status__in=['c','i','t'])
     startTime = getStartTime(daysago, True)
     currentTime = time.time()
     timeRanges = [(start, start + timeinterval) for start in range(int(startTime), int(currentTime), timeinterval)]
 
     sums = {"activity": 0, "social": 0, "focus": 0}
     activeUsers = []
+    activeUsersIncludingTest = []
     data = {}
 
     for profile in profiles:
@@ -568,11 +575,13 @@ def socialHealthScores(label, daysago, timeinterval):
             activityScore = computeActivityScore(activityLevels)
             socialScore = computeSocialScore(socialLevels)
             focusScore = computeFocusScore(focusLevels)
-
-            sums["activity"] += activityScore
-            sums["social"] += socialScore
-            sums["focus"] += focusScore
-            activeUsers.append(profile)
+            
+            if profile.study_status != 't':
+                sums["activity"] += activityScore
+                sums["social"] += socialScore
+                sums["focus"] += focusScore
+                activeUsers.append(profile)
+            activeUsersIncludingTest.append(profile)
 
             try:
                 data[profile.uuid] = internalDataStore.getAnswer("socialhealth")[0]['value']
@@ -591,7 +600,7 @@ def socialHealthScores(label, daysago, timeinterval):
         averages = { k: sums[k] / numUsers for k in sums }
         #variances = { k: [(data[p.uuid]["user"][k] - averages[k])**2 for p in activeUsers] for k in averages }
         #stdDevs = { k: math.sqrt(sum(variances[k]) / len(variances[k])) for k in variances }
-        for profile in activeUsers:
+        for profile in activeUsersIncludingTest:
             token = getToken(profile, "app-uuid")
             internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
             data[profile.uuid][label+GROUP_LABEL] = { k: averages[k] for k in averages }
@@ -633,12 +642,15 @@ def historyScore(internalDataStore, key, newscore):
 
 @task()
 def saveHistory():
-    profiles = Profile.objects.filter(study_status__in=['c','i'])
+    profiles = Profile.objects.filter(study_status__in=['c','i','t'])
 
     for profile in profiles:
         try:
             token = getToken(profile, "app-uuid")
             internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
+
+            data = { 'social':50, 'activity':50, 'focus':50, 'meds':50, 'glucose':50, 'sleep':50, 'goal':50 }
+            internalDataStore.saveAnswer("socialhealthavgs", data)
 
             # Add social scores to historical data
             socialhealth = internalDataStore.getAnswer("socialhealth")[0]['value'][SOCIALHEALTH_HISTORY_LABEL]
@@ -649,7 +661,8 @@ def saveHistory():
             # Add survey scores to historical data
             surveyscores = internalDataStore.getAnswer(SURVEY_HISTORY_LABEL)[0]['value']
             sleepScoreHistory = historyScore(internalDataStore, "sleepScoreHistory", surveyscores['sleep'])
-            glucoseScoreHistory = historyScore(internalDataStore, "glucoseScoreHistory", surveyscores['glucose'])
+            #glucoseScoreHistory = historyScore(internalDataStore, "glucoseScoreHistory", surveyscores['glucose'])
+            glucoseScoreHistory = historyScore(internalDataStore, "glucoseScoreHistory", surveyscores['real_glucose'])
             medsScoreHistory = historyScore(internalDataStore, "medsScoreHistory", surveyscores['meds'])
             goalScoreHistory = historyScore(internalDataStore, "goalScoreHistory", surveyscores['goal'])
 
@@ -662,7 +675,8 @@ def saveHistory():
             # Add group survey scores to historical data
             surveyscoresGroup = internalDataStore.getAnswer(SURVEY_HISTORY_LABEL + GROUP_LABEL)[0]['value']
             historyScore(internalDataStore, "sleepScoreGroupHistory", surveyscoresGroup['sleep'])
-            historyScore(internalDataStore, "glucoseScoreGroupHistory", surveyscoresGroup['glucose'])
+            #historyScore(internalDataStore, "glucoseScoreGroupHistory", surveyscoresGroup['glucose'])
+            historyScore(internalDataStore, "glucoseScoreGroupHistory", surveyscoresGroup['real_glucose'])
             historyScore(internalDataStore, "medsScoreGroupHistory", surveyscoresGroup['meds'])
             historyScore(internalDataStore, "goalScoreGroupHistory", surveyscoresGroup['goal'])
 
@@ -782,27 +796,33 @@ def calculateGlucoseScore(profile, daysago):
     gcq1_score = gcq1_total/len(gcq1s) if len(gcq1s) > 0 else DEFAULT_SCORE
 
     gcq2_total = 0
+    real_glucose_avg = 0
     for gcq in gcq2s:
         gcq2_total += normalizeGlucoseScore(gcq.answer)
+        real_glucose_avg += gcq.answer
+    if len(gcq2s) > 0:
+        real_glucose_avg = real_glucose_avg/len(gcq2s)
 
     gcq2_score = gcq2_total/len(gcq2s) if len(gcq2s) > 0 else DEFAULT_SCORE
 
     if len(gcq2s) > 0 and len(gcq1s) > 0:
-        return gcq1_score*.25 + gcq2_score*.75
+        return (gcq1_score*.25 + gcq2_score*.75, real_glucose_avg)
     elif len(gcq2s) > 0:
-        return gcq2_score
+        return (gcq2_score, real_glucose_avg)
     elif len(gcq1s) > 0:
         return gcq1_score*.50 + gcq2_score*.50
-    return DEFAULT_SCORE
+    return (DEFAULT_SCORE, real_glucose_avg)
 
 def surveyScores(daysago, label):
-    profiles = Profile.objects.filter(study_status__in=['c','i'])
+    profiles = Profile.objects.filter(study_status__in=['c','i','t'])
 
     totalMedsScore = 0
     totalGlucoseScore = 0
+    totalRealGlucoseScore = 0
     totalSleepScore = 0
     totalGoalScore = 0
     scoreCount = 0
+    realGlucoseScoreCount = 0
 
 
     for profile in profiles:
@@ -811,20 +831,25 @@ def surveyScores(daysago, label):
             internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
 
             medsScore = calculateMedsScore(profile, daysago)
-            glucoseScore = calculateGlucoseScore(profile, daysago)
+            glucoseScore, realGlucoseScore = calculateGlucoseScore(profile, daysago)
             sleepScore = calculateSleepScore(profile, daysago)
             goalScore = calculateGoalScore(profile, daysago)
 
             print "Sleep Score: " + str(sleepScore)
 
-            data = { 'meds':medsScore, 'glucose':glucoseScore, 'sleep':sleepScore, 'goal':goalScore }
+            data = { 'meds':medsScore, 'glucose':glucoseScore, 'sleep':sleepScore, 'goal':goalScore, 'real_glucose': realGlucoseScore }
             internalDataStore.saveAnswer(label, data)
 
-            scoreCount += 1
-            totalMedsScore += medsScore
-            totalGlucoseScore += glucoseScore
-            totalSleepScore += sleepScore
-            totalGoalScore += goalScore
+            if profile.study_status != 't':
+                scoreCount += 1
+                totalMedsScore += medsScore
+                totalGlucoseScore += glucoseScore
+                totalSleepScore += sleepScore
+                totalGoalScore += goalScore
+                
+                if realGlucoseScore > 0:
+                    realGlucoseScoreCount += 1
+                    totalRealGlucoseScore += realGlucoseScore
         except Exception as e:
             logging.info("Problem with survey score for profile pk=%s uuid=%s" % (profile.id, profile.uuid))
             logging.info(e)
@@ -832,6 +857,7 @@ def surveyScores(daysago, label):
     if scoreCount > 0:
         avgMedsScore  = totalMedsScore / scoreCount
         avgGlucoseScore  = totalGlucoseScore / scoreCount
+        avgRealGlucoseScore  = totalRealGlucoseScore / realGlucoseScoreCount
         avgSleepScore  = totalSleepScore / scoreCount
         avgGoalScore  = totalGoalScore / scoreCount
 
@@ -839,7 +865,7 @@ def surveyScores(daysago, label):
             try:
                 token = getToken(profile, "app-uuid")
                 internalDataStore = getInternalDataStore(profile, "MGH smartCATCH", "Social Health Tracker", token)
-                data = { 'meds':avgMedsScore, 'glucose':avgGlucoseScore, 'sleep':avgSleepScore, 'goal':avgGoalScore }
+                data = { 'meds':avgMedsScore, 'glucose':avgGlucoseScore, 'real_glucose':avgRealGlucoseScore, 'sleep':avgSleepScore, 'goal':avgGoalScore }
                 internalDataStore.saveAnswer(label + GROUP_LABEL, data)
             except Exception as e:
                 logging.info("Problem with group survey score for profile pk=%s uuid=%s" % (profile.id, profile.uuid))
