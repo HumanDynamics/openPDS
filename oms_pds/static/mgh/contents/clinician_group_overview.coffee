@@ -253,6 +253,30 @@ setNoData = (id, width, height) ->
     .text "No Data"
 
 
+
+setNoData = (id, width, height) ->
+  svg = d3.select(id)
+    .append("svg")
+    .attr("class", "no-data")
+    .attr "width", width
+    .attr "height", height
+
+  r = svg.append("g")
+    .append("rect")
+    .attr "width", width
+    .attr "height", height
+    .style "fill", "#c5c5c5"
+
+  svg.append("text")
+    .attr "class", "no-data-text"
+    .attr "y", (d, i) => height / 2
+    .attr "x", (d, i) => (width / 2) - 50
+    .style "stroke", 'rgba(26, 47, 70, 1)'
+    .style "font-weight", 300
+    .style "font-size", "1.5em"
+    .text "No Data"
+
+
 window.changeAggCharts = (aspect) ->
 
   # remove charts
