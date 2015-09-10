@@ -77,12 +77,17 @@ def smartcatchQuestionsPage(request):
 
     try:
         #weeks = internalDataStore.getAnswerList("activityScoreHistory")[0]['value'][0]["time"]
-        weeks = datastore_owner.created
-        weeks = math.ceil((time.time() - weeks) / (60 * 60 * 24 * 7))
+        weeks = time.mktime(datastore_owner.created.timetuple())
+        weeks = math.ceil((time.time() - weeks)/(60 * 60 * 24 * 7))
     except:
         weeks = 1
+        
+    if datastore_owner.study_status == 't':
+        template = "visualization/smartcatch_questions_v2.html"
+    else:
+        template = "visualization/smartcatch_questions.html"
     
-    return render_to_response("visualization/smartcatch_questions.html", {
+    return render_to_response(template, {
         "questions": questionsRemainingList,
         "bearer_token": token,
         "datastore_owner": datastore_owner_uuid,
@@ -114,9 +119,9 @@ def smartcatchMyResults(request):
         return HttpResponse("Not enough data collected. Please wait.")
     
     try:
-        weeks = profile.created
         #weeks = internalDataStore.getAnswerList("activityScoreHistory")[0]['value'][0]["time"]
-        weeks = math.ceil((time.time() - weeks) / (60 * 60 * 24 * 7))
+        weeks = time.mktime(profile.created.timetuple())
+        weeks = math.ceil((time.time() - weeks)/(60 * 60 * 24 * 7))
     except:
         weeks = 1
     
