@@ -35,7 +35,7 @@ git clone https://github.com/HumanDynamics/openPDS.git
 cd openPDS
 
 # install openPDS and its requirements
-pip install -r conf/requirements.txt
+pip install -r requirements.txt
 
 # set up and run your local openPDS
 python start.py
