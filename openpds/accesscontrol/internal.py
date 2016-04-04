@@ -3,7 +3,6 @@ import sqlite3
 import os
 import stat
 import threading
-from pymongo import Connection
 from openpds.core.models import Profile
 from openpds.accesscontrol.models import Settings, Context
 from openpds import settings
