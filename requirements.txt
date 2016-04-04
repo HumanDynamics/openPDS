@@ -3,7 +3,7 @@
 django==1.4.13
 django-tastypie==0.9.11
 django-celery-with-mongodb
-pymongo
+pymongo==2.7.2
 requests
 django-extensions
 django-uni-form
