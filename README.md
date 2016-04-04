@@ -3,7 +3,7 @@ openPDS - Personal Data Store / Server
 
 The personal data store component of [openPDS](http://openpds.media.mit.edu/) handles storage of raw personal data, provides endpoints for writing such data via connectors, a computation engine to perform analysis on the raw data, as well as storage and REST endpoints for results of such analysis (answers to questions, in openPDS lingo).
 
-__Please note__: openPDS requires a separate registry server for account management and to act as an OAuth 2.0 provider. This can be found at https://github.com/HumanDynamics/openPDS-RegistryServer. If you run your own registry server, the domain for your registry server must be provided to the openPDS setup script. 
+__Please note__: openPDS requires a separate registry server for account management and to act as an OAuth 2.0 provider. This can be found at https://github.com/HumanDynamics/openPDS-RegistryServer. If you run your own registry server, the domain for your registry server must be provided to the openPDS setup script.
 
 __Contributors__: The dev branch is for ongoing development. Please submit pull requests to this brach.
 
@@ -28,7 +28,7 @@ You must clone the repo into the virtualenv directory for `setup.py` to work:
 # create the virtual environment
 virtualenv pdsEnv
 cd pdsEnv
-source bin/activate   
+source bin/activate
 
 # get the latest openPDS code
 git clone https://github.com/HumanDynamics/openPDS.git
@@ -42,5 +42,5 @@ python start.py
 python manage.py syncdb
 python manage.py runserver 0.0.0.0:8002 (for access to local VM)
 ```
- 
- The above steps will start openPDS with default configuration settings on port `8002` of the loopback interface (local access only) on your machine. The openPDS setup script generates a wsgi file that can be used to run openPDS with other web server software, such as Apache. 
+
+The above steps will start openPDS with default configuration settings on port `8002` of the loopback interface (local access only) on your machine. The openPDS setup script generates a wsgi file that can be used to run openPDS with other web server software, such as Apache.
